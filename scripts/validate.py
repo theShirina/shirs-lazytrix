@@ -159,7 +159,7 @@ def validate_source() -> None:
         "TRAIN_ALL_SOCKET_WIDTH = 90",
         "TRAIN_ALL_SOCKET_HEIGHT = 31",
         "TRAINER_MONEY_SCALE = 1",
-        "TRAINER_MONEY_RIGHT = 190",
+        "TRAINER_MONEY_RIGHT = 189",
         "TRAINER_MONEY_BOTTOM = 86",
         "expandedTrainerEnabled()",
         "trainAllEnabled()",

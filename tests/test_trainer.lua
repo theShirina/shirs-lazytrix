@@ -251,7 +251,7 @@ assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrai
   named.ShirsLazyTrixTrainAllButton.point[4] == 56 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
   ClassTrainerMoneyFrame.scale == 1 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
   ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
-  ClassTrainerMoneyFrame.point[4] == 190 and ClassTrainerMoneyFrame.point[5] == 86,
+  ClassTrainerMoneyFrame.point[4] == 189 and ClassTrainerMoneyFrame.point[5] == 86,
   "Train All and money were not split across the bottom-left action area")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
@@ -339,7 +339,7 @@ assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTr
   named.ShirsLazyTrixTrainAllButton.point[4] == 56 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
   ClassTrainerMoneyFrame.scale == 1 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
   ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
-  ClassTrainerMoneyFrame.point[4] == 190 and ClassTrainerMoneyFrame.point[5] == 86,
+  ClassTrainerMoneyFrame.point[4] == 189 and ClassTrainerMoneyFrame.point[5] == 86,
   "Train All-only mode did not keep its button in the bottom-left socket")
 
 -- Toolbar filter variants must not move the bottom Train All control.
