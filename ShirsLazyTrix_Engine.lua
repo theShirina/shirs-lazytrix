@@ -18,31 +18,56 @@ function ShirsLazyTrix.QuestKey(npc, title)
   return (npc or "") .. "\031" .. (title or "")
 end
 
+function ShirsLazyTrix.CharacterKey()
+  if ShirsLazyTrix.characterKeyOverride then
+    return ShirsLazyTrix.characterKeyOverride
+  end
+
+  local realm = ""
+  local player = ""
+  if type(GetRealmName) == "function" then
+    realm = GetRealmName() or ""
+  end
+  if type(UnitName) == "function" then
+    player = UnitName("player") or ""
+  end
+  return realm .. "\031" .. player
+end
+
+function ShirsLazyTrix.CharacterRepeatables(db)
+  db.repeatableByCharacter = db.repeatableByCharacter or {}
+  local character = ShirsLazyTrix.CharacterKey()
+  db.repeatableByCharacter[character] = db.repeatableByCharacter[character] or {}
+  return db.repeatableByCharacter[character]
+end
+
 function ShirsLazyTrix.IsRepeatable(npc, title, db)
-  if not db or not db.repeatable then
+  if not db then
     return false
   end
-  return db.repeatable[ShirsLazyTrix.QuestKey(npc, title)] and true or false
+  local repeatables = ShirsLazyTrix.CharacterRepeatables(db)
+  return repeatables[ShirsLazyTrix.QuestKey(npc, title)] and true or false
 end
 
 function ShirsLazyTrix.RememberTurnIn(npc, title, db)
   ShirsLazyTrix.recentTurnIn = {
     npc = npc or "",
     title = title or "",
+    character = ShirsLazyTrix.CharacterKey(),
   }
 end
 
 function ShirsLazyTrix.ObserveAvailable(npc, titles, db)
   local recent = ShirsLazyTrix.recentTurnIn
-  if not recent or recent.npc ~= (npc or "") then
+  if not recent or recent.character ~= ShirsLazyTrix.CharacterKey() or recent.npc ~= (npc or "") then
     return false
   end
 
   local i
   for i = 1, table.getn(titles) do
     if titles[i] == recent.title then
-      db.repeatable = db.repeatable or {}
-      db.repeatable[ShirsLazyTrix.QuestKey(npc, recent.title)] = true
+      local repeatables = ShirsLazyTrix.CharacterRepeatables(db)
+      repeatables[ShirsLazyTrix.QuestKey(npc, recent.title)] = true
       ShirsLazyTrix.recentTurnIn = nil
       return true
     end

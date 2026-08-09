@@ -36,7 +36,7 @@ assertContains('"Turn in completed quests", "turnInNormal"', "normal turn-in che
 assertContains('"Pick up quests", "pickUpNormal"', "normal pickup checkbox")
 assertContains('"Turn in completed quests", "turnInRepeatable"', "repeatable turn-in checkbox")
 assertContains('"Pick up quests", "pickUpRepeatable"', "repeatable pickup checkbox")
-assertContains('Repeatable quests are learned after their first completed cycle.', "learning note")
+assertContains("Repeatable quests are learned separately per character after their first completed cycle.", "repeatable learning note")
 
 if count('createCheckbox(') ~= 5 then
   error("UI must define exactly four checkbox calls plus the helper", 2)

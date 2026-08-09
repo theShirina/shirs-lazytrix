@@ -46,8 +46,19 @@ function ShirsLazyTrix.EnsureDatabase()
     end
   end
 
-  if type(ShirsLazyTrixDB.repeatable) ~= "table" then
-    ShirsLazyTrixDB.repeatable = {}
+  if type(ShirsLazyTrixDB.repeatableByCharacter) ~= "table" then
+    ShirsLazyTrixDB.repeatableByCharacter = {}
+  end
+
+  if type(ShirsLazyTrixDB.repeatable) == "table" then
+    local repeatables = ShirsLazyTrix.CharacterRepeatables(ShirsLazyTrixDB)
+    local questKey, learned
+    for questKey, learned in pairs(ShirsLazyTrixDB.repeatable) do
+      if learned then
+        repeatables[questKey] = true
+      end
+    end
+    ShirsLazyTrixDB.repeatable = nil
   end
 end
 

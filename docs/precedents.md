@@ -12,4 +12,4 @@ Leatrix Plus 1.13.43 and QuestHaste 0.1 in the local addon archive both declare 
 
 ## v0.0.1 choice
 
-Shir's LazyTrix uses only APIs present in Microbot's 1.12 client. It learns repeatable titles from a confirmed turn-in followed by the same title reappearing at the same NPC. Unknown titles stay in the normal category; no copied or guessed quest database is bundled.
+Shir's LazyTrix uses only APIs present in Microbot's 1.12 client. It learns repeatable titles from a confirmed turn-in followed by the same title reappearing at the same NPC. Learned titles are keyed by realm and character. Unknown titles stay in the normal category; no copied or guessed quest database is bundled.

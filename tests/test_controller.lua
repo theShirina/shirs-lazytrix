@@ -12,6 +12,8 @@ local title = ""
 local completable = false
 local choices = 0
 local npc = "Quest Giver"
+local player = "Shirina"
+local realm = "Icecrown"
 
 local function resetCalls()
   calls = {}
@@ -40,7 +42,11 @@ local function assertEqual(actual, expected, message)
   end
 end
 
-function UnitName(unit) return npc end
+function UnitName(unit)
+  if unit == "player" then return player end
+  return npc
+end
+function GetRealmName() return realm end
 function GetNumActiveQuests() return table.getn(active) end
 function GetActiveTitle(index) return active[index].title, active[index].complete end
 function GetNumAvailableQuests() return table.getn(available) end
@@ -66,6 +72,16 @@ assertEqual(ShirsLazyTrixDB.turnInNormal, true, "normal turn-in default")
 assertEqual(ShirsLazyTrixDB.pickUpNormal, true, "normal pickup default")
 assertEqual(ShirsLazyTrixDB.turnInRepeatable, false, "repeatable turn-in default")
 assertEqual(ShirsLazyTrixDB.pickUpRepeatable, false, "repeatable pickup default")
+
+local legacyQuestKey = ShirsLazyTrix.QuestKey("Legacy NPC", "Legacy Repeatable")
+ShirsLazyTrixDB.repeatable = { [legacyQuestKey] = true }
+ShirsLazyTrixDB.repeatableByCharacter = nil
+ShirsLazyTrix.EnsureDatabase()
+assertEqual(ShirsLazyTrixDB.repeatable, nil, "shared repeatable registry is removed after migration")
+assertEqual(ShirsLazyTrix.IsRepeatable("Legacy NPC", "Legacy Repeatable", ShirsLazyTrixDB), true, "legacy registry migrates to current character")
+player = "ShirinaF2P"
+assertEqual(ShirsLazyTrix.IsRepeatable("Legacy NPC", "Legacy Repeatable", ShirsLazyTrixDB), false, "migrated registry does not cross characters")
+player = "Shirina"
 
 active = {
   { title = "Incomplete", complete = false },

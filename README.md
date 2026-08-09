@@ -12,7 +12,7 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.1 au
 
 ## Repeatable quests on 1.12
 
-The Vanilla 1.12 quest APIs do not expose a repeatable flag in quest-giver lists. LazyTrix learns a repeatable quest when the same NPC offers the same title again after a confirmed turn-in. Until then, the quest uses the normal category. This avoids a guessed title database and supports Microbot-specific quests after one completed cycle.
+The Vanilla 1.12 quest APIs do not expose a repeatable flag in quest-giver lists. LazyTrix learns a repeatable quest when the same NPC offers the same title again after a confirmed turn-in. Learned quests are stored separately for each realm and character. Until then, the quest uses the normal category. This avoids a guessed title database and supports Microbot-specific quests after one completed cycle.
 
 ## Defaults
 

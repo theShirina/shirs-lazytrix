@@ -62,12 +62,19 @@ assertEqual(ShirsLazyTrix.ShouldCompleteProgress("Normal Quest", false, false, d
 assertEqual(ShirsLazyTrix.ShouldCompleteProgress("Normal Quest", true, false, db), true, "normal quest completion")
 assertEqual(ShirsLazyTrix.ShouldCompleteProgress("Repeatable Quest", true, true, db), false, "disabled repeatable turn-in")
 
+ShirsLazyTrix.characterKeyOverride = "Icecrown\031Shirina"
 ShirsLazyTrix.RememberTurnIn("Argent Officer", "A Donation of Wool", db)
 assertEqual(ShirsLazyTrix.ObserveAvailable("Other Officer", { "A Donation of Wool" }, db), false, "different NPC must not learn repeatable")
 assertEqual(ShirsLazyTrix.ObserveAvailable("Argent Officer", { "Another Quest" }, db), false, "different title must not learn repeatable")
 assertEqual(ShirsLazyTrix.ObserveAvailable("Argent Officer", { "A Donation of Wool" }, db), true, "same NPC and title learns repeatable")
 assertEqual(ShirsLazyTrix.IsRepeatable("Argent Officer", "A Donation of Wool", db), true, "learned repeatable lookup")
 
+ShirsLazyTrix.characterKeyOverride = "Icecrown\031ShirinaF2P"
+assertEqual(ShirsLazyTrix.IsRepeatable("Argent Officer", "A Donation of Wool", db), false, "learned repeatable must not cross characters")
+ShirsLazyTrix.characterKeyOverride = "Icecrown\031Shirina"
+assertEqual(ShirsLazyTrix.IsRepeatable("Argent Officer", "A Donation of Wool", db), true, "original character keeps learned repeatable")
+
 print("turn-in-priority: PASS")
 print("incomplete-quest-guard: PASS")
 print("repeatable-learning: PASS")
+print("per-character-repeatable-learning: PASS")

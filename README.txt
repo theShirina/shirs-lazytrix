@@ -16,4 +16,4 @@ OPTIONS
 
 Turn-ins are checked before pickups. Incomplete quests are never submitted. Quests with several reward choices wait for you.
 
-Vanilla 1.12 does not expose repeatable quest type in quest-giver lists. LazyTrix learns a repeatable quest when the same NPC offers the same title again after a completed turn-in. Until then it uses the normal category.
+Vanilla 1.12 does not expose repeatable quest type in quest-giver lists. LazyTrix learns a repeatable quest when the same NPC offers the same title again after a completed turn-in. Learned quests are kept separate for each realm and character. Until then it uses the normal category.

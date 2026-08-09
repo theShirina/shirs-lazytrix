@@ -86,7 +86,7 @@ local function createSettingsFrame()
   createCheckbox(frame, "ShirsLazyTrixTurnInRepeatable", "Turn in completed quests", "turnInRepeatable", 28, -188)
   createCheckbox(frame, "ShirsLazyTrixPickUpRepeatable", "Pick up quests", "pickUpRepeatable", 28, -216)
 
-  local note = createText(frame, "Repeatable quests are learned after their first completed cycle.", 10, "BOTTOMLEFT", frame, "BOTTOMLEFT", 28, 24, 300)
+  local note = createText(frame, "Repeatable quests are learned separately per character after their first completed cycle.", 10, "BOTTOMLEFT", frame, "BOTTOMLEFT", 28, 24, 300)
   note:SetTextColor(0.65, 0.65, 0.65)
 
   frame:Hide()
