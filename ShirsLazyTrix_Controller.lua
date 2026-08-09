@@ -6,6 +6,7 @@ local DEFAULTS = {
   autoRepairAll = false,
   autoAcceptOpenWorldRes = false,
   autoRemoveImmolationOnStealth = false,
+  enhanceTrainers = false,
   minimapAngle = 220,
 }
 
@@ -148,6 +149,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.autoRemoveImmolationOnStealth) ~= "boolean" then
     ShirsLazyTrixDB.autoRemoveImmolationOnStealth = DEFAULTS.autoRemoveImmolationOnStealth
+  end
+  if type(ShirsLazyTrixDB.enhanceTrainers) ~= "boolean" then
+    ShirsLazyTrixDB.enhanceTrainers = DEFAULTS.enhanceTrainers
   end
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
      ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then

@@ -20,7 +20,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.5.zip"
+    return output / "ShirsLazyTrix-v0.0.6.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:
@@ -48,6 +48,10 @@ with tempfile.TemporaryDirectory() as temporary:
         assert "ShirsLazyTrix/ShirsLazyTrix_World.lua" in names, "world automation module missing from release archive"
         assert archive.read("ShirsLazyTrix/ShirsLazyTrix_World.lua") == (ROOT / "ShirsLazyTrix_World.lua").read_bytes().replace(b"\r\n", b"\n"), (
             "packaged world module differs from source"
+        )
+        assert "ShirsLazyTrix/ShirsLazyTrix_Trainer.lua" in names, "trainer module missing from release archive"
+        assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Trainer.lua") == (ROOT / "ShirsLazyTrix_Trainer.lua").read_bytes().replace(b"\r\n", b"\n"), (
+            "packaged trainer module differs from source"
         )
         assert "ShirsLazyTrix/LazyTrixIcon.tga" in names, "custom icon missing from release archive"
         assert archive.read("ShirsLazyTrix/LazyTrixIcon.tga") == (ROOT / "LazyTrixIcon.tga").read_bytes(), (

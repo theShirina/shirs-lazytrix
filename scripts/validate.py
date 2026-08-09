@@ -12,6 +12,7 @@ LUA_FILES = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_Trainer.lua",
     "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
     "ShirsLazyTrix.lua",
@@ -19,6 +20,7 @@ LUA_FILES = [
 TESTS = [
     "tests/test_engine.lua",
     "tests/test_controller.lua",
+    "tests/test_trainer.lua",
     "tests/test_world.lua",
     "tests/test_stealth.lua",
     "tests/test_merchant.lua",
@@ -46,6 +48,7 @@ PUBLIC_FILES = {
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
+    "ShirsLazyTrix_Trainer.lua",
     "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
     "docs/precedents.md",
@@ -53,6 +56,7 @@ PUBLIC_FILES = {
     "scripts/validate.py",
     "tests/test_build_release.py",
     "tests/test_controller.lua",
+    "tests/test_trainer.lua",
     "tests/test_world.lua",
     "tests/test_stealth.lua",
     "tests/test_engine.lua",
@@ -103,7 +107,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.5\s*$", toc, re.MULTILINE), "TOC version must be 0.0.5"
+    assert re.search(r"^## Version:\s*0\.0\.6\s*$", toc, re.MULTILINE), "TOC version must be 0.0.6"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -131,6 +135,28 @@ def validate_source() -> None:
 
     engine = (ROOT / "ShirsLazyTrix_Engine.lua").read_text(encoding="utf-8")
     assert "repeatable" not in engine.lower(), "engine must not classify quest recurrence"
+
+    trainer = (ROOT / "ShirsLazyTrix_Trainer.lua").read_text(encoding="utf-8")
+    for token in (
+        "TRAINER_ROWS = 22",
+        'RegisterEvent("TRAINER_SHOW")',
+        'RegisterEvent("TRAINER_UPDATE")',
+        'RegisterEvent("TRAINER_CLOSED")',
+        "GetNumTrainerServices()",
+        "GetTrainerServiceInfo(i)",
+        "GetTrainerServiceCost(i)",
+        'serviceType == "available"',
+        "validPointCost(cp1)",
+        "validPointCost(cp2)",
+        "pcall(BuyTrainerService, index)",
+        "ClassTrainer_SetToTradeSkillTrainer = function()",
+        "ClassTrainer_SetToClassTrainer = function()",
+        'CreateFrame("Button", name, ClassTrainerFrame, "ClassTrainerSkillButtonTemplate")',
+    ):
+        assert token in trainer, f"trainer feature is missing exact-client behavior: {token}"
+    assert trainer.count("pcall(BuyTrainerService, index)") == 1, "Train All must have one guarded purchase call"
+    assert "hooksecurefunc" not in trainer, "trainer feature must not use the later secure-hook API"
+    assert "MAX_COPPER = 2147483647" in trainer, "trainer cost guard must use the Vanilla signed range"
 
     merchant = (ROOT / "ShirsLazyTrix_Merchant.lua").read_text(encoding="utf-8")
     assert merchant.count("UseContainerItem(") == 1, "merchant module must have one revalidated sale call"
@@ -173,7 +199,7 @@ def validate_source() -> None:
     assert 'CancelBuff("' not in world, "stealth cleanup must not depend on SuperMacro"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "enhanceTrainers"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -183,6 +209,7 @@ def validate_source() -> None:
     assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
     assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
     assert "Remove immolation effects on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
+    assert "Expand trainer windows and add Train All" in ui, "UI must expose trainer enhancement"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

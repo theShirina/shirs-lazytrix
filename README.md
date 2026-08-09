@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.5 automates safe quest handling, optional vendor and world actions, and stealth-safe immolation cleanup.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 adds an optional expanded trainer window with a guarded Train All queue.
 
 ## Features
 
@@ -22,6 +22,9 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.5 au
 - Optional removal of Oil of Immolation and Immolation Aura when Stealth, Lesser Invisibility, or Invisibility starts.
 - Distinguishes Oil's `Fire Shield` from a warlock imp's same-named buff by requiring the Immolation texture.
 - Uses the exact client buff index API and does not require SuperMacro.
+- Optionally expands class and profession trainers from 10/11 visible rows to 22.
+- Adds a manual Train All button that buys one safe service per trainer update.
+- Checks the full plan cost before spending and skips services that consume a profession slot.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -42,10 +45,11 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Automatically repair all gear at repair vendors: off.
 - Automatically accept open-world resurrection requests: off.
 - Remove immolation effects on stealth or invisibility: off.
+- Expand trainer windows and add Train All: off.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.5.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.5/ShirsLazyTrix-v0.0.5.zip).
+1. Download [`ShirsLazyTrix-v0.0.6.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.6/ShirsLazyTrix-v0.0.6.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.

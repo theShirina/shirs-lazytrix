@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.6
+
+- Added a default-off expanded layout for class and profession trainers.
+- Increased the visible trainer list to 22 rows and moved details into a second pane.
+- Added a manual Train All button with a full-plan affordability check.
+- Buys one service per trainer update and stops when the trainer closes or results stop changing.
+- Skips services that consume a profession slot or return malformed cost data.
+
 ## 0.0.5
 
 - Added a default-off setting that removes immolation effects when stealth or invisibility starts.

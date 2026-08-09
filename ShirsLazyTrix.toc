@@ -1,13 +1,14 @@
 ## Interface: 11200
 ## Title: Shir's LazyTrix
-## Notes: Minimal quest, vendor, and world automation for Microbot.
+## Notes: Quest, vendor, world, and trainer tools for Microbot.
 ## Author: Shirina
-## Version: 0.0.5
+## Version: 0.0.6
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua
 ShirsLazyTrix_Merchant.lua
 ShirsLazyTrix_Controller.lua
+ShirsLazyTrix_Trainer.lua
 ShirsLazyTrix_World.lua
 ShirsLazyTrix_UI.lua
 ShirsLazyTrix.lua

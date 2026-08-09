@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.5
+Shir's LazyTrix 0.0.6
 
 Microbot WoW 1.12.1 only.
 
@@ -18,6 +18,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Automatically repair all gear at repair vendors
 - Automatically accept open-world resurrection requests
 - Remove immolation effects on stealth or invisibility
+- Expand trainer windows and add Train All
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -37,3 +38,6 @@ RESURRECTION
 
 STEALTH AND INVISIBILITY
 "Remove immolation effects on stealth or invisibility" is off by default. When enabled, LazyTrix removes Oil of Immolation and Immolation Aura after the client reports Stealth, Lesser Invisibility, or Invisibility. It checks Oil's Immolation texture so it will not remove a warlock imp's same-named Fire Shield. It works without SuperMacro and does not send a chat message.
+
+TRAINERS
+"Expand trainer windows and add Train All" is off by default. When enabled, class and profession trainers show 22 rows and a manual Train All button. LazyTrix checks the full cost first, buys one service per trainer update, and skips entries that consume a profession slot. Closing the trainer stops the queue.

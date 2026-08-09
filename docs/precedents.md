@@ -42,6 +42,12 @@ The user supplied a SuperMacro snippet that listens for `CHAT_MSG_SPELL_PERIODIC
 
 The exact Microbot executable exposes `CancelPlayerBuff`, `GetPlayerBuff`, and `GetPlayerBuffTexture`. Stock `BuffFrame.lua` and installed exact-client pfUI enumerate helpful buffs with `GetPlayerBuff`, inspect tooltip text, and cancel the returned index. Exact `Spell.dbc` data distinguishes Oil's `Fire Shield` / `Fire Shield IV` Immolation icon (`Spell_Fire_Immolation`) from a warlock imp's same-named Fire Armor icon (`Spell_Fire_FireArmor`). LazyTrix uses an original private tooltip scanner and a descending `31..0` slot loop. Exact `Oil of Immolation` and `Immolation Aura` names are unambiguous; `Fire Shield` and `Fire Shield IV` also require the Immolation texture. The default-off feature does not call SuperMacro's global `CancelBuff` and does not send chat output.
 
+## v0.0.6 expanded trainer precedent
+
+Microbot's stock Interface `11200` `ClassTrainerFrame.lua` shows 10 profession rows or 11 class rows. It enumerates services through `GetNumTrainerServices()` and `GetTrainerServiceInfo()`, reads money and profession-point costs through `GetTrainerServiceCost()`, and submits one selected service through `BuyTrainerService()`. Its profession and class mode functions reset the row count and scroll-frame heights on each update.
+
+The installed Leatrix Plus 1.13.43 trainer layout declares Interface `11303` and uses later APIs and later-client artwork, so it is behavior evidence only. The installed SuperMacro 3.14a contains an exact-client bulk trainer loop but has no located licence and is also study-only. LazyTrix uses original Lua 5.0.3 code: it creates stock trainer-row templates up to 22, wraps the two stock mode functions without `hooksecurefunc`, and restores the expanded row count after each update. Train All accepts only exact `available` services with bounded copper values and zero profession-point costs. It checks the entire plan against current money, submits one service, waits for `TRAINER_UPDATE`, rescans, and stops on closure or an unchanged result. No Leatrix or SuperMacro source or artwork is copied.
+
 ## Settings and minimap precedents
 
 | Source | Pin | Client and evidence | Licence | Reuse decision |

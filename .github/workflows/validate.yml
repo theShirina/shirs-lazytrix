@@ -40,7 +40,7 @@ jobs:
           set -euo pipefail
           python scripts/build_release.py --output-dir "$RUNNER_TEMP/build-a"
           python scripts/build_release.py --output-dir "$RUNNER_TEMP/build-b"
-          cmp "$RUNNER_TEMP/build-a/ShirsLazyTrix-v0.0.5.zip" \
-              "$RUNNER_TEMP/build-b/ShirsLazyTrix-v0.0.5.zip"
+          cmp "$RUNNER_TEMP/build-a/ShirsLazyTrix-v0.0.6.zip" \
+              "$RUNNER_TEMP/build-b/ShirsLazyTrix-v0.0.6.zip"
           cd "$RUNNER_TEMP/build-a"
-          sha256sum --check ShirsLazyTrix-v0.0.5.zip.sha256
+          sha256sum --check ShirsLazyTrix-v0.0.6.zip.sha256
