@@ -138,7 +138,10 @@ def validate_source() -> None:
 
     trainer = (ROOT / "ShirsLazyTrix_Trainer.lua").read_text(encoding="utf-8")
     for token in (
-        "TRAINER_ROWS = 22",
+        "TRAINER_ROWS = 18",
+        "TRAINER_LIST_HEIGHT = 296",
+        "CLASS_FRAME_HEIGHT = 624",
+        "TRADE_FRAME_HEIGHT = 640",
         'RegisterEvent("TRAINER_SHOW")',
         'RegisterEvent("TRAINER_UPDATE")',
         'RegisterEvent("TRAINER_CLOSED")',
@@ -149,6 +152,11 @@ def validate_source() -> None:
         "validPointCost(cp1)",
         "validPointCost(cp2)",
         "pcall(BuyTrainerService, index)",
+        "HandleTrainerOnUpdate(elapsed)",
+        "TRAINER_MAX_RETRIES = 2",
+        "TRAINER_TIMEOUT_SECONDS = 3",
+        "money == lastPurchaseMoney",
+        'setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)',
         "GetGossipOptions()",
         'options[i] == "trainer"',
         "pcall(SelectGossipOption, found)",
@@ -160,6 +168,8 @@ def validate_source() -> None:
         assert token in trainer, f"trainer feature is missing exact-client behavior: {token}"
     assert trainer.count("pcall(BuyTrainerService, index)") == 1, "Train All must have one guarded purchase call"
     assert "hooksecurefunc" not in trainer, "trainer feature must not use the later secure-hook API"
+    assert "SetWidth(714)" not in trainer, "trainer layout must preserve stock width"
+    assert 'CreateFrame("Frame", "ShirsLazyTrixTrainerDetailsBackdrop"' not in trainer, "trainer detail pane must remain below the list"
     assert "MAX_COPPER = 2147483647" in trainer, "trainer cost guard must use the Vanilla signed range"
 
     merchant = (ROOT / "ShirsLazyTrix_Merchant.lua").read_text(encoding="utf-8")

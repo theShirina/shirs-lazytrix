@@ -2,10 +2,11 @@
 
 ## 0.0.6
 
-- Added a default-off expanded layout for class and profession trainers.
-- Increased the visible trainer list to 22 rows and moved details into a second pane.
+- Added a default-off downward layout for class and profession trainers.
+- Increased the visible trainer list to 18 rows while preserving stock width and the detail pane beneath it.
 - Added a manual Train All button with a full-plan affordability check.
-- Buys one service per trainer update and stops when the trainer closes or results stop changing.
+- Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
+- Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
 - Skips services that consume a profession slot or return malformed cost data.
 - Added a separate default-off option that opens the exact trainer-type gossip entry.
 - Holding Shift always bypasses trainer gossip selection so talent reset choices remain available.

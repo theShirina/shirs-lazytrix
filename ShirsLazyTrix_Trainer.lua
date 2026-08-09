@@ -1,10 +1,23 @@
-local TRAINER_ROWS = 22
+local TRAINER_ROWS = 18
+local TRAINER_LIST_HEIGHT = 296
+local CLASS_FRAME_HEIGHT = 624
+local TRADE_FRAME_HEIGHT = 640
+local TRAINER_HORIZONTAL_Y = -387
+local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
+local TRAINER_PACE_SECONDS = 0.35
+local TRAINER_RETRY_SECONDS = 0.75
+local TRAINER_TIMEOUT_SECONDS = 3
+local TRAINER_MAX_RETRIES = 2
 
 local trainerFrame = nil
 local trainAllActive = false
 local trainAllWaiting = false
 local lastPurchaseKey = nil
+local lastPurchaseMoney = nil
+local trainAllElapsed = 0
+local trainAllStuckElapsed = 0
+local trainAllRetryCount = 0
 local layoutApplied = false
 local originalLayout = nil
 local trainerHooksInstalled = false
@@ -100,28 +113,6 @@ local function ensureTrainerRows()
   end
 end
 
-local function createDetailsBackdrop()
-  local backdrop = getglobal("ShirsLazyTrixTrainerDetailsBackdrop")
-  if backdrop then return backdrop end
-  backdrop = CreateFrame("Frame", "ShirsLazyTrixTrainerDetailsBackdrop", ClassTrainerFrame)
-  backdrop:SetWidth(332)
-  backdrop:SetHeight(361)
-  backdrop:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 336, -72)
-  if type(backdrop.SetBackdrop) == "function" then
-    backdrop:SetBackdrop({
-      bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-      edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-      tile = true,
-      tileSize = 16,
-      edgeSize = 12,
-      insets = { left = 3, right = 3, top = 3, bottom = 3 },
-    })
-    if type(backdrop.SetBackdropColor) == "function" then backdrop:SetBackdropColor(0.08, 0.06, 0.03, 0.92) end
-    if type(backdrop.SetBackdropBorderColor) == "function" then backdrop:SetBackdropBorderColor(0.55, 0.43, 0.24, 1) end
-  end
-  return backdrop
-end
-
 local function buttonTooltip()
   if not GameTooltip or type(GameTooltip.SetOwner) ~= "function" then return end
   local count, total = ShirsLazyTrix.GetTrainAllPlan()
@@ -143,7 +134,7 @@ local function createTrainAllButton()
   button:SetWidth(90)
   button:SetHeight(22)
   button:SetText("Train All")
-  button:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 352, 54)
+  button:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, 54)
   button:SetScript("OnClick", function() ShirsLazyTrix.StartTrainAll() end)
   button:SetScript("OnEnter", buttonTooltip)
   button:SetScript("OnLeave", function()
@@ -157,53 +148,42 @@ local function trainerFramesAvailable()
     ClassTrainerTrainButton and ClassTrainerCancelButton and ClassTrainerFrameCloseButton
 end
 
+local function isTradeTrainer()
+  return type(IsTradeskillTrainer) == "function" and IsTradeskillTrainer() and true or false
+end
+
+local function applyExpandedModeGeometry()
+  local trade = isTradeTrainer()
+  local height = trade and TRADE_FRAME_HEIGHT or CLASS_FRAME_HEIGHT
+  ClassTrainerFrame:SetHeight(height)
+  ClassTrainerListScrollFrame:SetHeight(TRAINER_LIST_HEIGHT)
+  setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
+  ClassTrainerDetailScrollFrame:SetHeight(trade and 135 or 119)
+  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 54)
+  setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
+  if ClassTrainerHorizontalBarLeft then
+    setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, TRAINER_HORIZONTAL_Y)
+    if type(ClassTrainerHorizontalBarLeft.Show) == "function" then ClassTrainerHorizontalBarLeft:Show() end
+  end
+  local button = getglobal("ShirsLazyTrixTrainAllButton")
+  if button then setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, 54) end
+  if type(UIPanelWindows) == "table" and type(UIPanelWindows["ClassTrainerFrame"]) == "table" then
+    UIPanelWindows["ClassTrainerFrame"].height = height
+  end
+  CLASS_TRAINER_SKILLS_DISPLAYED = TRAINER_ROWS
+end
+
 function ShirsLazyTrix.ApplyTrainerLayout()
   if not trainerFramesAvailable() then return false end
   saveOriginalLayout()
   ensureTrainerRows()
 
-  if type(UIPanelWindows) == "table" then
-    UIPanelWindows["ClassTrainerFrame"] = UIPanelWindows["ClassTrainerFrame"] or {}
-    local panel = UIPanelWindows["ClassTrainerFrame"]
-    panel.area = "override"
-    panel.pushable = 1
-    panel.xoffset = -16
-    panel.yoffset = 12
-    panel.bottomClampOverride = 152
-    panel.width = 714
-    panel.height = 487
-    panel.whileDead = 1
-  end
-
-  ClassTrainerFrame:SetWidth(714)
-  ClassTrainerFrame:SetHeight(487)
-  setPoint(ClassTrainerListScrollFrame, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 25, -75)
-  ClassTrainerListScrollFrame:SetWidth(295)
-  ClassTrainerListScrollFrame:SetHeight(336)
-  setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 352, -74)
-  ClassTrainerDetailScrollFrame:SetWidth(296)
-  ClassTrainerDetailScrollFrame:SetHeight(336)
-  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 54)
-  setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
-  setPoint(ClassTrainerFrameCloseButton, "TOPRIGHT", ClassTrainerFrame, "TOPRIGHT", -30, -8)
-  if ClassTrainerFrameFilterDropDown then
-    setPoint(ClassTrainerFrameFilterDropDown, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 501, -40)
-  end
-  if ClassTrainerMoneyFrame then
-    setPoint(ClassTrainerMoneyFrame, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 143, -49)
-  end
-  if ClassTrainerGreetingText and type(ClassTrainerGreetingText.Hide) == "function" then ClassTrainerGreetingText:Hide() end
-  if ClassTrainerHorizontalBarLeft and type(ClassTrainerHorizontalBarLeft.Hide) == "function" then ClassTrainerHorizontalBarLeft:Hide() end
-  if ClassTrainerSkillHighlightFrame and type(ClassTrainerSkillHighlightFrame.SetWidth) == "function" then
-    ClassTrainerSkillHighlightFrame:SetWidth(290)
-  end
-
-  local backdrop = createDetailsBackdrop()
-  backdrop:Show()
+  local oldBackdrop = getglobal("ShirsLazyTrixTrainerDetailsBackdrop")
+  if oldBackdrop and type(oldBackdrop.Hide) == "function" then oldBackdrop:Hide() end
   local button = createTrainAllButton()
   button:Show()
-  CLASS_TRAINER_SKILLS_DISPLAYED = TRAINER_ROWS
   layoutApplied = true
+  applyExpandedModeGeometry()
   if type(ClassTrainerFrame_Update) == "function" then ClassTrainerFrame_Update() end
   return true
 end
@@ -229,7 +209,7 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   restoreFrame(ClassTrainerHorizontalBarLeft, originalLayout.horizontal)
 
   local i
-  for i = 12, TRAINER_ROWS do
+  for i = 12, TRAINER_MAX_CLEANUP_ROWS do
     local row = getglobal("ClassTrainerSkill" .. i)
     if row and type(row.Hide) == "function" then row:Hide() end
   end
@@ -344,7 +324,32 @@ function ShirsLazyTrix.CancelTrainAll()
   trainAllActive = false
   trainAllWaiting = false
   lastPurchaseKey = nil
+  lastPurchaseMoney = nil
+  trainAllElapsed = 0
+  trainAllStuckElapsed = 0
+  trainAllRetryCount = 0
   ShirsLazyTrix.UpdateTrainAllButton()
+end
+
+local function submitTrainerService(index, key, money, retry)
+  if not trainAllActive or not index or not key or not validCopper(money) then return false end
+  if key ~= lastPurchaseKey then
+    trainAllRetryCount = 0
+    trainAllStuckElapsed = 0
+  elseif retry then
+    trainAllRetryCount = trainAllRetryCount + 1
+  end
+  lastPurchaseKey = key
+  lastPurchaseMoney = money
+  trainAllWaiting = true
+  trainAllElapsed = 0
+  local ok = pcall(BuyTrainerService, index)
+  if not ok then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  ShirsLazyTrix.UpdateTrainAllButton()
+  return true
 end
 
 local function buyNextTrainerService()
@@ -356,18 +361,45 @@ local function buyNextTrainerService()
     return false
   end
   if key == lastPurchaseKey then
+    return false
+  end
+  return submitTrainerService(index, key, money, false)
+end
+
+function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
+  if not trainAllActive or not trainAllWaiting then return false end
+  if type(elapsed) ~= "number" or elapsed < 0 then elapsed = 0 end
+  trainAllElapsed = trainAllElapsed + elapsed
+  trainAllStuckElapsed = trainAllStuckElapsed + elapsed
+  if trainAllElapsed < TRAINER_PACE_SECONDS then return false end
+
+  local count, total, index, key = ShirsLazyTrix.GetTrainAllPlan()
+  local money = type(GetMoney) == "function" and GetMoney() or nil
+  if count == 0 or not index or not key then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
-  lastPurchaseKey = key
-  trainAllWaiting = true
-  local ok = pcall(BuyTrainerService, index)
-  if not ok then
+  if not validCopper(money) then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
-  ShirsLazyTrix.UpdateTrainAllButton()
-  return true
+  if key ~= lastPurchaseKey then
+    if total > money then
+      ShirsLazyTrix.CancelTrainAll()
+      return false
+    end
+    trainAllWaiting = false
+    return buyNextTrainerService()
+  end
+
+  if trainAllStuckElapsed >= TRAINER_TIMEOUT_SECONDS then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  if trainAllElapsed >= TRAINER_RETRY_SECONDS and trainAllRetryCount < TRAINER_MAX_RETRIES and money == lastPurchaseMoney then
+    return submitTrainerService(index, key, money, true)
+  end
+  return false
 end
 
 function ShirsLazyTrix.StartTrainAll()
@@ -383,6 +415,10 @@ function ShirsLazyTrix.StartTrainAll()
   trainAllActive = true
   trainAllWaiting = false
   lastPurchaseKey = nil
+  lastPurchaseMoney = nil
+  trainAllElapsed = 0
+  trainAllStuckElapsed = 0
+  trainAllRetryCount = 0
   return buyNextTrainerService()
 end
 
@@ -401,8 +437,7 @@ function ShirsLazyTrix.HandleTrainerEvent(name)
   end
   if name == "TRAINER_UPDATE" then
     if trainAllActive then
-      trainAllWaiting = false
-      buyNextTrainerService()
+      ShirsLazyTrix.UpdateTrainAllButton()
     else
       ShirsLazyTrix.UpdateTrainAllButton()
     end
@@ -419,17 +454,13 @@ function ShirsLazyTrix.InstallTrainerHooks()
   ClassTrainer_SetToTradeSkillTrainer = function()
     originalTradeSkillMode()
     if layoutApplied and ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
-      CLASS_TRAINER_SKILLS_DISPLAYED = TRAINER_ROWS
-      ClassTrainerListScrollFrame:SetHeight(336)
-      ClassTrainerDetailScrollFrame:SetHeight(336)
+      applyExpandedModeGeometry()
     end
   end
   ClassTrainer_SetToClassTrainer = function()
     originalClassMode()
     if layoutApplied and ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
-      CLASS_TRAINER_SKILLS_DISPLAYED = TRAINER_ROWS
-      ClassTrainerListScrollFrame:SetHeight(336)
-      ClassTrainerDetailScrollFrame:SetHeight(336)
+      applyExpandedModeGeometry()
     end
   end
   trainerHooksInstalled = true
@@ -444,6 +475,7 @@ function ShirsLazyTrix.InitializeTrainer()
   trainerFrame:RegisterEvent("TRAINER_UPDATE")
   trainerFrame:RegisterEvent("TRAINER_CLOSED")
   trainerFrame:SetScript("OnEvent", function() ShirsLazyTrix.HandleTrainerEvent(event) end)
+  trainerFrame:SetScript("OnUpdate", function() ShirsLazyTrix.HandleTrainerOnUpdate(arg1 or 0) end)
   return trainerFrame
 end
 

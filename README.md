@@ -22,8 +22,8 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Optional removal of Oil of Immolation and Immolation Aura when Stealth, Lesser Invisibility, or Invisibility starts.
 - Distinguishes Oil's `Fire Shield` from a warlock imp's same-named buff by requiring the Immolation texture.
 - Uses the exact client buff index API and does not require SuperMacro.
-- Optionally expands class and profession trainers from 10/11 visible rows to 22.
-- Adds a manual Train All button that buys one safe service per trainer update.
+- Optionally grows stock-width class and profession trainers downward to 18 visible rows.
+- Adds a manual Train All button with paced, bounded purchase retries.
 - Checks the full plan cost before spending and skips services that consume a profession slot.
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
 - Holding Shift always leaves trainer gossip open for talent resets and other choices.

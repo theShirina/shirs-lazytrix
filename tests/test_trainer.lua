@@ -9,6 +9,7 @@ local playerMoney = 0
 local gossipOptions = {}
 local selectedGossip = {}
 local shiftDown = false
+local tradeskillTrainer = false
 
 local function makeFrame(name)
   local frame = {
@@ -105,7 +106,7 @@ UIPanelWindows = {
 CLASS_TRAINER_SKILLS_DISPLAYED = 11
 CLASS_TRAINER_SKILL_HEIGHT = 16
 
-function IsTradeskillTrainer() return false end
+function IsTradeskillTrainer() return tradeskillTrainer end
 function GetMoney() return playerMoney end
 function GetNumTrainerServices() return table.getn(services) end
 function GetTrainerServiceInfo(index)
@@ -172,27 +173,35 @@ assert(ShirsLazyTrix.RefreshTrainerFeature() == false, "disabled trainer enhance
 assert(ClassTrainerFrame.width == 384 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
   "disabled trainer enhancement changed stock layout")
 
--- Enabled layout is double-wide, creates 22 rows, and is idempotent.
+-- Enabled layout preserves stock width and extends downward with 18 rows.
 ShirsLazyTrixDB.enhanceTrainers = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "enabled trainer enhancement did not apply")
-assert(ClassTrainerFrame.width == 714 and ClassTrainerFrame.height == 487,
-  "expanded trainer frame geometry mismatch")
-assert(ClassTrainerListScrollFrame.width == 295 and ClassTrainerListScrollFrame.height == 336,
-  "expanded trainer list geometry mismatch")
-assert(ClassTrainerDetailScrollFrame.width == 296 and ClassTrainerDetailScrollFrame.height == 336,
-  "expanded trainer detail geometry mismatch")
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 22, "expanded trainer row count mismatch")
-assert(named.ClassTrainerSkill22 and named.ClassTrainerSkill22.id == 22,
+assert(ClassTrainerFrame.width == 384 and ClassTrainerFrame.height == 624,
+  "downward trainer frame geometry mismatch")
+assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.height == 296,
+  "downward trainer list geometry mismatch")
+assert(ClassTrainerDetailScrollFrame.width == 296 and ClassTrainerDetailScrollFrame.height == 119,
+  "downward trainer detail geometry mismatch")
+assert(ClassTrainerDetailScrollFrame.point[1] == "TOPLEFT" and ClassTrainerDetailScrollFrame.point[2] == ClassTrainerListScrollFrame and
+  ClassTrainerDetailScrollFrame.point[3] == "BOTTOMLEFT" and ClassTrainerDetailScrollFrame.point[4] == 0 and ClassTrainerDetailScrollFrame.point[5] == -8,
+  "detail pane must remain below the trainer list")
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18, "expanded trainer row count mismatch")
+assert(named.ClassTrainerSkill18 and named.ClassTrainerSkill18.id == 18,
   "additional trainer rows were not created")
 assert(named.ShirsLazyTrixTrainAllButton, "Train All button was not created")
-assert(createdSkillRows == 11, "expected exactly eleven additional trainer rows")
+assert(not named.ShirsLazyTrixTrainerDetailsBackdrop, "horizontal details backdrop must not be created")
+assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25,
+  "Train All must remain inside the stock-width frame")
+assert(createdSkillRows == 7, "expected exactly seven additional trainer rows")
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(createdSkillRows == 11, "reapplying trainer layout duplicated rows")
+assert(createdSkillRows == 7, "reapplying trainer layout duplicated rows")
+tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 22 and ClassTrainerListScrollFrame.height == 336 and ClassTrainerDetailScrollFrame.height == 336,
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 640 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 135,
   "profession trainer mode reset the expanded row count")
+tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 22 and ClassTrainerListScrollFrame.height == 336 and ClassTrainerDetailScrollFrame.height == 336,
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 624 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
   "class trainer mode reset the expanded row count")
 
 local function resetRows(rows, money)
@@ -222,19 +231,44 @@ assert(ShirsLazyTrix.StartTrainAll() == true, "affordable Train All plan did not
 assert(table.getn(bought) == 1 and bought[1] == 2, "Train All must buy exactly one safe service initially")
 services[2].serviceType = "used"
 ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+assert(table.getn(bought) == 1, "TRAINER_UPDATE bypassed purchase pacing")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and bought[2] == 5, "TRAINER_UPDATE did not buy exactly the next safe service")
 services[5].serviceType = "used"
-ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and not ShirsLazyTrix.IsTrainAllActive(), "Train All did not stop after the plan completed")
 
--- Repeated unchanged service after an update must stop rather than buy twice.
+-- An intermediate unchanged update must wait, then retry in a bounded way.
 resetRows({
   { name = "Sticky", subText = "Rank 1", serviceType = "available", money = 25, cp1 = 0, cp2 = 0 },
 }, 100)
 assert(ShirsLazyTrix.StartTrainAll() == true, "single safe service did not start")
 ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
-assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
-  "unchanged trainer result was purchased twice")
+assert(table.getn(bought) == 1 and ShirsLazyTrix.IsTrainAllActive(),
+  "intermediate unchanged update cancelled Train All")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1, "unchanged service retried too quickly")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 2 and ShirsLazyTrix.IsTrainAllActive(),
+  "unchanged service did not receive one paced retry")
+services[1].serviceType = "used"
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(not ShirsLazyTrix.IsTrainAllActive(), "completed retry queue did not stop")
+
+-- More than three services must complete without a built-in queue limit.
+local longRows = {}
+for i = 1, 6 do
+  table.insert(longRows, { name = "Long " .. i, serviceType = "available", money = 10, cp1 = 0, cp2 = 0 })
+end
+resetRows(longRows, 1000)
+assert(ShirsLazyTrix.StartTrainAll() == true, "long queue did not start")
+for i = 1, 6 do
+  services[i].serviceType = "used"
+  ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+  ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+end
+assert(table.getn(bought) == 6 and not ShirsLazyTrix.IsTrainAllActive(),
+  "Train All stopped before completing more than three services")
 
 -- Insufficient funds block the whole plan before spending anything.
 resetRows({
