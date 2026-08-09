@@ -244,14 +244,14 @@ ShirsLazyTrixDB.trainAll = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "combined trainer features did not apply")
 assert(named.ShirsLazyTrixTrainAllButton and named.ShirsLazyTrixTrainAllButton.shown == true,
   "combined mode did not show Train All")
-assert(named.ShirsLazyTrixTrainAllButton.width == 82 and named.ShirsLazyTrixTrainAllButton.height == 23 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
   named.ShirsLazyTrixTrainAllButton.point[1] == "CENTER" and
   named.ShirsLazyTrixTrainAllButton.point[2] == ClassTrainerFrame and
   named.ShirsLazyTrixTrainAllButton.point[3] == "BOTTOMLEFT" and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 56 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
   ClassTrainerMoneyFrame.scale == 1 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
   ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
-  ClassTrainerMoneyFrame.point[4] == 194 and ClassTrainerMoneyFrame.point[5] == 86,
+  ClassTrainerMoneyFrame.point[4] == 192 and ClassTrainerMoneyFrame.point[5] == 86,
   "Train All and money were not split across the bottom-left action area")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
@@ -336,24 +336,24 @@ assert(ClassTrainerFrame.height == 512 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
   "Train All-only mode did not restore stock geometry")
 assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTrainAllButton.enabled == true and
   named.ShirsLazyTrixTrainAllButton.point[1] == "CENTER" and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 56 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
   ClassTrainerMoneyFrame.scale == 1 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
   ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
-  ClassTrainerMoneyFrame.point[4] == 194 and ClassTrainerMoneyFrame.point[5] == 86,
+  ClassTrainerMoneyFrame.point[4] == 192 and ClassTrainerMoneyFrame.point[5] == 86,
   "Train All-only mode did not keep its button in the bottom-left socket")
 
 -- Toolbar filter variants must not move the bottom Train All control.
 ClassTrainerSortFrame = makeFrame("ClassTrainerSortFrame")
 named.ClassTrainerSortFrame = ClassTrainerSortFrame
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 82 and named.ShirsLazyTrixTrainAllButton.height == 23 and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "stock checkbox filters moved the bottom Train All control")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 82 and named.ShirsLazyTrixTrainAllButton.height == 23 and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "dropdown filter layout moved the bottom Train All control")
 
@@ -363,14 +363,14 @@ ClassTrainerSortFrame.shown = true
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 82 and named.ShirsLazyTrixTrainAllButton.height == 23 and named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "profession mode setter moved or relabeled bottom Train All")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 82 and named.ShirsLazyTrixTrainAllButton.height == 23 and named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "class mode setter moved or relabeled bottom Train All")
 ShirsLazyTrixDB.expandTrainers = false

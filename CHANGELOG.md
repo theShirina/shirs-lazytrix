@@ -10,7 +10,7 @@
 - Extends the exact stock bottom-left and bottom-right artwork through the added middle band, while leaving pfUI's backdrop in charge when enabled.
 - Refreshes Train All after Blizzard makes its load-on-demand trainer frame visible.
 - Added a manual Train All button with a fixed click-time service and cost snapshot.
-- Places a slightly larger Train All in a matching bottom-left socket and keeps the stock-size money display in the recess beside it.
+- Centers Train All within its matching bottom-left socket and keeps the stock-size money display aligned in the recess beside it.
 - Leaves name-only services manual without disabling safe ranked services.
 - Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
