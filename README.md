@@ -26,7 +26,7 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Adds a manual Train All button with paced, bounded purchase retries.
 - Lets you enable trainer expansion and Train All independently.
 - Freezes the exact services and quoted costs when clicked; newly unlocked ranks wait for another click.
-- Checks the full plan cost before spending and skips services that consume a profession slot.
+- Checks the full plan cost before spending, includes unique recipes and owned profession rank upgrades, and skips new profession skill lines.
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
 - Holding Shift always leaves trainer gossip open for talent resets and other choices.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.

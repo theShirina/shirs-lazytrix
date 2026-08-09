@@ -21,6 +21,10 @@ local TRAIN_ALL_SOCKET_HEIGHT = 31
 local TRAINER_MONEY_SCALE = 1
 local TRAINER_MONEY_RIGHT = 189
 local TRAINER_MONEY_BOTTOM = 86
+local TRAINER_MONEY_BUTTON_WIDTH = 27
+local TRAINER_MONEY_ELEMENT_HEIGHT = 11
+local TRAINER_MONEY_FONT_REDUCTION = 2
+local TRAINER_MONEY_GAP = -3
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
@@ -106,6 +110,38 @@ local function restoreFrame(frame, saved)
   end
 end
 
+local moneyCoinNames = { "Copper", "Silver", "Gold" }
+
+local function saveMoneyParts()
+  local saved = {}
+  local i
+  for i = 1, table.getn(moneyCoinNames) do
+    local coin = moneyCoinNames[i]
+    local button = getglobal("ClassTrainerMoneyFrame" .. coin .. "Button")
+    if button then
+      local part = { button = saveFrame(button) }
+      if type(button.GetNormalTexture) == "function" then
+        part.textureFrame = button:GetNormalTexture()
+        part.texture = saveFrame(part.textureFrame)
+      end
+      if type(button.GetFontString) == "function" then
+        local fontString = button:GetFontString()
+        if fontString and type(fontString.GetFont) == "function" then
+          local path, size, flags = fontString:GetFont()
+          if type(path) == "string" and type(size) == "number" then
+            part.fontString = fontString
+            part.fontPath = path
+            part.fontSize = size
+            part.fontFlags = flags
+          end
+        end
+      end
+      saved[coin] = part
+    end
+  end
+  return saved
+end
+
 local function savePanelEntry()
   if type(UIPanelWindows) ~= "table" or type(UIPanelWindows["ClassTrainerFrame"]) ~= "table" then return nil end
   local copy = {}
@@ -126,6 +162,7 @@ local function saveOriginalLayout()
     close = saveFrame(ClassTrainerFrameCloseButton),
     filter = saveFrame(ClassTrainerFrameFilterDropDown),
     money = saveFrame(ClassTrainerMoneyFrame),
+    moneyParts = saveMoneyParts(),
     greeting = saveFrame(ClassTrainerGreetingText),
     horizontal = saveFrame(ClassTrainerHorizontalBarLeft),
   }
@@ -135,6 +172,60 @@ local function setPoint(frame, point, relative, relativePoint, x, y)
   if not frame or type(frame.ClearAllPoints) ~= "function" or type(frame.SetPoint) ~= "function" then return end
   frame:ClearAllPoints()
   frame:SetPoint(point, relative, relativePoint, x, y)
+end
+
+local function compactMoneyParts()
+  local copper = getglobal("ClassTrainerMoneyFrameCopperButton")
+  local silver = getglobal("ClassTrainerMoneyFrameSilverButton")
+  local gold = getglobal("ClassTrainerMoneyFrameGoldButton")
+  local buttons = { copper, silver, gold }
+  local i
+  for i = 1, table.getn(buttons) do
+    local button = buttons[i]
+    if button then
+      if type(button.SetWidth) == "function" then button:SetWidth(TRAINER_MONEY_BUTTON_WIDTH) end
+      if type(button.SetHeight) == "function" then button:SetHeight(TRAINER_MONEY_ELEMENT_HEIGHT) end
+      if type(button.GetNormalTexture) == "function" then
+        local texture = button:GetNormalTexture()
+        if texture then
+          if type(texture.SetWidth) == "function" then texture:SetWidth(TRAINER_MONEY_ELEMENT_HEIGHT) end
+          if type(texture.SetHeight) == "function" then texture:SetHeight(TRAINER_MONEY_ELEMENT_HEIGHT) end
+        end
+      end
+      if type(button.GetFontString) == "function" then
+        local fontString = button:GetFontString()
+        local part = originalLayout and originalLayout.moneyParts and originalLayout.moneyParts[moneyCoinNames[i]] or nil
+        local path = part and part.fontPath or nil
+        local size = part and part.fontSize or nil
+        local flags = part and part.fontFlags or nil
+        if (not path or not size) and fontString and type(fontString.GetFont) == "function" then
+          path, size, flags = fontString:GetFont()
+        end
+        if fontString and type(fontString.SetFont) == "function" and
+           type(path) == "string" and type(size) == "number" and size > TRAINER_MONEY_FONT_REDUCTION then
+          fontString:SetFont(path, size - TRAINER_MONEY_FONT_REDUCTION, flags)
+        end
+      end
+    end
+  end
+  setPoint(copper, "RIGHT", ClassTrainerMoneyFrame, "RIGHT", -13, 0)
+  setPoint(silver, "RIGHT", copper, "LEFT", TRAINER_MONEY_GAP, 0)
+  setPoint(gold, "RIGHT", silver, "LEFT", TRAINER_MONEY_GAP, 0)
+end
+
+local function restoreMoneyParts(saved)
+  if not saved then return end
+  local i
+  for i = 1, table.getn(moneyCoinNames) do
+    local part = saved[moneyCoinNames[i]]
+    if part then
+      restoreFrame(getglobal("ClassTrainerMoneyFrame" .. moneyCoinNames[i] .. "Button"), part.button)
+      restoreFrame(part.textureFrame, part.texture)
+      if part.fontString and part.fontPath and part.fontSize and type(part.fontString.SetFont) == "function" then
+        part.fontString:SetFont(part.fontPath, part.fontSize, part.fontFlags)
+      end
+    end
+  end
 end
 
 local function ensureTrainerRows()
@@ -201,7 +292,7 @@ local function buttonTooltip()
   else
     GameTooltip:AddLine("Trains every safe and affordable available service.", 1, 1, 1)
   end
-  GameTooltip:AddLine("New primary professions are skipped.", 0.75, 0.82, 0.9)
+  GameTooltip:AddLine("New professions are skipped; owned rank upgrades are included.", 0.75, 0.82, 0.9)
   GameTooltip:Show()
 end
 
@@ -229,6 +320,7 @@ local function positionTrainAllButton(button)
   if ClassTrainerMoneyFrame then
     if type(ClassTrainerMoneyFrame.SetScale) == "function" then ClassTrainerMoneyFrame:SetScale(TRAINER_MONEY_SCALE) end
     setPoint(ClassTrainerMoneyFrame, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMLEFT", TRAINER_MONEY_RIGHT, TRAINER_MONEY_BOTTOM)
+    compactMoneyParts()
   end
   updateTrainAllSocket(true)
 end
@@ -236,6 +328,7 @@ end
 local function restoreTrainAllFurniture()
   updateTrainAllSocket(false)
   if originalLayout and originalLayout.money then restoreFrame(ClassTrainerMoneyFrame, originalLayout.money) end
+  if originalLayout then restoreMoneyParts(originalLayout.moneyParts) end
 end
 
 local function createTrainAllButton()
@@ -321,6 +414,7 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   restoreFrame(ClassTrainerFrameCloseButton, originalLayout.close)
   restoreFrame(ClassTrainerFrameFilterDropDown, originalLayout.filter)
   restoreFrame(ClassTrainerMoneyFrame, originalLayout.money)
+  restoreMoneyParts(originalLayout.moneyParts)
   restoreFrame(ClassTrainerGreetingText, originalLayout.greeting)
   restoreFrame(ClassTrainerHorizontalBarLeft, originalLayout.horizontal)
 
@@ -413,7 +507,14 @@ local function readServiceInfo(index)
   if not ok or type(serviceType) ~= "string" then return nil end
   local identity = serviceIdentity(name, subText)
   if not identity then return nil end
-  return { identity = identity, name = name, subText = subText or "", serviceType = serviceType }
+  local skillLine = nil
+  if type(GetTrainerServiceSkillLine) == "function" then
+    local skillOk, value = pcall(GetTrainerServiceSkillLine, index)
+    if skillOk and type(value) == "string" and string.find(value, "%S") and
+       not string.find(value, "\029", 1, true) and not string.find(value, "\030", 1, true) and
+       not string.find(value, "\031", 1, true) then skillLine = value end
+  end
+  return { identity = identity, name = name, subText = subText or "", serviceType = serviceType, skillLine = skillLine }
 end
 
 local function readServiceCost(index)
@@ -421,6 +522,28 @@ local function readServiceCost(index)
   local ok, money, cp1, cp2 = pcall(GetTrainerServiceCost, index)
   if not ok or not validCopper(money) or not validCopper(cp1) or not validCopper(cp2) then return nil end
   return money, cp1, cp2
+end
+
+local function playerHasSkillLine(skillLine)
+  if type(skillLine) ~= "string" or not string.find(skillLine, "%S") or
+     type(GetNumSkillLines) ~= "function" or type(GetSkillLineInfo) ~= "function" then return false end
+  local ok, number = pcall(GetNumSkillLines)
+  if not ok or type(number) ~= "number" or number < 0 or number > 1000 then return false end
+  local wholeOk, whole = pcall(math.floor, number)
+  if not wholeOk or whole ~= number then return false end
+  local i
+  for i = 1, number do
+    local lineOk, name = pcall(GetSkillLineInfo, i)
+    if not lineOk then return false end
+    if name == skillLine then return true end
+  end
+  return false
+end
+
+local function serviceCostsAllowed(info, talentCost, professionCost)
+  if not validCopper(talentCost) or not validCopper(professionCost) or talentCost ~= 0 then return false end
+  if professionCost == 0 then return true end
+  return info and playerHasSkillLine(info.skillLine)
 end
 
 local function buildTrainAllSnapshot()
@@ -435,10 +558,10 @@ local function buildTrainAllSnapshot()
   for i = 1, number do
     local info = readServiceInfo(i)
     if not info then return nil, nil end
-    if info.serviceType == "available" and string.find(info.subText, "%S") then
+    if info.serviceType == "available" then
       local money, cp1, cp2 = readServiceCost(i)
       if money == nil then return nil, nil end
-      if cp1 == 0 and cp2 == 0 then
+      if serviceCostsAllowed(info, cp1, cp2) then
         if seen[info.identity] or total > MAX_COPPER - money then return nil, nil end
         seen[info.identity] = true
         total = total + money
@@ -446,7 +569,10 @@ local function buildTrainAllSnapshot()
           identity = info.identity,
           name = info.name,
           subText = info.subText,
+          skillLine = info.skillLine,
           money = money,
+          talentCost = cp1,
+          professionCost = cp2,
           initialIndex = i,
         })
       end
@@ -571,7 +697,7 @@ local function currentTrainerListSignature()
     local info = readServiceInfo(i)
     if not info or string.find(info.serviceType, "\029", 1, true) or
        string.find(info.serviceType, "\030", 1, true) or string.find(info.serviceType, "\031", 1, true) then return nil end
-    table.insert(parts, info.identity .. "\030" .. info.serviceType)
+    table.insert(parts, info.identity .. "\030" .. info.serviceType .. "\030" .. (info.skillLine or ""))
   end
   return table.concat(parts, "\029")
 end
@@ -594,7 +720,8 @@ local function submitCurrentSnapshot(retry)
     return false
   end
   local moneyCost, cp1, cp2 = readServiceCost(index)
-  if moneyCost == nil or moneyCost ~= entry.money or not validPointCost(cp1) or not validPointCost(cp2) then
+  if moneyCost == nil or moneyCost ~= entry.money or cp1 ~= entry.talentCost or cp2 ~= entry.professionCost or
+       info.skillLine ~= entry.skillLine or not serviceCostsAllowed(info, cp1, cp2) then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
@@ -680,7 +807,8 @@ function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
     return false
   else
     local moneyCost, cp1, cp2 = readServiceCost(index)
-    if moneyCost == nil or moneyCost ~= entry.money or not validPointCost(cp1) or not validPointCost(cp2) then
+    if moneyCost == nil or moneyCost ~= entry.money or cp1 ~= entry.talentCost or cp2 ~= entry.professionCost or
+       info.skillLine ~= entry.skillLine or not serviceCostsAllowed(info, cp1, cp2) then
       ShirsLazyTrix.CancelTrainAll()
       return false
     end

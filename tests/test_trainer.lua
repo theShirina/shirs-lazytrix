@@ -10,6 +10,7 @@ local gossipOptions = {}
 local selectedGossip = {}
 local shiftDown = false
 local tradeskillTrainer = false
+local playerSkills = {}
 
 local function makeFrame(name)
   local frame = {
@@ -50,6 +51,12 @@ local function makeFrame(name)
   function frame:SetBackdropBorderColor(...) self.backdropBorderColor = arg end
   function frame:SetTexture(...) self.texture = arg end
   function frame:SetTexCoord(...) self.texCoord = arg end
+  function frame:SetFont(path, size, flags) self.font = { path, size, flags } end
+  function frame:GetFont()
+    if self.font then return self.font[1], self.font[2], self.font[3] end
+  end
+  function frame:GetFontString() return self.fontString end
+  function frame:GetNormalTexture() return self.normalTexture end
 
   function frame:CreateTexture(childName, layer)
     local texture = makeFrame(childName)
@@ -98,6 +105,28 @@ ClassTrainerFrameFilterDropDown = makeFrame("ClassTrainerFrameFilterDropDown")
 ClassTrainerMoneyFrame = makeFrame("ClassTrainerMoneyFrame")
 ClassTrainerMoneyFrame.scale = 1
 ClassTrainerMoneyFrame.point = { "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 22, 86 }
+local moneyCoins = { "Copper", "Silver", "Gold" }
+for i = 1, table.getn(moneyCoins) do
+  local coin = moneyCoins[i]
+  local button = makeFrame("ClassTrainerMoneyFrame" .. coin .. "Button")
+  local texture = makeFrame("ClassTrainerMoneyFrame" .. coin .. "Texture")
+  local fontString = makeFrame("ClassTrainerMoneyFrame" .. coin .. "Text")
+  button.width = 32
+  button.height = 13
+  texture.width = 13
+  texture.height = 13
+  fontString.font = { "Fonts\\FRIZQT__.TTF", 12, "" }
+  button.normalTexture = texture
+  button.fontString = fontString
+  if coin == "Copper" then
+    button.point = { "RIGHT", ClassTrainerMoneyFrame, "RIGHT", -13, 0 }
+  else
+    local previous = coin == "Silver" and "Copper" or "Silver"
+    button.point = { "RIGHT", named["ClassTrainerMoneyFrame" .. previous .. "Button"], "LEFT", -4, 0 }
+  end
+  named[button.name] = button
+  _G[button.name] = button
+end
 ClassTrainerGreetingText = makeFrame("ClassTrainerGreetingText")
 ClassTrainerSkillHighlightFrame = makeFrame("ClassTrainerSkillHighlightFrame")
 ClassTrainerHorizontalBarLeft = makeFrame("ClassTrainerHorizontalBarLeft")
@@ -142,6 +171,13 @@ function GetTrainerServiceCost(index)
   if not row then return nil end
   return row.money, row.cp1, row.cp2
 end
+function GetTrainerServiceSkillLine(index)
+  local row = services[index]
+  if not row then return nil end
+  return row.skillLine
+end
+function GetNumSkillLines() return table.getn(playerSkills) end
+function GetSkillLineInfo(index) return playerSkills[index] end
 function BuyTrainerService(index) table.insert(bought, index) end
 function ExpandTrainerSkillLine() end
 function ClassTrainerFrame_Update() end
@@ -253,6 +289,17 @@ assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrai
   ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
   ClassTrainerMoneyFrame.point[4] == 189 and ClassTrainerMoneyFrame.point[5] == 86,
   "Train All and money were not split across the bottom-left action area")
+for i = 1, table.getn(moneyCoins) do
+  local button = named["ClassTrainerMoneyFrame" .. moneyCoins[i] .. "Button"]
+  local _, fontSize = button.fontString:GetFont()
+  assert(button.width == 27 and button.height == 11 and
+    button.normalTexture.width == 11 and button.normalTexture.height == 11 and fontSize == 10,
+    "trainer money denomination was not reduced by two pixels")
+end
+assert(named.ClassTrainerMoneyFrameCopperButton.point[4] == -13 and
+  named.ClassTrainerMoneyFrameSilverButton.point[4] == -3 and
+  named.ClassTrainerMoneyFrameGoldButton.point[4] == -3,
+  "compact trainer money spacing did not preserve its right alignment")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
 ShirsLazyTrix.RefreshTrainerFeature()
@@ -300,13 +347,14 @@ assert(CLASS_TRAINER_SKILLS_DISPLAYED == 16 and ClassTrainerFrame.height == 596 
   ClassTrainerHorizontalBarLeft.point[5] == -355 and named.ClassTrainerSkill17.shown == false and named.ClassTrainerSkill18.shown == false,
   "class trainer mode did not preserve protected detail spacing")
 
-local function resetRows(rows, money)
+local function resetRows(rows, money, skills)
   local i
   for i = 1, table.getn(rows) do
     if rows[i].subText == nil then rows[i].subText = "Rank 1" end
   end
   services = rows
   playerMoney = money
+  playerSkills = skills or {}
   bought = {}
   ClassTrainerFrame.shown = true
   ShirsLazyTrixDB.trainAll = true
@@ -316,7 +364,7 @@ end
 local safeRows = {
   { name = "Header", serviceType = "header", money = 0, cp1 = 0, cp2 = 0 },
   { name = "Safe One", subText = "Rank 1", serviceType = "available", money = 100, cp1 = 0, cp2 = 0 },
-  { name = "New Profession", serviceType = "available", money = 50, cp1 = 1, cp2 = 0 },
+  { name = "New Profession", serviceType = "available", money = 50, cp1 = 0, cp2 = 1, skillLine = "Blacksmithing" },
   { name = "Already Known", serviceType = "used", money = 10, cp1 = 0, cp2 = 0 },
   { name = "Safe Two", subText = "Rank 1", serviceType = "available", money = 200, cp1 = 0, cp2 = 0 },
   { name = "Malformed", serviceType = "unavailable", money = "free", cp1 = 0, cp2 = 0 },
@@ -515,35 +563,88 @@ resetRows({
 assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
   "duplicate snapshot identity was accepted")
 resetRows({
+  { name = "Duplicate Recipe", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Duplicate Recipe", subText = "", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "duplicate blank-rank recipe identity was accepted")
+resetRows({
   { name = "   ", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
 }, 500)
 assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
   "blank snapshot identity was accepted")
 resetRows({
-  { name = "Blank Rank", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Blank Rank Recipe", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
 }, 500)
-assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
-  "blank snapshot rank was accepted")
+assert(ShirsLazyTrix.GetTrainAllPlan() == 1,
+  "unique blank-rank recipe was not accepted")
 resetRows({
-  { name = "Whitespace Rank", subText = "   ", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Whitespace Rank Recipe", subText = "   ", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
 }, 500)
-assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
-  "whitespace snapshot rank was accepted")
+assert(ShirsLazyTrix.GetTrainAllPlan() == 1,
+  "unique whitespace-rank recipe was not accepted")
 
--- Name-only services stay manual without disabling safe ranked services.
+-- Unique name-only recipes are safe under the frozen full-list signature.
 resetRows({
-  { name = "Manual Name Only", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Unique Recipe", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0,
+    skillLine = "Tailoring" },
   { name = "Ranked Safe", subText = "Rank 2", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
 }, 500)
 local mixedCount, mixedTotal, mixedIndex = ShirsLazyTrix.GetTrainAllPlan()
-assert(mixedCount == 1 and mixedTotal == 20 and mixedIndex == 2,
-  "name-only service disabled the safe ranked snapshot")
+assert(mixedCount == 2 and mixedTotal == 30 and mixedIndex == 1,
+  "unique name-only recipe was excluded from the frozen snapshot")
 ShirsLazyTrix.UpdateTrainAllButton()
-assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (1)",
-  "name-only service left the ranked Train All plan disabled")
-assert(ShirsLazyTrix.StartTrainAll() == true and bought[1] == 2,
-  "mixed plan did not buy only the ranked service")
+assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "unique recipe and ranked service did not enable Train All")
+assert(ShirsLazyTrix.StartTrainAll() == true and bought[1] == 1,
+  "mixed profession plan did not start with its frozen unique recipe")
 ShirsLazyTrix.CancelTrainAll()
+
+-- Existing profession rank upgrades are safe; new profession skill lines remain manual.
+resetRows({
+  { name = "Expert Tailor", subText = "(Journeyman)", serviceType = "available", money = 4500,
+    cp1 = 0, cp2 = 1, skillLine = "Tailoring" },
+}, 10000, { "Tailoring" })
+local professionCount, professionTotal, professionIndex = ShirsLazyTrix.GetTrainAllPlan()
+assert(professionCount == 1 and professionTotal == 4500 and professionIndex == 1,
+  "owned profession rank upgrade was excluded from Train All")
+assert(ShirsLazyTrix.StartTrainAll() == true and table.getn(bought) == 1 and bought[1] == 1,
+  "owned profession rank upgrade did not start")
+ShirsLazyTrix.CancelTrainAll()
+
+resetRows({
+  { name = "Apprentice Blacksmith", subText = "(Apprentice)", serviceType = "available", money = 100,
+    cp1 = 0, cp2 = 1, skillLine = "Blacksmithing" },
+}, 10000, { "Tailoring" })
+professionCount = ShirsLazyTrix.GetTrainAllPlan()
+assert(professionCount == 0 and ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "new profession skill line was accepted by Train All")
+
+resetRows({
+  { name = "Expert Tailor", subText = "(Journeyman)", serviceType = "available", money = 4500,
+    cp1 = 0, cp2 = 1, skillLine = "Tailoring" },
+}, 10000, { "Tailoring" })
+local savedSkillLineApi = GetTrainerServiceSkillLine
+GetTrainerServiceSkillLine = nil
+assert(ShirsLazyTrix.GetTrainAllPlan() == 0,
+  "profession rank upgrade did not fail closed without its service skill-line API")
+GetTrainerServiceSkillLine = savedSkillLineApi
+
+-- The frozen profession rank snapshot must reject a changed skill line before another purchase.
+resetRows({
+  { name = "Expert Tailor", subText = "(Journeyman)", serviceType = "available", money = 4500,
+    cp1 = 0, cp2 = 1, skillLine = "Tailoring" },
+  { name = "Artisan Tailor", subText = "(Expert)", serviceType = "available", money = 5000,
+    cp1 = 0, cp2 = 1, skillLine = "Tailoring" },
+}, 20000, { "Tailoring" })
+assert(ShirsLazyTrix.StartTrainAll() == true and table.getn(bought) == 1,
+  "owned profession rank snapshot did not start")
+services[1].serviceType = "used"
+services[2].skillLine = "Blacksmithing"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "changed profession skill line was purchased from a frozen snapshot")
 
 -- Frame disappearance, feature disable, and throwing APIs cancel before another purchase.
 resetRows({
@@ -572,6 +673,17 @@ assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive() and
   ClassTrainerMoneyFrame.point[4] == 22 and ClassTrainerMoneyFrame.point[5] == 86 and
   trainAllSocket.shown == false,
   "disabling Train All did not stop its queue, restore money, and preserve expansion")
+for i = 1, table.getn(moneyCoins) do
+  local button = named["ClassTrainerMoneyFrame" .. moneyCoins[i] .. "Button"]
+  local _, fontSize = button.fontString:GetFont()
+  assert(button.width == 32 and button.height == 13 and
+    button.normalTexture.width == 13 and button.normalTexture.height == 13 and fontSize == 12,
+    "disabling Train All did not restore stock money denomination geometry")
+end
+assert(named.ClassTrainerMoneyFrameCopperButton.point[4] == -13 and
+  named.ClassTrainerMoneyFrameSilverButton.point[4] == -4 and
+  named.ClassTrainerMoneyFrameGoldButton.point[4] == -4,
+  "disabling Train All did not restore stock money spacing")
 
 resetRows({
   { name = "Throw A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },

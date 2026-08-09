@@ -10,12 +10,12 @@
 - Extends the exact stock bottom-left and bottom-right artwork through the added middle band, while leaving pfUI's backdrop in charge when enabled.
 - Refreshes Train All after Blizzard makes its load-on-demand trainer frame visible.
 - Added a manual Train All button with a fixed click-time service and cost snapshot.
-- Centers Train All within its matching bottom-left socket and keeps the stock-size money display aligned in the recess beside it.
-- Leaves name-only services manual without disabling safe ranked services.
+- Centers Train All within its matching bottom-left socket and reduces the money text and coin icons by two pixels to fit the recess beside it.
+- Trains unique blank-rank recipes while rejecting duplicate service identities.
 - Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
 - Cancels an unchanged retry if the ordered trainer list changed after submission.
-- Skips services that consume a profession slot and blocks malformed or ambiguous trainer data.
+- Includes owned profession rank upgrades, skips new profession skill lines, and blocks malformed or ambiguous trainer data.
 - Reuses pfUI's trainer-row skin for the seven added rows.
 - Retries trainer mode hooks after Blizzard's load-on-demand trainer UI becomes available.
 - Added a separate default-off option that opens the exact trainer-type gossip entry.
