@@ -11,9 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = [
     "ShirsLazyTrix.toc",
     "ShirsLazyTrix_Engine.lua",
+    "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_UI.lua",
     "ShirsLazyTrix.lua",
+    "LazyTrixIcon.tga",
     "README.txt",
     "LICENSE",
 ]
@@ -43,7 +45,9 @@ def build(output_dir: Path) -> Path:
                 info.create_system = 3
                 info.compress_type = zipfile.ZIP_DEFLATED
                 info.external_attr = 0o100644 << 16
-                data = source.read_bytes().replace(b"\r\n", b"\n")
+                data = source.read_bytes()
+                if source.suffix.lower() in {".lua", ".toc", ".txt", ".md"} or source.name == "LICENSE":
+                    data = data.replace(b"\r\n", b"\n")
                 archive.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
         temporary.replace(target)
     finally:

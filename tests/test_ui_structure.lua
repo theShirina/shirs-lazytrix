@@ -1,4 +1,4 @@
--- Structural UI contract for Shir's LazyTrix 0.0.1
+-- Structural UI contract for Shir's LazyTrix
 
 local root = arg and arg[1] or "."
 local path = root .. "/ShirsLazyTrix_UI.lua"
@@ -32,17 +32,41 @@ local function count(text)
   end
 end
 
-assertContains('frame:SetWidth(360)', "minimal settings width")
-assertContains('button:SetWidth(24)', "minimap button width")
-assertContains('button:SetHeight(24)', "minimap button height")
+assertContains('frame:SetWidth(340)', "minimal settings width")
+assertContains('frame:SetHeight(310)', "minimal settings height")
+assertContains('UI-Tooltip-Background', "addon-family dark panel background")
+assertContains('UI-Tooltip-Border', "addon-family thin panel border")
+assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
+assertContains('frame:SetBackdropBorderColor(0.3, 0.6, 0.9, 1)', "blue panel border")
+assertContains('title:SetTextColor(0.45, 0.82, 1)', "blue addon title")
+assertContains('"AUTOMATION"', "minimal section heading")
+assertContains('section:SetTextColor(1, 0.82, 0)', "gold section heading")
+assertContains('button:SetWidth(32)', "standard minimap button width")
+assertContains('button:SetHeight(32)', "standard minimap button height")
+assertContains('icon:SetWidth(20)', "filled minimap icon width")
+assertContains('icon:SetHeight(20)', "filled minimap icon height")
+assertContains('button:CreateTexture(nil, "ARTWORK")', "icon artwork layer")
+assertContains('Interface\\\\AddOns\\\\ShirsLazyTrix\\\\LazyTrixIcon', "custom LazyTrix icon")
+assertContains('MiniMap-TrackingBorder', "minimap tracking border")
+assertContains('border:SetWidth(52)', "standard border width")
+assertContains('button:RegisterForDrag("LeftButton")', "movable minimap registration")
+assertContains('ShirsLazyTrixDB.minimapAngle', "saved minimap angle")
+assertContains('math.atan2', "cursor angle calculation")
+assertContains('"Drag: Move this button"', "minimap drag tooltip")
 assertContains('"Turn in completed quests", "turnIn"', "turn-in checkbox")
 assertContains('"Pick up quests", "pickUp"', "pickup checkbox")
-assertContains("Hold Shift to handle a quest manually.", "Shift bypass note")
+assertContains('"Only automate while Shift is held", "automationOnShift"', "Shift-required automation checkbox")
+assertContains("When enabled, Shift triggers both pickup and turn-in.", "Shift behavior note")
+assertContains('"MERCHANT"', "merchant section heading")
+assertContains('"Automatically sell gray items at vendors", "autoSellGray"', "gray-only merchant checkbox")
+assertContains("Sells gray-quality items only.", "gray-only merchant note")
+assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 3 then
-  error("UI must define exactly two checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 5 then
+  error("UI must define exactly four checkbox calls plus the helper", 2)
 end
 
-print("ui-two-setting-structure: PASS")
-print("ui-shift-note: PASS")
+print("ui-minimal-family-style: PASS")
+print("ui-movable-filled-minimap: PASS")
+print("ui-four-setting-structure: PASS")

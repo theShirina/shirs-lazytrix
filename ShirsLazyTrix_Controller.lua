@@ -1,6 +1,9 @@
 local DEFAULTS = {
   turnIn = true,
   pickUp = true,
+  automationOnShift = false,
+  autoSellGray = false,
+  minimapAngle = 220,
 }
 
 local function npcName()
@@ -15,8 +18,34 @@ local function shiftHeld()
   return type(IsShiftKeyDown) == "function" and IsShiftKeyDown() and true or false
 end
 
+local function automationAllowed(held)
+  if ShirsLazyTrixDB.automationOnShift then return held and true or false end
+  return not held
+end
+
+local function turnInAllowed(held)
+  return ShirsLazyTrixDB.turnIn and automationAllowed(held)
+end
+
+local function pickUpAllowed(held)
+  return ShirsLazyTrixDB.pickUp and automationAllowed(held)
+end
+
+local function dialogSettings(held)
+  return {
+    turnIn = turnInAllowed(held),
+    pickUp = pickUpAllowed(held),
+  }
+end
+
 local function incompleteKey(npc, title)
   return (npc or "") .. "\031" .. (title or "")
+end
+
+local function incompleteTitle(key)
+  local _, separator = string.find(key, "\031", 1, true)
+  if not separator then return key end
+  return string.sub(key, separator + 1)
 end
 
 local function applyIncompleteObservation(npc, title, complete)
@@ -43,6 +72,9 @@ function ShirsLazyTrix.EnsureDatabase()
   if ShirsLazyTrixDB.pickUp == nil and ShirsLazyTrixDB.pickUpNormal ~= nil then
     ShirsLazyTrixDB.pickUp = ShirsLazyTrixDB.pickUpNormal and true or false
   end
+  if ShirsLazyTrixDB.automationOnShift == nil and ShirsLazyTrixDB.turnInOnShift == true then
+    ShirsLazyTrixDB.automationOnShift = true
+  end
 
   local key, value
   for key, value in pairs(DEFAULTS) do
@@ -51,8 +83,20 @@ function ShirsLazyTrix.EnsureDatabase()
     end
   end
 
+  if type(ShirsLazyTrixDB.automationOnShift) ~= "boolean" then
+    ShirsLazyTrixDB.automationOnShift = DEFAULTS.automationOnShift
+  end
+  if type(ShirsLazyTrixDB.autoSellGray) ~= "boolean" then
+    ShirsLazyTrixDB.autoSellGray = DEFAULTS.autoSellGray
+  end
+  if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
+     ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then
+    ShirsLazyTrixDB.minimapAngle = DEFAULTS.minimapAngle
+  end
+
   ShirsLazyTrixDB.turnInNormal = nil
   ShirsLazyTrixDB.pickUpNormal = nil
+  ShirsLazyTrixDB.turnInOnShift = nil
   ShirsLazyTrixDB.turnInRepeatable = nil
   ShirsLazyTrixDB.pickUpRepeatable = nil
   ShirsLazyTrixDB.repeatable = nil
@@ -61,7 +105,8 @@ end
 
 function ShirsLazyTrix.HandleQuestGreeting()
   ShirsLazyTrix.EnsureDatabase()
-  if shiftHeld() then return end
+  local held = shiftHeld()
+  if not automationAllowed(held) then return end
 
   local npc = npcName()
   local active = {}
@@ -80,7 +125,7 @@ function ShirsLazyTrix.HandleQuestGreeting()
     available[i] = { title = GetAvailableTitle(i) }
   end
 
-  local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, ShirsLazyTrixDB)
+  local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, dialogSettings(held))
   if action == "active" then
     SelectActiveQuest(index)
   elseif action == "available" then
@@ -103,7 +148,8 @@ end
 
 function ShirsLazyTrix.HandleGossipShow()
   ShirsLazyTrix.EnsureDatabase()
-  if shiftHeld() then return end
+  local held = shiftHeld()
+  if not automationAllowed(held) then return end
 
   local npc = npcName()
   local active = collectGossipQuests({ GetGossipActiveQuests() })
@@ -114,7 +160,7 @@ function ShirsLazyTrix.HandleGossipShow()
     active[i].complete = applyIncompleteObservation(npc, active[i].title, nil)
   end
 
-  local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, ShirsLazyTrixDB)
+  local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, dialogSettings(held))
   if action == "active" then
     SelectGossipActiveQuest(index)
   elseif action == "available" then
@@ -124,15 +170,14 @@ end
 
 function ShirsLazyTrix.HandleQuestDetail()
   ShirsLazyTrix.EnsureDatabase()
-  if shiftHeld() then return end
-  if ShirsLazyTrixDB.pickUp then
+  if pickUpAllowed(shiftHeld()) then
     AcceptQuest()
   end
 end
 
 function ShirsLazyTrix.HandleQuestProgress()
   ShirsLazyTrix.EnsureDatabase()
-  if shiftHeld() then return end
+  if not turnInAllowed(shiftHeld()) then return end
 
   local title = GetTitleText()
   local completable = IsQuestCompletable()
@@ -150,7 +195,7 @@ end
 
 function ShirsLazyTrix.HandleQuestComplete()
   ShirsLazyTrix.EnsureDatabase()
-  if shiftHeld() or not ShirsLazyTrixDB.turnIn then
+  if not turnInAllowed(shiftHeld()) then
     return
   end
 
@@ -160,6 +205,26 @@ function ShirsLazyTrix.HandleQuestComplete()
   end
 end
 
-function ShirsLazyTrix.HandleQuestFinished()
-  ShirsLazyTrix.incompleteSeen = nil
+function ShirsLazyTrix.HandleQuestLogUpdate()
+  if type(ShirsLazyTrix.incompleteSeen) ~= "table" then return end
+
+  local completed = {}
+  local i
+  for i = 1, GetNumQuestLogEntries() do
+    local title, _, _, isHeader, _, isComplete = GetQuestLogTitle(i)
+    if title and not isHeader and isComplete then
+      completed[title] = true
+    end
+  end
+
+  local remove = {}
+  local key
+  for key in pairs(ShirsLazyTrix.incompleteSeen) do
+    if completed[incompleteTitle(key)] then
+      table.insert(remove, key)
+    end
+  end
+  for i = 1, table.getn(remove) do
+    ShirsLazyTrix.incompleteSeen[remove[i]] = nil
+  end
 end

@@ -20,7 +20,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.1.zip"
+    return output / "ShirsLazyTrix-v0.0.2.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:
@@ -40,6 +40,15 @@ with tempfile.TemporaryDirectory() as temporary:
             "ZIP file modes are not fixed"
         )
         assert archive.testzip() is None, "release archive failed CRC validation"
+        names = {item.filename for item in members}
+        assert "ShirsLazyTrix/ShirsLazyTrix_Merchant.lua" in names, "gray-only merchant module missing from release archive"
+        assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Merchant.lua") == (ROOT / "ShirsLazyTrix_Merchant.lua").read_bytes().replace(b"\r\n", b"\n"), (
+            "packaged merchant module differs from source"
+        )
+        assert "ShirsLazyTrix/LazyTrixIcon.tga" in names, "custom icon missing from release archive"
+        assert archive.read("ShirsLazyTrix/LazyTrixIcon.tga") == (ROOT / "LazyTrixIcon.tga").read_bytes(), (
+            "packaged custom icon differs from source"
+        )
 
 print("cross-host-zip-metadata: PASS")
 print("deterministic-release-build: PASS")

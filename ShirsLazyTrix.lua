@@ -6,7 +6,9 @@ frame:RegisterEvent("QUEST_GREETING")
 frame:RegisterEvent("QUEST_DETAIL")
 frame:RegisterEvent("QUEST_PROGRESS")
 frame:RegisterEvent("QUEST_COMPLETE")
-frame:RegisterEvent("QUEST_FINISHED")
+frame:RegisterEvent("QUEST_LOG_UPDATE")
+frame:RegisterEvent("MERCHANT_SHOW")
+frame:RegisterEvent("MERCHANT_CLOSED")
 
 frame:SetScript("OnEvent", function()
   if event == "VARIABLES_LOADED" then
@@ -22,9 +24,26 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.HandleQuestProgress()
   elseif event == "QUEST_COMPLETE" then
     ShirsLazyTrix.HandleQuestComplete()
-  elseif event == "QUEST_FINISHED" then
-    ShirsLazyTrix.HandleQuestFinished()
+  elseif event == "QUEST_LOG_UPDATE" then
+    ShirsLazyTrix.HandleQuestLogUpdate()
+  elseif event == "MERCHANT_SHOW" then
+    ShirsLazyTrix.StartAutoGraySale()
+  elseif event == "MERCHANT_CLOSED" then
+    ShirsLazyTrix.CancelGraySale()
   end
+end)
+
+local merchantElapsed = 0
+frame:SetScript("OnUpdate", function()
+  if not ShirsLazyTrix.GetGraySaleState() then
+    merchantElapsed = 0
+    return
+  end
+
+  merchantElapsed = merchantElapsed + (arg1 or 0)
+  if merchantElapsed < 0.25 then return end
+  merchantElapsed = 0
+  ShirsLazyTrix.SellNextGray()
 end)
 
 SLASH_SHIRSLAZYTRIX1 = "/lazytrix"
