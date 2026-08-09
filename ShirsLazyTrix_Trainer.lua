@@ -15,6 +15,7 @@ local trainAllActive = false
 local trainAllWaiting = false
 local lastPurchaseKey = nil
 local lastPurchaseMoney = nil
+local lastPurchaseListSignature = nil
 local trainAllElapsed = 0
 local trainAllStuckElapsed = 0
 local trainAllRetryCount = 0
@@ -273,7 +274,8 @@ local function serviceIdentity(name, subText)
   if type(name) ~= "string" or not string.find(name, "%S") then return nil end
   if subText == nil then subText = "" end
   if type(subText) ~= "string" then return nil end
-  if string.find(name, "\031", 1, true) or string.find(subText, "\031", 1, true) then return nil end
+  if string.find(name, "\029", 1, true) or string.find(name, "\030", 1, true) or string.find(name, "\031", 1, true) or
+     string.find(subText, "\029", 1, true) or string.find(subText, "\030", 1, true) or string.find(subText, "\031", 1, true) then return nil end
   return name .. "\031" .. subText
 end
 
@@ -306,6 +308,7 @@ local function buildTrainAllSnapshot()
     local info = readServiceInfo(i)
     if not info then return nil, nil end
     if info.serviceType == "available" then
+      if not string.find(info.subText, "%S") then return nil, nil end
       local money, cp1, cp2 = readServiceCost(i)
       if money == nil then return nil, nil end
       if cp1 == 0 and cp2 == 0 then
@@ -386,6 +389,7 @@ function ShirsLazyTrix.CancelTrainAll()
   trainAllWaiting = false
   lastPurchaseKey = nil
   lastPurchaseMoney = nil
+  lastPurchaseListSignature = nil
   trainAllElapsed = 0
   trainAllStuckElapsed = 0
   trainAllRetryCount = 0
@@ -427,6 +431,20 @@ local function remainingSnapshotCost()
   return total
 end
 
+local function currentTrainerListSignature()
+  local number = safeServiceCount()
+  if not number then return nil end
+  local parts = {}
+  local i
+  for i = 1, number do
+    local info = readServiceInfo(i)
+    if not info or string.find(info.serviceType, "\029", 1, true) or
+       string.find(info.serviceType, "\030", 1, true) or string.find(info.serviceType, "\031", 1, true) then return nil end
+    table.insert(parts, info.identity .. "\030" .. info.serviceType)
+  end
+  return table.concat(parts, "\029")
+end
+
 local function submitCurrentSnapshot(retry)
   if not trainAllActive or trainAllSubmitting or not trainAllSnapshot then return false end
   if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
@@ -451,7 +469,8 @@ local function submitCurrentSnapshot(retry)
   end
   local moneyOk, money = pcall(GetMoney)
   local remaining = remainingSnapshotCost()
-  if not moneyOk or not validCopper(money) or not remaining or remaining > money then
+  local listSignature = currentTrainerListSignature()
+  if not moneyOk or not validCopper(money) or not remaining or remaining > money or not listSignature then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
@@ -463,6 +482,7 @@ local function submitCurrentSnapshot(retry)
   end
   lastPurchaseKey = entry.identity
   lastPurchaseMoney = money
+  lastPurchaseListSignature = listSignature
   trainAllWaiting = true
   trainAllElapsed = 0
   trainAllSawUpdate = false
@@ -489,6 +509,7 @@ local function advanceTrainAllSnapshot()
   trainAllRetryCount = 0
   lastPurchaseKey = nil
   lastPurchaseMoney = nil
+  lastPurchaseListSignature = nil
   return submitCurrentSnapshot(false)
 end
 
@@ -534,6 +555,11 @@ function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
     end
     if trainAllElapsed >= TRAINER_RETRY_SECONDS and trainAllSawUpdate and
        trainAllRetryCount < TRAINER_MAX_RETRIES and money == lastPurchaseMoney then
+      local listSignature = currentTrainerListSignature()
+      if not listSignature or listSignature ~= lastPurchaseListSignature then
+        ShirsLazyTrix.CancelTrainAll()
+        return false
+      end
       return submitCurrentSnapshot(true)
     end
   end
@@ -564,6 +590,7 @@ function ShirsLazyTrix.StartTrainAll()
   trainAllSawUpdate = false
   lastPurchaseKey = nil
   lastPurchaseMoney = nil
+  lastPurchaseListSignature = nil
   trainAllElapsed = 0
   trainAllStuckElapsed = 0
   trainAllRetryCount = 0

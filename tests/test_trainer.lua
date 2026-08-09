@@ -221,6 +221,10 @@ assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 624 
   "class trainer mode reset the expanded row count")
 
 local function resetRows(rows, money)
+  local i
+  for i = 1, table.getn(rows) do
+    if rows[i].subText == nil then rows[i].subText = "Rank 1" end
+  end
   services = rows
   playerMoney = money
   bought = {}
@@ -274,6 +278,18 @@ services[1].serviceType = "used"
 ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(not ShirsLazyTrix.IsTrainAllActive(), "completed retry queue did not stop")
+
+-- An unchanged acknowledgement may retry only if the complete trainer list is unchanged.
+resetRows({
+  { name = "Mutation A", serviceType = "available", money = 25, cp1 = 0, cp2 = 0 },
+  { name = "Mutation B", serviceType = "available", money = 25, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "mutation snapshot did not start")
+table.insert(services, 1, { name = "Inserted Mutation", subText = "Rank 1", serviceType = "unavailable", money = 1, cp1 = 0, cp2 = 0 })
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.8)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "changed trainer list retried an unchanged destructive purchase")
 
 -- More than three services must complete without a built-in queue limit.
 local longRows = {}
@@ -366,6 +382,16 @@ resetRows({
 }, 500)
 assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
   "blank snapshot identity was accepted")
+resetRows({
+  { name = "Blank Rank", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "blank snapshot rank was accepted")
+resetRows({
+  { name = "Whitespace Rank", subText = "   ", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "whitespace snapshot rank was accepted")
 
 -- Frame disappearance, feature disable, and throwing APIs cancel before another purchase.
 resetRows({
