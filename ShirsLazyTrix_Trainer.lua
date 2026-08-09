@@ -10,16 +10,17 @@ local CLASS_TRAINER_HORIZONTAL_Y = -355
 local TRADE_TRAINER_HORIZONTAL_Y = -387
 local TRAINER_CANCEL_X = -39
 local TRAINER_BUTTON_BOTTOM = 81
-local TRAIN_ALL_WIDTH = 80
+local TRAIN_ALL_WIDTH = 82
+local TRAIN_ALL_HEIGHT = 23
 local TRAIN_ALL_CENTER_X = 59
 local TRAIN_ALL_CENTER_Y = 92
 local TRAIN_ALL_SOCKET_X = 14
 local TRAIN_ALL_SOCKET_Y = 74
 local TRAIN_ALL_SOCKET_WIDTH = 90
 local TRAIN_ALL_SOCKET_HEIGHT = 31
-local TRAINER_MONEY_SCALE = 0.6
-local TRAINER_MONEY_RIGHT = 180
-local TRAINER_MONEY_BOTTOM = 89
+local TRAINER_MONEY_SCALE = 1
+local TRAINER_MONEY_RIGHT = 194
+local TRAINER_MONEY_BOTTOM = 86
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
@@ -222,6 +223,7 @@ end
 local function positionTrainAllButton(button)
   button:ClearAllPoints()
   button:SetWidth(TRAIN_ALL_WIDTH)
+  button:SetHeight(TRAIN_ALL_HEIGHT)
   button:SetPoint("CENTER", ClassTrainerFrame, "BOTTOMLEFT", TRAIN_ALL_CENTER_X, TRAIN_ALL_CENTER_Y)
   button:SetText("Train All")
   if ClassTrainerMoneyFrame then
