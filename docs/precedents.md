@@ -36,6 +36,12 @@ Microbot's `WoW.exe` exposes `IsInInstance`, `AcceptResurrect`, and `CancelPlaye
 
 Vanilla API references document `IsInInstance()` as returning `1` inside an instance and `nil` outside. Some compatible clients expose boolean values and a second type value. LazyTrix therefore accepts only the explicit outside forms `nil`, `false`, or `0`, with a missing type or `"none"`. It rejects every inside, contradictory, unknown, or missing-API state. The original handler calls `AcceptResurrect()` at most once on `RESURRECT_REQUEST`, hides the pending popup only after acceptance, and never calls `RepopMe()`.
 
+## v0.0.5 stealth immolation cleanup precedent
+
+The user supplied a SuperMacro snippet that listens for `CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS`, matches the exact English messages for Stealth, Lesser Invisibility, and Invisibility, then calls `CancelBuff("Fire Shield")`. The installed SuperMacro 3.14a declares Interface `11200`. Its `SM_Slash.lua` (SHA-256 `421fc8dddd835a129e55c225359a2929501947624d4f12828cb7ed256c21cb57`) resolves buff names through a hidden tooltip and calls `CancelPlayerBuff(index)`. No licence file was found in the installed folder or referenced archive, so its source remains study-only.
+
+The exact Microbot executable exposes `CancelPlayerBuff`, `GetPlayerBuff`, and `GetPlayerBuffTexture`. Stock `BuffFrame.lua` and installed exact-client pfUI enumerate helpful buffs with `GetPlayerBuff`, inspect tooltip text, and cancel the returned index. Exact `Spell.dbc` data distinguishes Oil's `Fire Shield` / `Fire Shield IV` Immolation icon (`Spell_Fire_Immolation`) from a warlock imp's same-named Fire Armor icon (`Spell_Fire_FireArmor`). LazyTrix uses an original private tooltip scanner and a descending `31..0` slot loop. Exact `Oil of Immolation` and `Immolation Aura` names are unambiguous; `Fire Shield` and `Fire Shield IV` also require the Immolation texture. The default-off feature does not call SuperMacro's global `CancelBuff` and does not send chat output.
+
 ## Settings and minimap precedents
 
 | Source | Pin | Client and evidence | Licence | Reuse decision |

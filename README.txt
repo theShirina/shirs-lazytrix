@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.4
+Shir's LazyTrix 0.0.5
 
 Microbot WoW 1.12.1 only.
 
@@ -17,6 +17,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Automatically sell gray items at vendors
 - Automatically repair all gear at repair vendors
 - Automatically accept open-world resurrection requests
+- Remove immolation effects on stealth or invisibility
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -33,3 +34,6 @@ REPAIRS
 
 RESURRECTION
 "Automatically accept open-world resurrection requests" is off by default. When enabled, LazyTrix accepts a pending resurrection only when the client reports that you are outside battlegrounds, dungeons, raids, and other instances. It does not release your corpse.
+
+STEALTH AND INVISIBILITY
+"Remove immolation effects on stealth or invisibility" is off by default. When enabled, LazyTrix removes Oil of Immolation and Immolation Aura after the client reports Stealth, Lesser Invisibility, or Invisibility. It checks Oil's Immolation texture so it will not remove a warlock imp's same-named Fire Shield. It works without SuperMacro and does not send a chat message.

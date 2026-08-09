@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.5
+
+- Added a default-off setting that removes immolation effects when stealth or invisibility starts.
+- Handles Stealth, Lesser Invisibility, and Invisibility messages from the exact client.
+- Removes exact Oil of Immolation and Immolation Aura effects without requiring SuperMacro.
+- Requires the Immolation texture for same-named Fire Shield buffs, preserving a warlock imp's Fire Shield.
+- Scans from the highest buff slot down and cancels the exact index returned by the client.
+- Does not send a chat message.
+
 ## 0.0.4
 
 - Added a default-off setting that accepts pending resurrection requests in the open world.

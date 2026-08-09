@@ -33,7 +33,7 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(340)', "minimal settings width")
-assertContains('frame:SetHeight(390)', "minimal settings height")
+assertContains('frame:SetHeight(420)', "minimal settings height")
 assertContains('UI-Tooltip-Background', "addon-family dark panel background")
 assertContains('UI-Tooltip-Border', "addon-family thin panel border")
 assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
@@ -58,6 +58,7 @@ assertContains('"Pick up quests", "pickUp"', "pickup checkbox")
 assertContains('"Only automate while Shift is held", "automationOnShift"', "Shift-required automation checkbox")
 assertContains("When enabled, Shift triggers both pickup and turn-in.", "Shift behavior note")
 assertContains('"Automatically accept open-world resurrection requests", "autoAcceptOpenWorldRes"', "open-world resurrection checkbox")
+assertContains('"Remove immolation effects on stealth or invisibility", "autoRemoveImmolationOnStealth"', "stealth immolation cleanup checkbox")
 assertContains('"MERCHANT"', "merchant section heading")
 assertContains('"Automatically sell gray items at vendors", "autoSellGray"', "gray-only merchant checkbox")
 assertContains('"Automatically repair all gear at repair vendors", "autoRepairAll"', "automatic repair checkbox")
@@ -65,10 +66,10 @@ assertContains("Sells gray-quality items only. Vendor options run independently.
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 7 then
-  error("UI must define exactly six checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 8 then
+  error("UI must define exactly seven checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")
 print("ui-movable-filled-minimap: PASS")
-print("ui-six-setting-structure: PASS")
+print("ui-seven-setting-structure: PASS")

@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.4 automates safe quest handling, optional vendor actions, and optional open-world resurrection acceptance.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.5 automates safe quest handling, optional vendor and world actions, and stealth-safe immolation cleanup.
 
 ## Features
 
@@ -19,6 +19,9 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.4 au
 - Optional automatic acceptance of pending resurrection requests in the open world.
 - Never accepts inside a battleground, dungeon, raid, or any ambiguous location.
 - Does not release your corpse.
+- Optional removal of Oil of Immolation and Immolation Aura when Stealth, Lesser Invisibility, or Invisibility starts.
+- Distinguishes Oil's `Fire Shield` from a warlock imp's same-named buff by requiring the Immolation texture.
+- Uses the exact client buff index API and does not require SuperMacro.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -38,10 +41,11 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Automatically sell gray items at vendors: off.
 - Automatically repair all gear at repair vendors: off.
 - Automatically accept open-world resurrection requests: off.
+- Remove immolation effects on stealth or invisibility: off.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.4.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.4/ShirsLazyTrix-v0.0.4.zip).
+1. Download [`ShirsLazyTrix-v0.0.5.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.5/ShirsLazyTrix-v0.0.5.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.

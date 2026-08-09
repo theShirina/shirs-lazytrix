@@ -10,6 +10,7 @@ frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:RegisterEvent("MERCHANT_SHOW")
 frame:RegisterEvent("MERCHANT_CLOSED")
 frame:RegisterEvent("RESURRECT_REQUEST")
+frame:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
 
 frame:SetScript("OnEvent", function()
   if event == "VARIABLES_LOADED" then
@@ -29,6 +30,8 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.HandleQuestLogUpdate()
   elseif event == "RESURRECT_REQUEST" then
     ShirsLazyTrix.TryAutoAcceptResurrection()
+  elseif event == "CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS" then
+    ShirsLazyTrix.HandleStealthBuffMessage(arg1)
   elseif event == "MERCHANT_SHOW" then
     ShirsLazyTrix.TryAutoRepairAll()
     ShirsLazyTrix.StartAutoGraySale()

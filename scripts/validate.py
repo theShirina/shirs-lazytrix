@@ -20,6 +20,7 @@ TESTS = [
     "tests/test_engine.lua",
     "tests/test_controller.lua",
     "tests/test_world.lua",
+    "tests/test_stealth.lua",
     "tests/test_merchant.lua",
     "tests/test_repair.lua",
     "tests/test_ui_structure.lua",
@@ -53,6 +54,7 @@ PUBLIC_FILES = {
     "tests/test_build_release.py",
     "tests/test_controller.lua",
     "tests/test_world.lua",
+    "tests/test_stealth.lua",
     "tests/test_engine.lua",
     "tests/test_event_runtime.lua",
     "tests/test_event_structure.lua",
@@ -101,7 +103,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.4\s*$", toc, re.MULTILINE), "TOC version must be 0.0.4"
+    assert re.search(r"^## Version:\s*0\.0\.5\s*$", toc, re.MULTILINE), "TOC version must be 0.0.5"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -152,9 +154,26 @@ def validate_source() -> None:
     assert "inside == nil or inside == false or inside == 0" in world, "open-world check must support exact Vanilla outside forms"
     assert 'instanceType ~= nil and instanceType ~= "none"' in world, "contradictory instance types must fail closed"
     assert "RepopMe" not in world, "pending-resurrection acceptance must never release the corpse"
+    for token in (
+        '"You gain Stealth."',
+        '"You gain Lesser Invisibility."',
+        '"You gain Invisibility."',
+        '"Fire Shield"',
+        '"Fire Shield IV"',
+        '"Oil of Immolation"',
+        '"Immolation Aura"',
+        '"spell_fire_immolation"',
+        'GetPlayerBuff(slot, "HELPFUL")',
+        "GetPlayerBuffTexture(buffIndex)",
+        "CancelPlayerBuff(buffIndex)",
+    ):
+        assert token in world, f"stealth immolation cleanup is missing exact-client behavior: {token}"
+    assert "for slot = 31, 0, -1 do" in world, "buff cancellation must scan from the highest slot down"
+    assert "SendChatMessage" not in world, "stealth cleanup must not send chat output"
+    assert 'CancelBuff("' not in world, "stealth cleanup must not depend on SuperMacro"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -163,6 +182,7 @@ def validate_source() -> None:
     assert "Sells gray-quality items only." in ui, "UI must state the gray-only merchant boundary"
     assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
     assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
+    assert "Remove immolation effects on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

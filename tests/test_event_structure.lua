@@ -1,4 +1,4 @@
--- Event wiring contract for Shir's LazyTrix 0.0.4
+-- Event wiring contract for Shir's LazyTrix 0.0.5
 
 local root = arg and arg[1] or "."
 local path = root .. "/ShirsLazyTrix.lua"
@@ -18,6 +18,7 @@ local required = {
   'RegisterEvent("MERCHANT_SHOW")',
   'RegisterEvent("MERCHANT_CLOSED")',
   'RegisterEvent("RESURRECT_REQUEST")',
+  'RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")',
   'ShirsLazyTrix.HandleGossipShow()',
   'ShirsLazyTrix.HandleQuestGreeting()',
   'ShirsLazyTrix.HandleQuestDetail()',
@@ -25,6 +26,7 @@ local required = {
   'ShirsLazyTrix.HandleQuestComplete()',
   'ShirsLazyTrix.HandleQuestLogUpdate()',
   'ShirsLazyTrix.TryAutoAcceptResurrection()',
+  'ShirsLazyTrix.HandleStealthBuffMessage(arg1)',
   'ShirsLazyTrix.StartAutoGraySale()',
   'ShirsLazyTrix.CancelGraySale()',
   'ShirsLazyTrix.SellNextGray()',

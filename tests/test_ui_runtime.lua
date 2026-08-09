@@ -114,7 +114,7 @@ function GameTooltip:Show() self.shown = true end
 function GameTooltip:Hide() self.shown = false end
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, minimapAngle = 220 }
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -122,7 +122,7 @@ ShirsLazyTrix.CreateUI()
 local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 if not settings or not minimap then error("UI frames were not constructed", 2) end
-if settings.width ~= 340 or settings.height ~= 390 then error("minimal settings geometry mismatch", 2) end
+if settings.width ~= 340 or settings.height ~= 420 then error("minimal settings geometry mismatch", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
 if minimap.width ~= 32 or minimap.height ~= 32 then error("minimap button geometry mismatch", 2) end
@@ -157,11 +157,13 @@ local shiftAutomation = named.ShirsLazyTrixShiftAutomation
 local autoSellGray = named.ShirsLazyTrixAutoSellGray
 local autoRepairAll = named.ShirsLazyTrixAutoRepairAll
 local autoAcceptOpenWorldRes = named.ShirsLazyTrixAutoAcceptOpenWorldRes
+local autoRemoveImmolationOnStealth = named.ShirsLazyTrixAutoRemoveImmolationOnStealth
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
 if not autoRepairAll then error("automatic repair checkbox missing", 2) end
 if not autoAcceptOpenWorldRes then error("open-world resurrection checkbox missing", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if not autoRemoveImmolationOnStealth then error("stealth immolation cleanup checkbox missing", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -182,6 +184,10 @@ autoAcceptOpenWorldRes.checked = 1
 this = autoAcceptOpenWorldRes
 autoAcceptOpenWorldRes.scripts.OnClick()
 if ShirsLazyTrixDB.autoAcceptOpenWorldRes ~= true then error("open-world resurrection checkbox did not save true", 2) end
+autoRemoveImmolationOnStealth.checked = 1
+this = autoRemoveImmolationOnStealth
+autoRemoveImmolationOnStealth.scripts.OnClick()
+if ShirsLazyTrixDB.autoRemoveImmolationOnStealth ~= true then error("stealth immolation cleanup checkbox did not save true", 2) end
 
 print("ui-runtime-construction: PASS")
 print("ui-runtime-minimap-drag: PASS")

@@ -5,6 +5,7 @@ local DEFAULTS = {
   autoSellGray = false,
   autoRepairAll = false,
   autoAcceptOpenWorldRes = false,
+  autoRemoveImmolationOnStealth = false,
   minimapAngle = 220,
 }
 
@@ -144,6 +145,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.autoAcceptOpenWorldRes) ~= "boolean" then
     ShirsLazyTrixDB.autoAcceptOpenWorldRes = DEFAULTS.autoAcceptOpenWorldRes
+  end
+  if type(ShirsLazyTrixDB.autoRemoveImmolationOnStealth) ~= "boolean" then
+    ShirsLazyTrixDB.autoRemoveImmolationOnStealth = DEFAULTS.autoRemoveImmolationOnStealth
   end
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
      ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then

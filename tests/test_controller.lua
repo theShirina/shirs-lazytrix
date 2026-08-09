@@ -80,6 +80,7 @@ assertEqual(ShirsLazyTrixDB.automationOnShift, false, "Shift-required automation
 assertEqual(ShirsLazyTrixDB.autoSellGray, false, "automatic gray sale default")
 assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "automatic repair default")
 assertEqual(ShirsLazyTrixDB.autoAcceptOpenWorldRes, false, "open-world resurrection default")
+assertEqual(ShirsLazyTrixDB.autoRemoveImmolationOnStealth, false, "stealth immolation cleanup default")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
 
 ShirsLazyTrixDB = {
@@ -93,6 +94,7 @@ ShirsLazyTrixDB = {
   autoSellGray = "invalid",
   autoRepairAll = "invalid",
   autoAcceptOpenWorldRes = "invalid",
+  autoRemoveImmolationOnStealth = "invalid",
   minimapAngle = "invalid",
 }
 ShirsLazyTrix.EnsureDatabase()
@@ -102,6 +104,7 @@ assertEqual(ShirsLazyTrixDB.automationOnShift, true, "temporary turn-in-only Shi
 assertEqual(ShirsLazyTrixDB.autoSellGray, false, "invalid automatic gray sale setting repairs")
 assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "invalid automatic repair setting repairs")
 assertEqual(ShirsLazyTrixDB.autoAcceptOpenWorldRes, false, "invalid open-world resurrection setting repairs")
+assertEqual(ShirsLazyTrixDB.autoRemoveImmolationOnStealth, false, "invalid stealth immolation cleanup setting repairs")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "invalid minimap angle repairs")
 assertEqual(ShirsLazyTrixDB.turnInNormal, nil, "old normal turn-in key removed")

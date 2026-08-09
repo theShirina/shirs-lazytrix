@@ -2,7 +2,7 @@
 ## Title: Shir's LazyTrix
 ## Notes: Minimal quest, vendor, and world automation for Microbot.
 ## Author: Shirina
-## Version: 0.0.4
+## Version: 0.0.5
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua

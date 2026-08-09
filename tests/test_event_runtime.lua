@@ -28,6 +28,9 @@ ShirsLazyTrix = {
   TryAutoAcceptResurrection = function()
     table.insert(merchantOrder, "resurrection")
   end,
+  HandleStealthBuffMessage = function(message)
+    table.insert(merchantOrder, "stealth:" .. tostring(message))
+  end,
   ToggleSettings = function() end,
   TryAutoRepairAll = function()
     table.insert(merchantOrder, "repair")
@@ -56,11 +59,18 @@ local frame = frames[1]
 assert(frame.events.MERCHANT_SHOW, "MERCHANT_SHOW is not registered")
 assert(frame.events.MERCHANT_CLOSED, "MERCHANT_CLOSED is not registered")
 assert(frame.events.RESURRECT_REQUEST, "RESURRECT_REQUEST is not registered")
+assert(frame.events.CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS, "stealth buff chat event is not registered")
 assert(type(frame.scripts.OnUpdate) == "function", "merchant update driver is missing")
 
 event = "RESURRECT_REQUEST"
 frame.scripts.OnEvent()
 assert(merchantOrder[1] == "resurrection", "pending resurrection event was not dispatched")
+merchantOrder = {}
+
+event = "CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS"
+arg1 = "You gain Stealth."
+frame.scripts.OnEvent()
+assert(merchantOrder[1] == "stealth:You gain Stealth.", "stealth buff message was not dispatched")
 merchantOrder = {}
 
 event = "MERCHANT_SHOW"
