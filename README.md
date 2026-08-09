@@ -25,6 +25,8 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Optionally expands class and profession trainers from 10/11 visible rows to 22.
 - Adds a manual Train All button that buys one safe service per trainer update.
 - Checks the full plan cost before spending and skips services that consume a profession slot.
+- Optionally selects the client-typed trainer gossip entry without matching class-specific text.
+- Holding Shift always leaves trainer gossip open for talent resets and other choices.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -46,6 +48,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Automatically accept open-world resurrection requests: off.
 - Remove immolation effects on stealth or invisibility: off.
 - Expand trainer windows and add Train All: off.
+- Automatically open trainer services: off.
 
 ## Installation
 

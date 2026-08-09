@@ -17,7 +17,9 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.EnsureDatabase()
     ShirsLazyTrix.CreateUI()
   elseif event == "GOSSIP_SHOW" then
-    ShirsLazyTrix.HandleGossipShow()
+    if not ShirsLazyTrix.TryAutoOpenTrainer() then
+      ShirsLazyTrix.HandleGossipShow()
+    end
   elseif event == "QUEST_GREETING" then
     ShirsLazyTrix.HandleQuestGreeting()
   elseif event == "QUEST_DETAIL" then

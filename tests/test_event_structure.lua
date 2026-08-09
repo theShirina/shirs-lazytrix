@@ -20,6 +20,7 @@ local required = {
   'RegisterEvent("RESURRECT_REQUEST")',
   'RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")',
   'ShirsLazyTrix.HandleGossipShow()',
+  'ShirsLazyTrix.TryAutoOpenTrainer()',
   'ShirsLazyTrix.HandleQuestGreeting()',
   'ShirsLazyTrix.HandleQuestDetail()',
   'ShirsLazyTrix.HandleQuestProgress()',

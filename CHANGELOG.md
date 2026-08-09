@@ -7,6 +7,8 @@
 - Added a manual Train All button with a full-plan affordability check.
 - Buys one service per trainer update and stops when the trainer closes or results stop changing.
 - Skips services that consume a profession slot or return malformed cost data.
+- Added a separate default-off option that opens the exact trainer-type gossip entry.
+- Holding Shift always bypasses trainer gossip selection so talent reset choices remain available.
 
 ## 0.0.5
 

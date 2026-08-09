@@ -19,6 +19,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Automatically accept open-world resurrection requests
 - Remove immolation effects on stealth or invisibility
 - Expand trainer windows and add Train All
+- Automatically open trainer services
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -41,3 +42,5 @@ STEALTH AND INVISIBILITY
 
 TRAINERS
 "Expand trainer windows and add Train All" is off by default. When enabled, class and profession trainers show 22 rows and a manual Train All button. LazyTrix checks the full cost first, buys one service per trainer update, and skips entries that consume a profession slot. Closing the trainer stops the queue.
+
+"Automatically open trainer services" is off by default. When enabled, LazyTrix selects the trainer-type gossip entry without relying on class-specific wording. Hold Shift while speaking to the trainer to keep the gossip menu open for talent resets and other choices.

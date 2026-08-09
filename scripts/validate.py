@@ -149,6 +149,10 @@ def validate_source() -> None:
         "validPointCost(cp1)",
         "validPointCost(cp2)",
         "pcall(BuyTrainerService, index)",
+        "GetGossipOptions()",
+        'options[i] == "trainer"',
+        "pcall(SelectGossipOption, found)",
+        "held == true or held == 1",
         "ClassTrainer_SetToTradeSkillTrainer = function()",
         "ClassTrainer_SetToClassTrainer = function()",
         'CreateFrame("Button", name, ClassTrainerFrame, "ClassTrainerSkillButtonTemplate")',
@@ -199,7 +203,7 @@ def validate_source() -> None:
     assert 'CancelBuff("' not in world, "stealth cleanup must not depend on SuperMacro"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "enhanceTrainers"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "enhanceTrainers", "autoOpenTrainers"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -210,6 +214,7 @@ def validate_source() -> None:
     assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
     assert "Remove immolation effects on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
     assert "Expand trainer windows and add Train All" in ui, "UI must expose trainer enhancement"
+    assert "Automatically open trainer services" in ui, "UI must expose automatic trainer gossip"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

@@ -16,10 +16,19 @@ local cancels = 0
 local ticks = 0
 local saleActive = false
 local merchantOrder = {}
+local trainerGossipConsumed = false
+local gossipHandled = 0
 ShirsLazyTrix = {
   EnsureDatabase = function() end,
   CreateUI = function() end,
-  HandleGossipShow = function() end,
+  HandleGossipShow = function()
+    gossipHandled = gossipHandled + 1
+    table.insert(merchantOrder, "quest-gossip")
+  end,
+  TryAutoOpenTrainer = function()
+    table.insert(merchantOrder, "trainer-gossip")
+    return trainerGossipConsumed
+  end,
   HandleQuestGreeting = function() end,
   HandleQuestDetail = function() end,
   HandleQuestProgress = function() end,
@@ -71,6 +80,18 @@ event = "CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS"
 arg1 = "You gain Stealth."
 frame.scripts.OnEvent()
 assert(merchantOrder[1] == "stealth:You gain Stealth.", "stealth buff message was not dispatched")
+merchantOrder = {}
+
+event = "GOSSIP_SHOW"
+trainerGossipConsumed = true
+frame.scripts.OnEvent()
+assert(table.getn(merchantOrder) == 1 and merchantOrder[1] == "trainer-gossip" and gossipHandled == 0,
+  "selected trainer gossip must suppress quest gossip handling")
+merchantOrder = {}
+trainerGossipConsumed = false
+frame.scripts.OnEvent()
+assert(table.getn(merchantOrder) == 2 and merchantOrder[1] == "trainer-gossip" and merchantOrder[2] == "quest-gossip" and gossipHandled == 1,
+  "unselected trainer gossip must continue to quest gossip handling")
 merchantOrder = {}
 
 event = "MERCHANT_SHOW"

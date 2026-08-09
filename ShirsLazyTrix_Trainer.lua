@@ -263,6 +263,32 @@ local function trainerApisAvailable()
     type(BuyTrainerService) == "function"
 end
 
+function ShirsLazyTrix.TryAutoOpenTrainer()
+  if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
+  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.autoOpenTrainers) then return false end
+  if type(IsShiftKeyDown) == "function" then
+    local held = IsShiftKeyDown()
+    if held == true or held == 1 then return false end
+  end
+  if type(GetGossipOptions) ~= "function" or type(SelectGossipOption) ~= "function" then return false end
+
+  local options = { GetGossipOptions() }
+  local size = table.getn(options)
+  if math.mod(size, 2) ~= 0 then return false end
+  local found = nil
+  local count = 0
+  local i
+  for i = 2, size, 2 do
+    if options[i] == "trainer" then
+      count = count + 1
+      found = i / 2
+    end
+  end
+  if count ~= 1 or not found then return false end
+  local ok = pcall(SelectGossipOption, found)
+  return ok and true or false
+end
+
 function ShirsLazyTrix.GetTrainAllPlan()
   if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or not trainerApisAvailable() then
     return 0, 0, nil, nil

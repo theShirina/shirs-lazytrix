@@ -48,6 +48,8 @@ Microbot's stock Interface `11200` `ClassTrainerFrame.lua` shows 10 profession r
 
 The installed Leatrix Plus 1.13.43 trainer layout declares Interface `11303` and uses later APIs and later-client artwork, so it is behavior evidence only. The installed SuperMacro 3.14a contains an exact-client bulk trainer loop but has no located licence and is also study-only. LazyTrix uses original Lua 5.0.3 code: it creates stock trainer-row templates up to 22, wraps the two stock mode functions without `hooksecurefunc`, and restores the expanded row count after each update. Train All accepts only exact `available` services with bounded copper values and zero profession-point costs. It checks the entire plan against current money, submits one service, waits for `TRAINER_UPDATE`, rescans, and stops on closure or an unchanged result. No Leatrix or SuperMacro source or artwork is copied.
 
+Stock `GossipFrame.lua` passes text/type pairs from `GetGossipOptions()` to the UI and calls `SelectGossipOption()` with the pair index. LazyTrix's separate default-off shortcut requires exactly one option whose type is the exact lowercase value `trainer`; it does not match class-specific or localized text. Missing APIs, malformed pairs, and several trainer entries fail closed. Physical Shift always bypasses this shortcut before quest gossip handling, leaving talent reset and other gossip choices available.
+
 ## Settings and minimap precedents
 
 | Source | Pin | Client and evidence | Licence | Reuse decision |

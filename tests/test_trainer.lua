@@ -6,6 +6,9 @@ local createdSkillRows = 0
 local bought = {}
 local services = {}
 local playerMoney = 0
+local gossipOptions = {}
+local selectedGossip = {}
+local shiftDown = false
 
 local function makeFrame(name)
   local frame = {
@@ -118,6 +121,9 @@ end
 function BuyTrainerService(index) table.insert(bought, index) end
 function ExpandTrainerSkillLine() end
 function ClassTrainerFrame_Update() end
+function IsShiftKeyDown() return shiftDown and 1 or nil end
+function GetGossipOptions() return unpack(gossipOptions) end
+function SelectGossipOption(index) table.insert(selectedGossip, index) end
 function ClassTrainer_SetToTradeSkillTrainer()
   CLASS_TRAINER_SKILLS_DISPLAYED = 10
   ClassTrainerListScrollFrame:SetHeight(168)
@@ -130,10 +136,36 @@ function ClassTrainer_SetToClassTrainer()
 end
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { enhanceTrainers = false }
+ShirsLazyTrixDB = { enhanceTrainers = false, autoOpenTrainers = false }
 function ShirsLazyTrix.EnsureDatabase() end
 
 assert(loadfile(root .. "/ShirsLazyTrix_Trainer.lua"))()
+
+-- Automatic trainer gossip selection is default-off and text-independent.
+gossipOptions = { "Teach me the ways of my class", "trainer" }
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == false and table.getn(selectedGossip) == 0,
+  "disabled trainer gossip automation selected an option")
+ShirsLazyTrixDB.autoOpenTrainers = true
+gossipOptions = { "Any localized trainer wording", "trainer" }
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == true and selectedGossip[1] == 1,
+  "exact trainer gossip type was not selected")
+selectedGossip = {}
+shiftDown = true
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == false and table.getn(selectedGossip) == 0,
+  "Shift did not preserve the trainer gossip menu")
+shiftDown = false
+gossipOptions = { "Reset my talents", "gossip", "Train me", "trainer", "Other trainer", "trainer" }
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == false and table.getn(selectedGossip) == 0,
+  "ambiguous trainer gossip menu did not fail closed")
+gossipOptions = { "Reset my talents", "gossip", "Train me", "trainer" }
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == true and selectedGossip[1] == 2,
+  "trainer gossip pair index was not preserved")
+selectedGossip = {}
+local savedGossipApi = GetGossipOptions
+GetGossipOptions = nil
+assert(ShirsLazyTrix.TryAutoOpenTrainer() == false and table.getn(selectedGossip) == 0,
+  "missing gossip API did not fail closed")
+GetGossipOptions = savedGossipApi
 
 -- Disabled mode must leave the stock frame alone.
 assert(ShirsLazyTrix.RefreshTrainerFeature() == false, "disabled trainer enhancement must return false")
