@@ -8,6 +8,8 @@ local CLASS_FRAME_HEIGHT = 596
 local TRADE_FRAME_HEIGHT = 612
 local CLASS_TRAINER_HORIZONTAL_Y = -355
 local TRADE_TRAINER_HORIZONTAL_Y = -387
+local TRAINER_CANCEL_X = -39
+local TRAINER_BUTTON_BOTTOM = 81
 local TRAIN_ALL_X = 100
 local TRAIN_ALL_Y = -70
 local TRAIN_ALL_COMPACT_X = 69
@@ -248,7 +250,7 @@ local function applyExpandedModeGeometry()
   ClassTrainerListScrollFrame:SetHeight(listHeight)
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
   ClassTrainerDetailScrollFrame:SetHeight(detailHeight)
-  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 47)
+  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", TRAINER_CANCEL_X, TRAINER_BUTTON_BOTTOM)
   setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
   if ClassTrainerHorizontalBarLeft then
     setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, horizontalY)

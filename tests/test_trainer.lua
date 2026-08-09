@@ -209,6 +209,13 @@ assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.
   "downward trainer list geometry mismatch")
 assert(ClassTrainerDetailScrollFrame.width == 296 and ClassTrainerDetailScrollFrame.height == 151,
   "downward trainer detail geometry mismatch")
+assert(ClassTrainerCancelButton.point[1] == "BOTTOMRIGHT" and ClassTrainerCancelButton.point[2] == ClassTrainerFrame and
+  ClassTrainerCancelButton.point[3] == "BOTTOMRIGHT" and ClassTrainerCancelButton.point[4] == -39 and
+  ClassTrainerCancelButton.point[5] == 81 and
+  ClassTrainerTrainButton.point[1] == "RIGHT" and ClassTrainerTrainButton.point[2] == ClassTrainerCancelButton and
+  ClassTrainerTrainButton.point[3] == "LEFT" and ClassTrainerTrainButton.point[4] == -1 and
+  ClassTrainerTrainButton.point[5] == 0,
+  "Train and Exit buttons are not centered in the stock artwork sockets")
 assert(ClassTrainerDetailScrollFrame.point[1] == "TOPLEFT" and ClassTrainerDetailScrollFrame.point[2] == ClassTrainerListScrollFrame and
   ClassTrainerDetailScrollFrame.point[3] == "BOTTOMLEFT" and ClassTrainerDetailScrollFrame.point[4] == 0 and ClassTrainerDetailScrollFrame.point[5] == -8,
   "detail pane must remain below the trainer list")
