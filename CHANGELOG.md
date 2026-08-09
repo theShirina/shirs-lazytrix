@@ -5,9 +5,10 @@
 - Added a default-off downward layout for class and profession trainers.
 - Trainer expansion and Train All now have separate default-off settings and work independently.
 - Increased the visible trainer list to 18 rows while preserving stock width and the detail pane beneath it.
-- Fills the stock artwork gap behind added rows while leaving pfUI's backdrop in charge when enabled.
+- Extends the exact stock bottom-left and bottom-right artwork through the added middle band, while leaving pfUI's backdrop in charge when enabled.
 - Refreshes Train All after Blizzard makes its load-on-demand trainer frame visible.
 - Added a manual Train All button with a fixed click-time service and cost snapshot.
+- Places Train All in the measured top control slot, compacting it beside All when the stock checkbox filter strip is present.
 - Leaves name-only services manual without disabling safe ranked services.
 - Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.

@@ -3,7 +3,9 @@ local TRAINER_LIST_HEIGHT = 296
 local CLASS_FRAME_HEIGHT = 596
 local TRADE_FRAME_HEIGHT = 612
 local TRAINER_HORIZONTAL_Y = -387
-local TRAINER_ACTION_BOTTOM = 47
+local TRAIN_ALL_X = 100
+local TRAIN_ALL_Y = -70
+local TRAIN_ALL_COMPACT_X = 69
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
@@ -24,6 +26,7 @@ local trainAllSnapshot = nil
 local trainAllPosition = 0
 local trainAllSubmitting = false
 local trainAllSawUpdate = false
+local trainAllCompact = false
 local trainerShowPending = false
 local layoutApplied = false
 local originalLayout = nil
@@ -135,20 +138,36 @@ local function ensureTrainerRows()
 end
 
 local function updateStockBackground(frameHeight)
-  local texture = getglobal("ShirsLazyTrixTrainerStockBackground")
-  if not texture and ClassTrainerFrame and type(ClassTrainerFrame.CreateTexture) == "function" then
-    texture = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerStockBackground", "BACKGROUND")
-    texture:SetTexture(0, 0, 0, 1)
+  if not ClassTrainerFrame or type(ClassTrainerFrame.CreateTexture) ~= "function" then return end
+  local left = getglobal("ShirsLazyTrixTrainerStockBackgroundLeft")
+  local right = getglobal("ShirsLazyTrixTrainerStockBackgroundRight")
+  if not left then
+    left = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerStockBackgroundLeft", "BORDER")
+    left:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotLeft")
   end
-  if not texture then return end
-  texture:ClearAllPoints()
-  texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, -256)
-  texture:SetWidth(331)
-  texture:SetHeight(frameHeight - 512)
+  if not right then
+    right = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerStockBackgroundRight", "BORDER")
+    right:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotRight")
+  end
+  local gap = frameHeight - 512
+  left:ClearAllPoints()
+  left:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 0, -256)
+  left:SetWidth(256)
+  left:SetHeight(gap)
+  left:SetTexCoord(0, 1, 0, gap / 256)
+  right:ClearAllPoints()
+  right:SetPoint("TOPRIGHT", ClassTrainerFrame, "TOPRIGHT", 0, -256)
+  right:SetWidth(128)
+  right:SetHeight(gap)
+  right:SetTexCoord(0, 1, 0, gap / 256)
+  local old = getglobal("ShirsLazyTrixTrainerStockBackground")
+  if old and type(old.Hide) == "function" then old:Hide() end
   if type(SkinCollapseButton) == "function" then
-    texture:Hide()
+    left:Hide()
+    right:Hide()
   else
-    texture:Show()
+    left:Show()
+    right:Show()
   end
 end
 
@@ -166,14 +185,35 @@ local function buttonTooltip()
   GameTooltip:Show()
 end
 
+local function stockSortFrameVisible()
+  local frame = getglobal("ClassTrainerSortFrame")
+  if not frame then return false end
+  if type(frame.IsShown) ~= "function" then return true end
+  local ok, shown = pcall(frame.IsShown, frame)
+  if not ok then return true end
+  return shown == true or shown == 1
+end
+
+local function positionTrainAllButton(button)
+  trainAllCompact = stockSortFrameVisible()
+  button:ClearAllPoints()
+  if trainAllCompact then
+    button:SetWidth(22)
+    button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_COMPACT_X, TRAIN_ALL_Y)
+    button:SetText("+")
+  else
+    button:SetWidth(90)
+    button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_X, TRAIN_ALL_Y)
+    button:SetText("Train All")
+  end
+end
+
 local function createTrainAllButton()
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if button then return button end
   button = CreateFrame("Button", "ShirsLazyTrixTrainAllButton", ClassTrainerFrame, "UIPanelButtonTemplate")
-  button:SetWidth(90)
   button:SetHeight(22)
-  button:SetText("Train All")
-  button:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM)
+  positionTrainAllButton(button)
   button:SetScript("OnClick", function() ShirsLazyTrix.StartTrainAll() end)
   button:SetScript("OnEnter", buttonTooltip)
   button:SetScript("OnLeave", function()
@@ -199,14 +239,14 @@ local function applyExpandedModeGeometry()
   ClassTrainerListScrollFrame:SetHeight(TRAINER_LIST_HEIGHT)
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
   ClassTrainerDetailScrollFrame:SetHeight(trade and 135 or 119)
-  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, TRAINER_ACTION_BOTTOM)
+  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 47)
   setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
   if ClassTrainerHorizontalBarLeft then
     setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, TRAINER_HORIZONTAL_Y)
     if type(ClassTrainerHorizontalBarLeft.Show) == "function" then ClassTrainerHorizontalBarLeft:Show() end
   end
   local button = getglobal("ShirsLazyTrixTrainAllButton")
-  if button then setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM) end
+  if button then positionTrainAllButton(button) end
   if type(UIPanelWindows) == "table" and type(UIPanelWindows["ClassTrainerFrame"]) == "table" then
     UIPanelWindows["ClassTrainerFrame"].height = height
   end
@@ -254,6 +294,10 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   if backdrop then backdrop:Hide() end
   local stockBackground = getglobal("ShirsLazyTrixTrainerStockBackground")
   if stockBackground then stockBackground:Hide() end
+  local stockBackgroundLeft = getglobal("ShirsLazyTrixTrainerStockBackgroundLeft")
+  if stockBackgroundLeft then stockBackgroundLeft:Hide() end
+  local stockBackgroundRight = getglobal("ShirsLazyTrixTrainerStockBackgroundRight")
+  if stockBackgroundRight then stockBackgroundRight:Hide() end
   if type(IsTradeskillTrainer) == "function" and IsTradeskillTrainer() then
     CLASS_TRAINER_SKILLS_DISPLAYED = 10
   else
@@ -279,7 +323,7 @@ function ShirsLazyTrix.RefreshTrainerFeature()
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if bulk and trainerFramesAvailable() then
     button = createTrainAllButton()
-    setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM)
+    positionTrainAllButton(button)
     button:Show()
     ShirsLazyTrix.UpdateTrainAllButton()
   else
@@ -411,14 +455,20 @@ function ShirsLazyTrix.UpdateTrainAllButton()
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if not button then return end
   if trainAllActive then
-    button:SetText("Training...")
+    if trainAllCompact then button:SetText("...") else button:SetText("Training...") end
     button:Disable()
     return
   end
   local count, total = ShirsLazyTrix.GetTrainAllPlan()
   local ok, money = false, nil
   if type(GetMoney) == "function" then ok, money = pcall(GetMoney) end
-  if count > 0 then button:SetText("Train All (" .. count .. ")") else button:SetText("Train All") end
+  if trainAllCompact then
+    if count > 0 then button:SetText(tostring(count)) else button:SetText("+") end
+  elseif count > 0 then
+    button:SetText("Train All (" .. count .. ")")
+  else
+    button:SetText("Train All")
+  end
   if count > 0 and ok and validCopper(money) and total <= money then
     button:Enable()
   else
@@ -677,12 +727,14 @@ function ShirsLazyTrix.InstallTrainerHooks()
     if layoutApplied and expandedTrainerEnabled() then
       applyExpandedModeGeometry()
     end
+    ShirsLazyTrix.UpdateTrainAllButton()
   end
   ClassTrainer_SetToClassTrainer = function()
     originalClassMode()
     if layoutApplied and expandedTrainerEnabled() then
       applyExpandedModeGeometry()
     end
+    ShirsLazyTrix.UpdateTrainAllButton()
   end
   trainerHooksInstalled = true
   return true

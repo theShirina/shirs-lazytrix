@@ -47,6 +47,7 @@ local function makeFrame(name)
   function frame:SetBackdropColor(...) self.backdropColor = arg end
   function frame:SetBackdropBorderColor(...) self.backdropBorderColor = arg end
   function frame:SetTexture(...) self.texture = arg end
+  function frame:SetTexCoord(...) self.texCoord = arg end
 
   function frame:CreateTexture(childName, layer)
     local texture = makeFrame(childName)
@@ -230,33 +231,39 @@ ShirsLazyTrixDB.trainAll = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "combined trainer features did not apply")
 assert(named.ShirsLazyTrixTrainAllButton and named.ShirsLazyTrixTrainAllButton.shown == true,
   "combined mode did not show Train All")
-assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25 and
-  named.ShirsLazyTrixTrainAllButton.point[5] == 47,
-  "Train All must remain inside the stock-width frame")
+assert(named.ShirsLazyTrixTrainAllButton.point[1] == "TOPLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 100 and
+  named.ShirsLazyTrixTrainAllButton.point[5] == -70,
+  "Train All must occupy the free stock toolbar slot")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainerStockBackground and named.ShirsLazyTrixTrainerStockBackground.shown == true and
-  named.ShirsLazyTrixTrainerStockBackground.layer == "BACKGROUND" and
-  table.getn(named.ShirsLazyTrixTrainerStockBackground.points) == 1 and
-  named.ShirsLazyTrixTrainerStockBackground.point[1] == "TOPLEFT" and
-  named.ShirsLazyTrixTrainerStockBackground.point[2] == ClassTrainerFrame and
-  named.ShirsLazyTrixTrainerStockBackground.point[4] == 15 and
-  named.ShirsLazyTrixTrainerStockBackground.point[5] == -256 and
-  named.ShirsLazyTrixTrainerStockBackground.width == 331 and
-  named.ShirsLazyTrixTrainerStockBackground.height == 84,
-  "stock-only expansion did not fill the fixed-artwork gap")
+local stockLeft = named.ShirsLazyTrixTrainerStockBackgroundLeft
+local stockRight = named.ShirsLazyTrixTrainerStockBackgroundRight
+assert(stockLeft and stockRight and stockLeft.shown == true and stockRight.shown == true and
+  stockLeft.layer == "BORDER" and stockRight.layer == "BORDER" and
+  stockLeft.texture[1] == "Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotLeft" and
+  stockRight.texture[1] == "Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotRight" and
+  stockLeft.point[1] == "TOPLEFT" and stockLeft.point[2] == ClassTrainerFrame and
+  stockLeft.point[4] == 0 and stockLeft.point[5] == -256 and
+  stockRight.point[1] == "TOPRIGHT" and stockRight.point[2] == ClassTrainerFrame and
+  stockRight.point[4] == 0 and stockRight.point[5] == -256 and
+  stockLeft.width == 256 and stockRight.width == 128 and
+  stockLeft.height == 84 and stockRight.height == 84 and
+  stockLeft.texCoord[1] == 0 and stockLeft.texCoord[2] == 1 and stockLeft.texCoord[3] == 0 and
+  stockLeft.texCoord[4] == 0.328125 and stockRight.texCoord[4] == 0.328125,
+  "stock-only expansion did not extend the exact frame artwork through the gap")
 SkinCollapseButton = savedSkinCollapseButton
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainerStockBackground.shown == false,
-  "stock background was not hidden when pfUI owned the trainer backdrop")
+assert(stockLeft.shown == false and stockRight.shown == false,
+  "stock artwork extensions were not hidden when pfUI owned the trainer backdrop")
 assert(createdSkillRows == 7, "reapplying trainer layout duplicated rows")
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
 assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 612 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 135,
   "profession trainer mode reset the expanded row count")
-assert(named.ShirsLazyTrixTrainerStockBackground.width == 331 and named.ShirsLazyTrixTrainerStockBackground.height == 100,
-  "profession stock filler did not retain bounded interior geometry")
+assert(stockLeft.width == 256 and stockRight.width == 128 and stockLeft.height == 100 and stockRight.height == 100 and
+  stockLeft.texCoord[4] == 0.390625 and stockRight.texCoord[4] == 0.390625,
+  "profession stock artwork extensions did not retain exact bounded geometry")
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
 assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 596 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
@@ -296,8 +303,42 @@ ShirsLazyTrixDB.expandTrainers = false
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "Train All-only mode did not remain active")
 assert(ClassTrainerFrame.height == 512 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
   "Train All-only mode did not restore stock geometry")
-assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTrainAllButton.enabled == true,
-  "Train All-only mode hid or disabled its button")
+assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTrainAllButton.enabled == true and
+  named.ShirsLazyTrixTrainAllButton.point[1] == "TOPLEFT" and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 100 and named.ShirsLazyTrixTrainAllButton.point[5] == -70,
+  "Train All-only mode did not keep its button in the stock toolbar")
+
+-- Exact stock checkbox filters occupy x=92..344; compact Train All into x=69..91.
+ClassTrainerSortFrame = makeFrame("ClassTrainerSortFrame")
+named.ClassTrainerSortFrame = ClassTrainerSortFrame
+ShirsLazyTrix.RefreshTrainerFeature()
+assert(named.ShirsLazyTrixTrainAllButton.width == 22 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 69 and
+  named.ShirsLazyTrixTrainAllButton.text == "2",
+  "stock checkbox filters collided with the compact Train All slot")
+ClassTrainerSortFrame.shown = false
+ShirsLazyTrix.RefreshTrainerFeature()
+assert(named.ShirsLazyTrixTrainAllButton.width == 90 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 100 and
+  named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "dropdown filter layout did not restore the full Train All button")
+
+-- Direct trainer mode setters must preserve the recomputed compact/full state text.
+ShirsLazyTrixDB.expandTrainers = true
+ClassTrainerSortFrame.shown = true
+ShirsLazyTrix.RefreshTrainerFeature()
+tradeskillTrainer = true
+ClassTrainer_SetToTradeSkillTrainer()
+assert(named.ShirsLazyTrixTrainAllButton.width == 22 and named.ShirsLazyTrixTrainAllButton.text == "2",
+  "profession mode setter left stale compact Train All text")
+ClassTrainerSortFrame.shown = false
+ShirsLazyTrix.RefreshTrainerFeature()
+tradeskillTrainer = false
+ClassTrainer_SetToClassTrainer()
+assert(named.ShirsLazyTrixTrainAllButton.width == 90 and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "class mode setter left stale full Train All text")
+ShirsLazyTrixDB.expandTrainers = false
+ShirsLazyTrix.RefreshTrainerFeature()
 
 -- LazyTrix may receive TRAINER_SHOW before Blizzard's frame handler makes the panel visible.
 ClassTrainerFrame.shown = false

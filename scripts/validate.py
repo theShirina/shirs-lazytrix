@@ -142,7 +142,9 @@ def validate_source() -> None:
         "TRAINER_LIST_HEIGHT = 296",
         "CLASS_FRAME_HEIGHT = 596",
         "TRADE_FRAME_HEIGHT = 612",
-        "TRAINER_ACTION_BOTTOM = 47",
+        "TRAIN_ALL_X = 100",
+        "TRAIN_ALL_Y = -70",
+        "TRAIN_ALL_COMPACT_X = 69",
         "expandedTrainerEnabled()",
         "trainAllEnabled()",
         'RegisterEvent("TRAINER_SHOW")',
@@ -168,10 +170,18 @@ def validate_source() -> None:
         "moneyCost ~= entry.money",
         "trainAllSubmitting",
         "trainerVisible()",
-        'CreateTexture("ShirsLazyTrixTrainerStockBackground", "BACKGROUND")',
-        'texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, -256)',
-        "texture:SetWidth(331)",
-        "texture:SetHeight(frameHeight - 512)",
+        'CreateTexture("ShirsLazyTrixTrainerStockBackgroundLeft", "BORDER")',
+        'CreateTexture("ShirsLazyTrixTrainerStockBackgroundRight", "BORDER")',
+        'left:SetTexture("Interface\\\\ClassTrainerFrame\\\\UI-ClassTrainer-BotLeft")',
+        'right:SetTexture("Interface\\\\ClassTrainerFrame\\\\UI-ClassTrainer-BotRight")',
+        'left:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 0, -256)',
+        'right:SetPoint("TOPRIGHT", ClassTrainerFrame, "TOPRIGHT", 0, -256)',
+        "left:SetTexCoord(0, 1, 0, gap / 256)",
+        "right:SetTexCoord(0, 1, 0, gap / 256)",
+        'button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_X, TRAIN_ALL_Y)',
+        'getglobal("ClassTrainerSortFrame")',
+        "button:SetWidth(22)",
+        'button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_COMPACT_X, TRAIN_ALL_Y)',
         "trainerShowPending and trainerVisible()",
         "if ShirsLazyTrix.InstallTrainerHooks then ShirsLazyTrix.InstallTrainerHooks() end",
         "pcall(SkinCollapseButton, button)",
@@ -190,6 +200,7 @@ def validate_source() -> None:
     assert "hooksecurefunc" not in trainer, "trainer feature must not use the later secure-hook API"
     assert "SetWidth(714)" not in trainer, "trainer layout must preserve stock width"
     assert 'CreateFrame("Frame", "ShirsLazyTrixTrainerDetailsBackdrop"' not in trainer, "trainer detail pane must remain below the list"
+    assert "SetTexture(0, 0, 0, 1)" not in trainer, "expanded trainer must not use a flat black gap filler"
     assert "MAX_COPPER = 2147483647" in trainer, "trainer cost guard must use the Vanilla signed range"
 
     merchant = (ROOT / "ShirsLazyTrix_Merchant.lua").read_text(encoding="utf-8")
