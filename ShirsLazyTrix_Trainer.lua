@@ -18,6 +18,10 @@ local lastPurchaseMoney = nil
 local trainAllElapsed = 0
 local trainAllStuckElapsed = 0
 local trainAllRetryCount = 0
+local trainAllSnapshot = nil
+local trainAllPosition = 0
+local trainAllSubmitting = false
+local trainAllSawUpdate = false
 local layoutApplied = false
 local originalLayout = nil
 local trainerHooksInstalled = false
@@ -29,11 +33,16 @@ local function exactBoolean(value)
 end
 
 local function validCopper(value)
-  return type(value) == "number" and value >= 0 and value <= MAX_COPPER
+  if type(value) ~= "number" then return false end
+  local text = string.lower(tostring(value))
+  if string.find(text, "nan", 1, true) or string.find(text, "inf", 1, true) or string.find(text, "ind", 1, true) then return false end
+  if value < 0 or value > MAX_COPPER then return false end
+  local ok, whole = pcall(math.floor, value)
+  return ok and whole == value
 end
 
 local function validPointCost(value)
-  return type(value) == "number" and value == 0
+  return validCopper(value) and value == 0
 end
 
 local function framePoint(frame)
@@ -108,7 +117,8 @@ local function ensureTrainerRows()
       button = CreateFrame("Button", name, ClassTrainerFrame, "ClassTrainerSkillButtonTemplate")
       button:SetID(i)
       button:Hide()
-      setPoint(button, "TOPLEFT", previous, "BOTTOMLEFT", 0, 1)
+      setPoint(button, "TOPLEFT", previous, "BOTTOMLEFT", 0, 0)
+      if type(SkinCollapseButton) == "function" then pcall(SkinCollapseButton, button) end
     end
   end
 end
@@ -243,6 +253,77 @@ local function trainerApisAvailable()
     type(BuyTrainerService) == "function"
 end
 
+local function trainerVisible()
+  if not ClassTrainerFrame or type(ClassTrainerFrame.IsVisible) ~= "function" then return false end
+  local ok, visible = pcall(ClassTrainerFrame.IsVisible, ClassTrainerFrame)
+  return ok and (visible == true or visible == 1)
+end
+
+local function safeServiceCount()
+  if type(GetNumTrainerServices) ~= "function" then return nil end
+  local ok, number = pcall(GetNumTrainerServices)
+  if not ok or type(number) ~= "number" or number < 0 or number > 1000 then return nil end
+  local wholeOk, whole = pcall(math.floor, number)
+  if not wholeOk or whole ~= number then return nil end
+  return number
+end
+
+local function serviceIdentity(name, subText)
+  if type(name) ~= "string" or not string.find(name, "%S") then return nil end
+  if subText == nil then subText = "" end
+  if type(subText) ~= "string" then return nil end
+  if string.find(name, "\031", 1, true) or string.find(subText, "\031", 1, true) then return nil end
+  return name .. "\031" .. subText
+end
+
+local function readServiceInfo(index)
+  if type(GetTrainerServiceInfo) ~= "function" then return nil end
+  local ok, name, subText, serviceType = pcall(GetTrainerServiceInfo, index)
+  if not ok or type(serviceType) ~= "string" then return nil end
+  local identity = serviceIdentity(name, subText)
+  if not identity then return nil end
+  return { identity = identity, name = name, subText = subText or "", serviceType = serviceType }
+end
+
+local function readServiceCost(index)
+  if type(GetTrainerServiceCost) ~= "function" then return nil end
+  local ok, money, cp1, cp2 = pcall(GetTrainerServiceCost, index)
+  if not ok or not validCopper(money) or not validCopper(cp1) or not validCopper(cp2) then return nil end
+  return money, cp1, cp2
+end
+
+local function buildTrainAllSnapshot()
+  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+     not trainerVisible() or not trainerApisAvailable() then return nil, nil end
+  local number = safeServiceCount()
+  if not number then return nil, nil end
+  local snapshot = {}
+  local seen = {}
+  local total = 0
+  local i
+  for i = 1, number do
+    local info = readServiceInfo(i)
+    if not info then return nil, nil end
+    if info.serviceType == "available" then
+      local money, cp1, cp2 = readServiceCost(i)
+      if money == nil then return nil, nil end
+      if cp1 == 0 and cp2 == 0 then
+        if seen[info.identity] or total > MAX_COPPER - money then return nil, nil end
+        seen[info.identity] = true
+        total = total + money
+        table.insert(snapshot, {
+          identity = info.identity,
+          name = info.name,
+          subText = info.subText,
+          money = money,
+          initialIndex = i,
+        })
+      end
+    end
+  end
+  return snapshot, total
+end
+
 function ShirsLazyTrix.TryAutoOpenTrainer()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
   if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.autoOpenTrainers) then return false end
@@ -270,32 +351,10 @@ function ShirsLazyTrix.TryAutoOpenTrainer()
 end
 
 function ShirsLazyTrix.GetTrainAllPlan()
-  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or not trainerApisAvailable() then
-    return 0, 0, nil, nil
-  end
-  local number = GetNumTrainerServices()
-  if type(number) ~= "number" or number < 0 or number > 1000 then return 0, 0, nil, nil end
-
-  local count = 0
-  local total = 0
-  local firstIndex = nil
-  local firstKey = nil
-  local i
-  for i = 1, number do
-    local name, subText, serviceType = GetTrainerServiceInfo(i)
-    if type(name) == "string" and serviceType == "available" then
-      local money, cp1, cp2 = GetTrainerServiceCost(i)
-      if validCopper(money) and validPointCost(cp1) and validPointCost(cp2) and total <= MAX_COPPER - money then
-        count = count + 1
-        total = total + money
-        if not firstIndex then
-          firstIndex = i
-          firstKey = name .. "\031" .. tostring(subText or "") .. "\031" .. tostring(money)
-        end
-      end
-    end
-  end
-  return count, total, firstIndex, firstKey
+  local snapshot, total = buildTrainAllSnapshot()
+  if not snapshot or table.getn(snapshot) == 0 then return 0, 0, nil, nil end
+  local first = snapshot[1]
+  return table.getn(snapshot), total, first.initialIndex, first.identity
 end
 
 function ShirsLazyTrix.IsTrainAllActive()
@@ -311,9 +370,10 @@ function ShirsLazyTrix.UpdateTrainAllButton()
     return
   end
   local count, total = ShirsLazyTrix.GetTrainAllPlan()
-  local money = type(GetMoney) == "function" and GetMoney() or nil
+  local ok, money = false, nil
+  if type(GetMoney) == "function" then ok, money = pcall(GetMoney) end
   if count > 0 then button:SetText("Train All (" .. count .. ")") else button:SetText("Train All") end
-  if count > 0 and validCopper(money) and total <= money then
+  if count > 0 and ok and validCopper(money) and total <= money then
     button:Enable()
   else
     button:Disable()
@@ -328,23 +388,87 @@ function ShirsLazyTrix.CancelTrainAll()
   trainAllElapsed = 0
   trainAllStuckElapsed = 0
   trainAllRetryCount = 0
+  trainAllSnapshot = nil
+  trainAllPosition = 0
+  trainAllSubmitting = false
+  trainAllSawUpdate = false
   ShirsLazyTrix.UpdateTrainAllButton()
 end
 
-local function submitTrainerService(index, key, money, retry)
-  if not trainAllActive or not index or not key or not validCopper(money) then return false end
-  if key ~= lastPurchaseKey then
+local function findSnapshotService(identity)
+  local number = safeServiceCount()
+  if not number then return nil, nil, nil end
+  local matches = 0
+  local foundIndex = nil
+  local foundInfo = nil
+  local i
+  for i = 1, number do
+    local info = readServiceInfo(i)
+    if not info then return nil, nil, nil end
+    if info.identity == identity then
+      matches = matches + 1
+      foundIndex = i
+      foundInfo = info
+    end
+  end
+  return matches, foundIndex, foundInfo
+end
+
+local function remainingSnapshotCost()
+  if not trainAllSnapshot then return nil end
+  local total = 0
+  local i
+  for i = trainAllPosition, table.getn(trainAllSnapshot) do
+    local money = trainAllSnapshot[i].money
+    if not validCopper(money) or total > MAX_COPPER - money then return nil end
+    total = total + money
+  end
+  return total
+end
+
+local function submitCurrentSnapshot(retry)
+  if not trainAllActive or trainAllSubmitting or not trainAllSnapshot then return false end
+  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+     not trainerVisible() or not trainerApisAvailable() then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local entry = trainAllSnapshot[trainAllPosition]
+  if not entry then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local matches, index, info = findSnapshotService(entry.identity)
+  if matches ~= 1 or not index or not info or info.serviceType ~= "available" then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local moneyCost, cp1, cp2 = readServiceCost(index)
+  if moneyCost == nil or moneyCost ~= entry.money or not validPointCost(cp1) or not validPointCost(cp2) then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local moneyOk, money = pcall(GetMoney)
+  local remaining = remainingSnapshotCost()
+  if not moneyOk or not validCopper(money) or not remaining or remaining > money then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  if entry.identity ~= lastPurchaseKey then
     trainAllRetryCount = 0
     trainAllStuckElapsed = 0
   elseif retry then
     trainAllRetryCount = trainAllRetryCount + 1
   end
-  lastPurchaseKey = key
+  lastPurchaseKey = entry.identity
   lastPurchaseMoney = money
   trainAllWaiting = true
   trainAllElapsed = 0
+  trainAllSawUpdate = false
+  trainAllSubmitting = true
   local ok = pcall(BuyTrainerService, index)
-  if not ok then
+  trainAllSubmitting = false
+  if not ok or not trainAllActive then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
@@ -352,74 +476,97 @@ local function submitTrainerService(index, key, money, retry)
   return true
 end
 
-local function buyNextTrainerService()
-  if not trainAllActive or trainAllWaiting then return false end
-  local count, total, index, key = ShirsLazyTrix.GetTrainAllPlan()
-  local money = type(GetMoney) == "function" and GetMoney() or nil
-  if count == 0 or not index or not key or not validCopper(money) or total > money then
+local function advanceTrainAllSnapshot()
+  trainAllPosition = trainAllPosition + 1
+  if not trainAllSnapshot or trainAllPosition > table.getn(trainAllSnapshot) then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
-  if key == lastPurchaseKey then
-    return false
-  end
-  return submitTrainerService(index, key, money, false)
+  trainAllWaiting = false
+  trainAllElapsed = 0
+  trainAllStuckElapsed = 0
+  trainAllRetryCount = 0
+  lastPurchaseKey = nil
+  lastPurchaseMoney = nil
+  return submitCurrentSnapshot(false)
 end
 
 function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
-  if not trainAllActive or not trainAllWaiting then return false end
+  if not trainAllActive or not trainAllWaiting or trainAllSubmitting then return false end
+  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+     not trainerVisible() or not trainerApisAvailable() then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
   if type(elapsed) ~= "number" or elapsed < 0 then elapsed = 0 end
   trainAllElapsed = trainAllElapsed + elapsed
   trainAllStuckElapsed = trainAllStuckElapsed + elapsed
   if trainAllElapsed < TRAINER_PACE_SECONDS then return false end
 
-  local count, total, index, key = ShirsLazyTrix.GetTrainAllPlan()
-  local money = type(GetMoney) == "function" and GetMoney() or nil
-  if count == 0 or not index or not key then
+  local entry = trainAllSnapshot and trainAllSnapshot[trainAllPosition] or nil
+  if not entry then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
-  if not validCopper(money) then
+  local matches, index, info = findSnapshotService(entry.identity)
+  if matches == nil or matches > 1 then
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
-  if key ~= lastPurchaseKey then
-    if total > money then
+  if matches == 0 then
+    if trainAllSawUpdate then return advanceTrainAllSnapshot() end
+  elseif info.serviceType == "used" then
+    if trainAllSawUpdate then return advanceTrainAllSnapshot() end
+  elseif info.serviceType ~= "available" then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  else
+    local moneyCost, cp1, cp2 = readServiceCost(index)
+    if moneyCost == nil or moneyCost ~= entry.money or not validPointCost(cp1) or not validPointCost(cp2) then
       ShirsLazyTrix.CancelTrainAll()
       return false
     end
-    trainAllWaiting = false
-    return buyNextTrainerService()
+    local moneyOk, money = pcall(GetMoney)
+    if not moneyOk or not validCopper(money) then
+      ShirsLazyTrix.CancelTrainAll()
+      return false
+    end
+    if trainAllElapsed >= TRAINER_RETRY_SECONDS and trainAllSawUpdate and
+       trainAllRetryCount < TRAINER_MAX_RETRIES and money == lastPurchaseMoney then
+      return submitCurrentSnapshot(true)
+    end
   end
 
   if trainAllStuckElapsed >= TRAINER_TIMEOUT_SECONDS then
     ShirsLazyTrix.CancelTrainAll()
-    return false
-  end
-  if trainAllElapsed >= TRAINER_RETRY_SECONDS and trainAllRetryCount < TRAINER_MAX_RETRIES and money == lastPurchaseMoney then
-    return submitTrainerService(index, key, money, true)
   end
   return false
 end
 
 function ShirsLazyTrix.StartTrainAll()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
-  if trainAllActive or not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then return false end
+  if trainAllActive or not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+     not trainerVisible() then return false end
   if type(ExpandTrainerSkillLine) == "function" then ExpandTrainerSkillLine(0) end
-  local count, total = ShirsLazyTrix.GetTrainAllPlan()
-  local money = type(GetMoney) == "function" and GetMoney() or nil
-  if count == 0 or not validCopper(money) or total > money then
+  local snapshot, total = buildTrainAllSnapshot()
+  local moneyOk, money = false, nil
+  if type(GetMoney) == "function" then moneyOk, money = pcall(GetMoney) end
+  if not snapshot or table.getn(snapshot) == 0 or not moneyOk or not validCopper(money) or total > money then
     ShirsLazyTrix.UpdateTrainAllButton()
     return false
   end
   trainAllActive = true
   trainAllWaiting = false
+  trainAllSnapshot = snapshot
+  trainAllPosition = 1
+  trainAllSubmitting = false
+  trainAllSawUpdate = false
   lastPurchaseKey = nil
   lastPurchaseMoney = nil
   trainAllElapsed = 0
   trainAllStuckElapsed = 0
   trainAllRetryCount = 0
-  return buyNextTrainerService()
+  return submitCurrentSnapshot(false)
 end
 
 function ShirsLazyTrix.HandleTrainerEvent(name)
@@ -436,11 +583,8 @@ function ShirsLazyTrix.HandleTrainerEvent(name)
     return
   end
   if name == "TRAINER_UPDATE" then
-    if trainAllActive then
-      ShirsLazyTrix.UpdateTrainAllButton()
-    else
-      ShirsLazyTrix.UpdateTrainAllButton()
-    end
+    if trainAllActive then trainAllSawUpdate = true end
+    ShirsLazyTrix.UpdateTrainAllButton()
   end
 end
 

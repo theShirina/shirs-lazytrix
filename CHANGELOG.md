@@ -4,10 +4,11 @@
 
 - Added a default-off downward layout for class and profession trainers.
 - Increased the visible trainer list to 18 rows while preserving stock width and the detail pane beneath it.
-- Added a manual Train All button with a full-plan affordability check.
+- Added a manual Train All button with a fixed click-time service and cost snapshot.
 - Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
-- Skips services that consume a profession slot or return malformed cost data.
+- Skips services that consume a profession slot and blocks malformed or ambiguous trainer data.
+- Reuses pfUI's trainer-row skin for the seven added rows.
 - Added a separate default-off option that opens the exact trainer-type gossip entry.
 - Holding Shift always bypasses trainer gossip selection so talent reset choices remain available.
 

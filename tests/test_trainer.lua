@@ -60,6 +60,7 @@ function CreateFrame(_, name, parent, template)
 end
 
 function getglobal(name) return named[name] end
+function SkinCollapseButton(button) button.pfUISkinned = true end
 
 ClassTrainerFrame = makeFrame("ClassTrainerFrame")
 ClassTrainerFrame.width = 384
@@ -98,6 +99,7 @@ for i = 1, 11 do
   button.id = i
   named[button.name] = button
   _G[button.name] = button
+  SkinCollapseButton(button)
 end
 
 UIPanelWindows = {
@@ -188,6 +190,12 @@ assert(ClassTrainerDetailScrollFrame.point[1] == "TOPLEFT" and ClassTrainerDetai
 assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18, "expanded trainer row count mismatch")
 assert(named.ClassTrainerSkill18 and named.ClassTrainerSkill18.id == 18,
   "additional trainer rows were not created")
+for i = 12, 18 do
+  assert(named["ClassTrainerSkill" .. i].pfUISkinned == true,
+    "added trainer row did not inherit pfUI collapse-button styling")
+  assert(named["ClassTrainerSkill" .. i].point[5] == 0,
+    "added trainer row did not preserve the stock 16-pixel pitch")
+end
 assert(named.ShirsLazyTrixTrainAllButton, "Train All button was not created")
 assert(not named.ShirsLazyTrixTrainerDetailsBackdrop, "horizontal details backdrop must not be created")
 assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25,
@@ -208,6 +216,8 @@ local function resetRows(rows, money)
   services = rows
   playerMoney = money
   bought = {}
+  ClassTrainerFrame.shown = true
+  ShirsLazyTrixDB.enhanceTrainers = true
   ShirsLazyTrix.CancelTrainAll()
 end
 
@@ -217,7 +227,7 @@ local safeRows = {
   { name = "New Profession", serviceType = "available", money = 50, cp1 = 1, cp2 = 0 },
   { name = "Already Known", serviceType = "used", money = 10, cp1 = 0, cp2 = 0 },
   { name = "Safe Two", subText = "Rank 1", serviceType = "available", money = 200, cp1 = 0, cp2 = 0 },
-  { name = "Malformed", serviceType = "available", money = "free", cp1 = 0, cp2 = 0 },
+  { name = "Malformed", serviceType = "unavailable", money = "free", cp1 = 0, cp2 = 0 },
 }
 
 resetRows(safeRows, 500)
@@ -235,6 +245,7 @@ assert(table.getn(bought) == 1, "TRAINER_UPDATE bypassed purchase pacing")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and bought[2] == 5, "TRAINER_UPDATE did not buy exactly the next safe service")
 services[5].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and not ShirsLazyTrix.IsTrainAllActive(), "Train All did not stop after the plan completed")
 
@@ -252,6 +263,7 @@ ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and ShirsLazyTrix.IsTrainAllActive(),
   "unchanged service did not receive one paced retry")
 services[1].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(not ShirsLazyTrix.IsTrainAllActive(), "completed retry queue did not stop")
 
@@ -269,6 +281,163 @@ for i = 1, 6 do
 end
 assert(table.getn(bought) == 6 and not ShirsLazyTrix.IsTrainAllActive(),
   "Train All stopped before completing more than three services")
+
+-- The physical click freezes its service set; newly unlocked rows are not absorbed.
+resetRows({
+  { name = "Rank One", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Rank Two", subText = "Rank 2", serviceType = "unavailable", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "unlock snapshot did not start")
+services[1].serviceType = "used"
+services[2].serviceType = "available"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "newly unlocked service was absorbed into the click snapshot")
+
+-- Insertions are ignored while the original identity can move to a new index.
+resetRows({
+  { name = "Snapshot A", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Snapshot B", subText = "Rank 1", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "insertion snapshot did not start")
+services[1].serviceType = "used"
+table.insert(services, 1, { name = "Inserted", serviceType = "available", money = 1, cp1 = 0, cp2 = 0 })
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 2 and bought[2] == 3,
+  "Train All bought an inserted service instead of the moved snapshot identity")
+
+-- A quoted cost change cancels the remaining snapshot.
+resetRows({
+  { name = "Cost A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Cost B", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == true, "cost snapshot did not start")
+services[1].serviceType = "used"
+services[2].money = 25
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "changed snapshot cost was purchased")
+
+-- Money and profession-point drift stop before the next snapshot service.
+resetRows({
+  { name = "Money A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Money B", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "money snapshot did not start")
+services[1].serviceType = "used"
+playerMoney = 15
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "reduced money allowed a partial snapshot purchase")
+
+resetRows({
+  { name = "Point A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Point B", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "profession-point snapshot did not start")
+services[1].serviceType = "used"
+services[2].cp1 = 1
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "profession-point drift was purchased")
+
+-- Blank and duplicate identities reject the click before spending.
+resetRows({
+  { name = "Same", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Same", subText = "Rank 1", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "duplicate snapshot identity was accepted")
+resetRows({
+  { name = "   ", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
+  "blank snapshot identity was accepted")
+
+-- Frame disappearance, feature disable, and throwing APIs cancel before another purchase.
+resetRows({
+  { name = "Visible A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Visible B", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == true, "visibility snapshot did not start")
+services[1].serviceType = "used"
+ClassTrainerFrame.shown = false
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "hidden trainer frame allowed another purchase")
+
+resetRows({
+  { name = "Disable A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Disable B", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == true, "disable snapshot did not start")
+services[1].serviceType = "used"
+ShirsLazyTrixDB.enhanceTrainers = false
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "disabled trainer feature allowed another purchase")
+
+resetRows({
+  { name = "Throw A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Throw B", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == true, "throwing API snapshot did not start")
+services[1].serviceType = "used"
+local savedInfo = GetTrainerServiceInfo
+GetTrainerServiceInfo = function() error("injected trainer API failure") end
+local safeCall = pcall(ShirsLazyTrix.HandleTrainerOnUpdate, 0.4)
+GetTrainerServiceInfo = savedInfo
+assert(safeCall and table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "throwing trainer API escaped or left Train All active")
+
+resetRows({
+  { name = "Missing A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Missing B", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+assert(ShirsLazyTrix.StartTrainAll() == true, "missing API snapshot did not start")
+services[1].serviceType = "used"
+local savedCost = GetTrainerServiceCost
+GetTrainerServiceCost = nil
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+safeCall = pcall(ShirsLazyTrix.HandleTrainerOnUpdate, 0.4)
+GetTrainerServiceCost = savedCost
+assert(safeCall and table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "missing trainer cost API escaped or allowed another purchase")
+
+resetRows({
+  { name = "Bad Buy", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+local plainBuy = BuyTrainerService
+BuyTrainerService = function() error("injected purchase failure") end
+safeCall = pcall(ShirsLazyTrix.StartTrainAll)
+BuyTrainerService = plainBuy
+assert(safeCall and table.getn(bought) == 0 and not ShirsLazyTrix.IsTrainAllActive(),
+  "throwing purchase escaped or left Train All active")
+
+-- Synchronous TRAINER_UPDATE from BuyTrainerService cannot recurse into more buys.
+resetRows({
+  { name = "Reentrant A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Reentrant B", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+}, 500)
+plainBuy = BuyTrainerService
+local depth = 0
+local maxDepth = 0
+BuyTrainerService = function(index)
+  depth = depth + 1
+  if depth > maxDepth then maxDepth = depth end
+  table.insert(bought, index)
+  ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+  depth = depth - 1
+end
+assert(ShirsLazyTrix.StartTrainAll() == true, "reentrant snapshot did not start")
+BuyTrainerService = plainBuy
+assert(table.getn(bought) == 1 and maxDepth == 1,
+  "synchronous TRAINER_UPDATE recursively drained Train All")
 
 -- Insufficient funds block the whole plan before spending anything.
 resetRows({

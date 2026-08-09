@@ -24,6 +24,7 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Uses the exact client buff index API and does not require SuperMacro.
 - Optionally grows stock-width class and profession trainers downward to 18 visible rows.
 - Adds a manual Train All button with paced, bounded purchase retries.
+- Freezes the exact services and quoted costs when clicked; newly unlocked ranks wait for another click.
 - Checks the full plan cost before spending and skips services that consume a profession slot.
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
 - Holding Shift always leaves trainer gossip open for talent resets and other choices.

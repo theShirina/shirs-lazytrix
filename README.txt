@@ -41,6 +41,6 @@ STEALTH AND INVISIBILITY
 "Remove immolation effects on stealth or invisibility" is off by default. When enabled, LazyTrix removes Oil of Immolation and Immolation Aura after the client reports Stealth, Lesser Invisibility, or Invisibility. It checks Oil's Immolation texture so it will not remove a warlock imp's same-named Fire Shield. It works without SuperMacro and does not send a chat message.
 
 TRAINERS
-"Expand trainer windows and add Train All" is off by default. When enabled, class and profession trainers keep their stock width, grow downward to 18 rows, and gain a manual Train All button. LazyTrix checks the full cost first, paces purchases, retries an unchanged unpaid service at most twice, and skips entries that consume a profession slot. Closing the trainer stops the queue.
+"Expand trainer windows and add Train All" is off by default. When enabled, class and profession trainers keep their stock width, grow downward to 18 rows, and gain a manual Train All button. LazyTrix freezes the listed services and quoted costs when clicked, checks the full cost first, paces purchases, retries an unchanged unpaid service at most twice, and skips entries that consume a profession slot. Newly unlocked ranks wait for another click. Closing the trainer stops the queue.
 
 "Automatically open trainer services" is off by default. When enabled, LazyTrix selects the trainer-type gossip entry without relying on class-specific wording. Hold Shift while speaking to the trainer to keep the gossip menu open for talent resets and other choices.
