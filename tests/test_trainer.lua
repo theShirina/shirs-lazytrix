@@ -138,11 +138,19 @@ function ClassTrainer_SetToClassTrainer()
   ClassTrainerDetailScrollFrame:SetHeight(119)
 end
 
+-- Vanilla trainer UI is load-on-demand; its mode functions may not exist when LazyTrix first loads.
+local delayedTradeMode = ClassTrainer_SetToTradeSkillTrainer
+local delayedClassMode = ClassTrainer_SetToClassTrainer
+ClassTrainer_SetToTradeSkillTrainer = nil
+ClassTrainer_SetToClassTrainer = nil
+
 ShirsLazyTrix = {}
 ShirsLazyTrixDB = { enhanceTrainers = false, autoOpenTrainers = false }
 function ShirsLazyTrix.EnsureDatabase() end
 
 assert(loadfile(root .. "/ShirsLazyTrix_Trainer.lua"))()
+ClassTrainer_SetToTradeSkillTrainer = delayedTradeMode
+ClassTrainer_SetToClassTrainer = delayedClassMode
 
 -- Automatic trainer gossip selection is default-off and text-independent.
 gossipOptions = { "Teach me the ways of my class", "trainer" }

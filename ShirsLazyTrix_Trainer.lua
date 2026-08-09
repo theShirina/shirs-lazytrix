@@ -239,6 +239,7 @@ end
 
 function ShirsLazyTrix.RefreshTrainerFeature()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
+  if ShirsLazyTrix.InstallTrainerHooks then ShirsLazyTrix.InstallTrainerHooks() end
   if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
     ShirsLazyTrix.RestoreTrainerLayout()
     return false
@@ -612,7 +613,10 @@ function ShirsLazyTrix.InstallTrainerHooks()
 end
 
 function ShirsLazyTrix.InitializeTrainer()
-  if trainerFrame then return trainerFrame end
+  if trainerFrame then
+    ShirsLazyTrix.InstallTrainerHooks()
+    return trainerFrame
+  end
   ShirsLazyTrix.InstallTrainerHooks()
   trainerFrame = CreateFrame("Frame", "ShirsLazyTrixTrainerEventFrame")
   trainerFrame:RegisterEvent("TRAINER_SHOW")

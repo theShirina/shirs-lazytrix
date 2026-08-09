@@ -9,6 +9,7 @@
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
 - Skips services that consume a profession slot and blocks malformed or ambiguous trainer data.
 - Reuses pfUI's trainer-row skin for the seven added rows.
+- Retries trainer mode hooks after Blizzard's load-on-demand trainer UI becomes available.
 - Added a separate default-off option that opens the exact trainer-type gossip entry.
 - Holding Shift always bypasses trainer gossip selection so talent reset choices remain available.
 

@@ -162,6 +162,7 @@ def validate_source() -> None:
         "moneyCost ~= entry.money",
         "trainAllSubmitting",
         "trainerVisible()",
+        "if ShirsLazyTrix.InstallTrainerHooks then ShirsLazyTrix.InstallTrainerHooks() end",
         "pcall(SkinCollapseButton, button)",
         'setPoint(button, "TOPLEFT", previous, "BOTTOMLEFT", 0, 0)',
         'setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)',
