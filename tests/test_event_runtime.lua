@@ -25,6 +25,9 @@ ShirsLazyTrix = {
   HandleQuestProgress = function() end,
   HandleQuestComplete = function() end,
   HandleQuestLogUpdate = function() end,
+  TryAutoAcceptResurrection = function()
+    table.insert(merchantOrder, "resurrection")
+  end,
   ToggleSettings = function() end,
   TryAutoRepairAll = function()
     table.insert(merchantOrder, "repair")
@@ -52,7 +55,13 @@ assert(loadfile(root .. "/ShirsLazyTrix.lua"))()
 local frame = frames[1]
 assert(frame.events.MERCHANT_SHOW, "MERCHANT_SHOW is not registered")
 assert(frame.events.MERCHANT_CLOSED, "MERCHANT_CLOSED is not registered")
+assert(frame.events.RESURRECT_REQUEST, "RESURRECT_REQUEST is not registered")
 assert(type(frame.scripts.OnUpdate) == "function", "merchant update driver is missing")
+
+event = "RESURRECT_REQUEST"
+frame.scripts.OnEvent()
+assert(merchantOrder[1] == "resurrection", "pending resurrection event was not dispatched")
+merchantOrder = {}
 
 event = "MERCHANT_SHOW"
 frame.scripts.OnEvent()

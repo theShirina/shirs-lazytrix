@@ -12,12 +12,14 @@ LUA_FILES = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
     "ShirsLazyTrix.lua",
 ]
 TESTS = [
     "tests/test_engine.lua",
     "tests/test_controller.lua",
+    "tests/test_world.lua",
     "tests/test_merchant.lua",
     "tests/test_repair.lua",
     "tests/test_ui_structure.lua",
@@ -43,12 +45,14 @@ PUBLIC_FILES = {
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
+    "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
     "docs/precedents.md",
     "scripts/build_release.py",
     "scripts/validate.py",
     "tests/test_build_release.py",
     "tests/test_controller.lua",
+    "tests/test_world.lua",
     "tests/test_engine.lua",
     "tests/test_event_runtime.lua",
     "tests/test_event_structure.lua",
@@ -97,7 +101,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.3\s*$", toc, re.MULTILINE), "TOC version must be 0.0.3"
+    assert re.search(r"^## Version:\s*0\.0\.4\s*$", toc, re.MULTILINE), "TOC version must be 0.0.4"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -141,8 +145,16 @@ def validate_source() -> None:
     for removed in ("junkItems", "ToggleJunk", "SetJunkMark", "Sell Junk", "ShouldShowMerchantSellButton"):
         assert removed not in merchant, f"manual junk or merchant-button behavior remains: {removed}"
 
+    world = (ROOT / "ShirsLazyTrix_World.lua").read_text(encoding="utf-8")
+    for token in ("IsInInstance()", "AcceptResurrect()", 'StaticPopup_Hide("RESURRECT_NO_TIMER")'):
+        assert token in world, f"open-world resurrection path is missing exact-client API: {token}"
+    assert world.count("AcceptResurrect()") == 1, "resurrection path must have one guarded acceptance call"
+    assert "inside == nil or inside == false or inside == 0" in world, "open-world check must support exact Vanilla outside forms"
+    assert 'instanceType ~= nil and instanceType ~= "none"' in world, "contradictory instance types must fail closed"
+    assert "RepopMe" not in world, "pending-resurrection acceptance must never release the corpse"
+
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -150,6 +162,7 @@ def validate_source() -> None:
     assert "When enabled, Shift triggers both pickup and turn-in." in ui, "UI must explain unified Shift behavior"
     assert "Sells gray-quality items only." in ui, "UI must state the gray-only merchant boundary"
     assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
+    assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

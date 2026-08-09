@@ -1,4 +1,4 @@
-# Quest and merchant automation precedents
+# Quest, vendor, and world automation precedents
 
 ## Exact-client source
 
@@ -29,6 +29,12 @@ LazyTrix uses an original, narrow implementation. Its account-wide setting defau
 ## v0.0.3 two-attempt turn-in fallback
 
 LazyTrix uses `IsQuestCompletable()` for its first incomplete-turn-in guard. Some custom quests can still report true while refusing completion, so v0.0.3 adds a second runtime fallback keyed by NPC and quest title. It allows two active-quest selections, blocks the third, and shares the count across greeting and gossip dialogs. After a reward attempt, a count clears only when that same NPC's next active-quest list no longer contains the title. Quest-log changes from another NPC and logless custom quests cannot reset it.
+
+## v0.0.4 open-world resurrection precedent
+
+Microbot's `WoW.exe` exposes `IsInInstance`, `AcceptResurrect`, and `CancelPlayerBuff`; it does not expose the later `GetInstanceInfo`. The installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) registers `RESURRECT_REQUEST`, calls `AcceptResurrect()`, and hides the three exact-client resurrection popups. LazyPig accepts requests inside known instances, which is the opposite of LazyTrix's v0.0.4 policy. No licence file was found in the installed LazyPig folder, so it remains study-only.
+
+Vanilla API references document `IsInInstance()` as returning `1` inside an instance and `nil` outside. Some compatible clients expose boolean values and a second type value. LazyTrix therefore accepts only the explicit outside forms `nil`, `false`, or `0`, with a missing type or `"none"`. It rejects every inside, contradictory, unknown, or missing-API state. The original handler calls `AcceptResurrect()` at most once on `RESURRECT_REQUEST`, hides the pending popup only after acceptance, and never calls `RepopMe()`.
 
 ## Settings and minimap precedents
 

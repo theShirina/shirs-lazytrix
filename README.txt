@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.3
+Shir's LazyTrix 0.0.4
 
 Microbot WoW 1.12.1 only.
 
@@ -16,6 +16,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Only automate while Shift is held
 - Automatically sell gray items at vendors
 - Automatically repair all gear at repair vendors
+- Automatically accept open-world resurrection requests
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -29,3 +30,6 @@ GRAY ITEMS
 
 REPAIRS
 "Automatically repair all gear at repair vendors" is off by default. When enabled, LazyTrix checks the full repair cost and your money, then repairs once when an eligible vendor opens. Gray selling and repairs work independently.
+
+RESURRECTION
+"Automatically accept open-world resurrection requests" is off by default. When enabled, LazyTrix accepts a pending resurrection only when the client reports that you are outside battlegrounds, dungeons, raids, and other instances. It does not release your corpse.

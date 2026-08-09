@@ -9,6 +9,7 @@ frame:RegisterEvent("QUEST_COMPLETE")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:RegisterEvent("MERCHANT_SHOW")
 frame:RegisterEvent("MERCHANT_CLOSED")
+frame:RegisterEvent("RESURRECT_REQUEST")
 
 frame:SetScript("OnEvent", function()
   if event == "VARIABLES_LOADED" then
@@ -26,6 +27,8 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.HandleQuestComplete()
   elseif event == "QUEST_LOG_UPDATE" then
     ShirsLazyTrix.HandleQuestLogUpdate()
+  elseif event == "RESURRECT_REQUEST" then
+    ShirsLazyTrix.TryAutoAcceptResurrection()
   elseif event == "MERCHANT_SHOW" then
     ShirsLazyTrix.TryAutoRepairAll()
     ShirsLazyTrix.StartAutoGraySale()

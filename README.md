@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.3 automates safe quest handling, optional gray-item selling, and optional gear repairs.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.4 automates safe quest handling, optional vendor actions, and optional open-world resurrection acceptance.
 
 ## Features
 
@@ -16,6 +16,9 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.3 au
 - Optional automatic sale of gray-quality items when a vendor opens.
 - Optional automatic repair of all gear when a repair vendor opens.
 - Repair checks the quoted cost and available money before submitting once.
+- Optional automatic acceptance of pending resurrection requests in the open world.
+- Never accepts inside a battleground, dungeon, raid, or any ambiguous location.
+- Does not release your corpse.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -34,10 +37,11 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Only automate while Shift is held: off.
 - Automatically sell gray items at vendors: off.
 - Automatically repair all gear at repair vendors: off.
+- Automatically accept open-world resurrection requests: off.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.3.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.3/ShirsLazyTrix-v0.0.3.zip).
+1. Download [`ShirsLazyTrix-v0.0.4.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.4/ShirsLazyTrix-v0.0.4.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.

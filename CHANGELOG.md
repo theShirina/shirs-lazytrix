@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.4
+
+- Added a default-off setting that accepts pending resurrection requests in the open world.
+- Leaves resurrection requests untouched inside battlegrounds, dungeons, raids, and ambiguous locations.
+- Accepts player and companion requests through the stock pending-resurrection event.
+- Never releases the player's corpse.
+
 ## 0.0.3
 
 - Added an opt-in setting that repairs all gear when an eligible repair vendor opens.

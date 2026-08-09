@@ -4,6 +4,7 @@ local DEFAULTS = {
   automationOnShift = false,
   autoSellGray = false,
   autoRepairAll = false,
+  autoAcceptOpenWorldRes = false,
   minimapAngle = 220,
 }
 
@@ -140,6 +141,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.autoRepairAll) ~= "boolean" then
     ShirsLazyTrixDB.autoRepairAll = DEFAULTS.autoRepairAll
+  end
+  if type(ShirsLazyTrixDB.autoAcceptOpenWorldRes) ~= "boolean" then
+    ShirsLazyTrixDB.autoAcceptOpenWorldRes = DEFAULTS.autoAcceptOpenWorldRes
   end
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
      ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then

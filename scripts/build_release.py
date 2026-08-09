@@ -13,6 +13,7 @@ RUNTIME = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
     "ShirsLazyTrix.lua",
     "LazyTrixIcon.tga",
