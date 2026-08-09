@@ -161,7 +161,7 @@ ClassTrainer_SetToTradeSkillTrainer = nil
 ClassTrainer_SetToClassTrainer = nil
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { enhanceTrainers = false, autoOpenTrainers = false }
+ShirsLazyTrixDB = { expandTrainers = false, trainAll = false, autoOpenTrainers = false }
 function ShirsLazyTrix.EnsureDatabase() end
 
 assert(loadfile(root .. "/ShirsLazyTrix_Trainer.lua"))()
@@ -194,14 +194,14 @@ assert(ShirsLazyTrix.TryAutoOpenTrainer() == false and table.getn(selectedGossip
   "missing gossip API did not fail closed")
 GetGossipOptions = savedGossipApi
 
--- Disabled mode must leave the stock frame alone.
-assert(ShirsLazyTrix.RefreshTrainerFeature() == false, "disabled trainer enhancement must return false")
+-- Both settings disabled must leave the stock frame alone.
+assert(ShirsLazyTrix.RefreshTrainerFeature() == false, "disabled trainer features must return false")
 assert(ClassTrainerFrame.width == 384 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
-  "disabled trainer enhancement changed stock layout")
+  "disabled trainer features changed stock layout")
 
--- Enabled layout preserves stock width and extends downward with 18 rows.
-ShirsLazyTrixDB.enhanceTrainers = true
-assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "enabled trainer enhancement did not apply")
+-- Expansion alone preserves stock width and extends downward with 18 rows.
+ShirsLazyTrixDB.expandTrainers = true
+assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "trainer expansion did not apply")
 assert(ClassTrainerFrame.width == 384 and ClassTrainerFrame.height == 596,
   "downward trainer frame geometry mismatch")
 assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.height == 296,
@@ -220,24 +220,31 @@ for i = 12, 18 do
   assert(named["ClassTrainerSkill" .. i].point[5] == 0,
     "added trainer row did not preserve the stock 16-pixel pitch")
 end
-assert(named.ShirsLazyTrixTrainAllButton, "Train All button was not created")
+assert(not named.ShirsLazyTrixTrainAllButton or named.ShirsLazyTrixTrainAllButton.shown == false,
+  "expansion-only mode exposed Train All")
 assert(not named.ShirsLazyTrixTrainerDetailsBackdrop, "horizontal details backdrop must not be created")
+assert(createdSkillRows == 7, "expected exactly seven additional trainer rows")
+
+-- Enabling Train All while expanded adds only the independent button/queue feature.
+ShirsLazyTrixDB.trainAll = true
+assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "combined trainer features did not apply")
+assert(named.ShirsLazyTrixTrainAllButton and named.ShirsLazyTrixTrainAllButton.shown == true,
+  "combined mode did not show Train All")
 assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25 and
   named.ShirsLazyTrixTrainAllButton.point[5] == 47,
   "Train All must remain inside the stock-width frame")
-assert(createdSkillRows == 7, "expected exactly seven additional trainer rows")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
 ShirsLazyTrix.RefreshTrainerFeature()
 assert(named.ShirsLazyTrixTrainerStockBackground and named.ShirsLazyTrixTrainerStockBackground.shown == true and
   named.ShirsLazyTrixTrainerStockBackground.layer == "BACKGROUND" and
-  table.getn(named.ShirsLazyTrixTrainerStockBackground.points) == 2 and
-  named.ShirsLazyTrixTrainerStockBackground.points[1][1] == "TOPLEFT" and
-  named.ShirsLazyTrixTrainerStockBackground.points[1][2] == ClassTrainerFrame and
-  named.ShirsLazyTrixTrainerStockBackground.points[1][5] == -256 and
-  named.ShirsLazyTrixTrainerStockBackground.points[2][1] == "BOTTOMRIGHT" and
-  named.ShirsLazyTrixTrainerStockBackground.points[2][2] == ClassTrainerFrame and
-  named.ShirsLazyTrixTrainerStockBackground.points[2][5] == 256,
+  table.getn(named.ShirsLazyTrixTrainerStockBackground.points) == 1 and
+  named.ShirsLazyTrixTrainerStockBackground.point[1] == "TOPLEFT" and
+  named.ShirsLazyTrixTrainerStockBackground.point[2] == ClassTrainerFrame and
+  named.ShirsLazyTrixTrainerStockBackground.point[4] == 15 and
+  named.ShirsLazyTrixTrainerStockBackground.point[5] == -256 and
+  named.ShirsLazyTrixTrainerStockBackground.width == 331 and
+  named.ShirsLazyTrixTrainerStockBackground.height == 84,
   "stock-only expansion did not fill the fixed-artwork gap")
 SkinCollapseButton = savedSkinCollapseButton
 ShirsLazyTrix.RefreshTrainerFeature()
@@ -248,6 +255,8 @@ tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
 assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 612 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 135,
   "profession trainer mode reset the expanded row count")
+assert(named.ShirsLazyTrixTrainerStockBackground.width == 331 and named.ShirsLazyTrixTrainerStockBackground.height == 100,
+  "profession stock filler did not retain bounded interior geometry")
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
 assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 596 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
@@ -262,7 +271,7 @@ local function resetRows(rows, money)
   playerMoney = money
   bought = {}
   ClassTrainerFrame.shown = true
-  ShirsLazyTrixDB.enhanceTrainers = true
+  ShirsLazyTrixDB.trainAll = true
   ShirsLazyTrix.CancelTrainAll()
 end
 
@@ -281,6 +290,14 @@ assert(count == 2 and total == 300, "Train All plan included unsafe or unavailab
 ShirsLazyTrix.UpdateTrainAllButton()
 assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "affordable Train All plan did not enable the button")
+
+-- Train All remains usable after expansion is independently disabled.
+ShirsLazyTrixDB.expandTrainers = false
+assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "Train All-only mode did not remain active")
+assert(ClassTrainerFrame.height == 512 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
+  "Train All-only mode did not restore stock geometry")
+assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTrainAllButton.enabled == true,
+  "Train All-only mode hid or disabled its button")
 
 -- LazyTrix may receive TRAINER_SHOW before Blizzard's frame handler makes the panel visible.
 ClassTrainerFrame.shown = false
@@ -436,6 +453,21 @@ resetRows({
 assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
   "whitespace snapshot rank was accepted")
 
+-- Name-only services stay manual without disabling safe ranked services.
+resetRows({
+  { name = "Manual Name Only", subText = "", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Ranked Safe", subText = "Rank 2", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
+}, 500)
+local mixedCount, mixedTotal, mixedIndex = ShirsLazyTrix.GetTrainAllPlan()
+assert(mixedCount == 1 and mixedTotal == 20 and mixedIndex == 2,
+  "name-only service disabled the safe ranked snapshot")
+ShirsLazyTrix.UpdateTrainAllButton()
+assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (1)",
+  "name-only service left the ranked Train All plan disabled")
+assert(ShirsLazyTrix.StartTrainAll() == true and bought[1] == 2,
+  "mixed plan did not buy only the ranked service")
+ShirsLazyTrix.CancelTrainAll()
+
 -- Frame disappearance, feature disable, and throwing APIs cancel before another purchase.
 resetRows({
   { name = "Visible A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
@@ -454,10 +486,12 @@ resetRows({
 }, 500)
 assert(ShirsLazyTrix.StartTrainAll() == true, "disable snapshot did not start")
 services[1].serviceType = "used"
-ShirsLazyTrixDB.enhanceTrainers = false
-ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
-assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
-  "disabled trainer feature allowed another purchase")
+ShirsLazyTrixDB.expandTrainers = true
+ShirsLazyTrixDB.trainAll = false
+ShirsLazyTrix.RefreshTrainerFeature()
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive() and
+  named.ShirsLazyTrixTrainAllButton.shown == false and ClassTrainerFrame.height == 596,
+  "disabling Train All did not stop its queue while preserving expansion")
 
 resetRows({
   { name = "Throw A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },

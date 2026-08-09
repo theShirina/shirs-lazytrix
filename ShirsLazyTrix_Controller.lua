@@ -6,7 +6,8 @@ local DEFAULTS = {
   autoRepairAll = false,
   autoAcceptOpenWorldRes = false,
   autoRemoveImmolationOnStealth = false,
-  enhanceTrainers = false,
+  expandTrainers = false,
+  trainAll = false,
   autoOpenTrainers = false,
   minimapAngle = 220,
 }
@@ -128,6 +129,14 @@ function ShirsLazyTrix.EnsureDatabase()
   if ShirsLazyTrixDB.automationOnShift == nil and ShirsLazyTrixDB.turnInOnShift == true then
     ShirsLazyTrixDB.automationOnShift = true
   end
+  if type(ShirsLazyTrixDB.enhanceTrainers) == "boolean" then
+    if ShirsLazyTrixDB.expandTrainers == nil then
+      ShirsLazyTrixDB.expandTrainers = ShirsLazyTrixDB.enhanceTrainers
+    end
+    if ShirsLazyTrixDB.trainAll == nil then
+      ShirsLazyTrixDB.trainAll = ShirsLazyTrixDB.enhanceTrainers
+    end
+  end
 
   local key, value
   for key, value in pairs(DEFAULTS) do
@@ -151,8 +160,11 @@ function ShirsLazyTrix.EnsureDatabase()
   if type(ShirsLazyTrixDB.autoRemoveImmolationOnStealth) ~= "boolean" then
     ShirsLazyTrixDB.autoRemoveImmolationOnStealth = DEFAULTS.autoRemoveImmolationOnStealth
   end
-  if type(ShirsLazyTrixDB.enhanceTrainers) ~= "boolean" then
-    ShirsLazyTrixDB.enhanceTrainers = DEFAULTS.enhanceTrainers
+  if type(ShirsLazyTrixDB.expandTrainers) ~= "boolean" then
+    ShirsLazyTrixDB.expandTrainers = DEFAULTS.expandTrainers
+  end
+  if type(ShirsLazyTrixDB.trainAll) ~= "boolean" then
+    ShirsLazyTrixDB.trainAll = DEFAULTS.trainAll
   end
   if type(ShirsLazyTrixDB.autoOpenTrainers) ~= "boolean" then
     ShirsLazyTrixDB.autoOpenTrainers = DEFAULTS.autoOpenTrainers
@@ -167,6 +179,7 @@ function ShirsLazyTrix.EnsureDatabase()
   ShirsLazyTrixDB.turnInOnShift = nil
   ShirsLazyTrixDB.turnInRepeatable = nil
   ShirsLazyTrixDB.pickUpRepeatable = nil
+  ShirsLazyTrixDB.enhanceTrainers = nil
   ShirsLazyTrixDB.repeatable = nil
   ShirsLazyTrixDB.repeatableByCharacter = nil
 end

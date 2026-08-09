@@ -35,6 +35,14 @@ local function exactBoolean(value)
   return value == true
 end
 
+local function expandedTrainerEnabled()
+  return ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.expandTrainers)
+end
+
+local function trainAllEnabled()
+  return ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.trainAll)
+end
+
 local function validCopper(value)
   if type(value) ~= "number" then return false end
   local text = string.lower(tostring(value))
@@ -126,15 +134,17 @@ local function ensureTrainerRows()
   end
 end
 
-local function updateStockBackground()
+local function updateStockBackground(frameHeight)
   local texture = getglobal("ShirsLazyTrixTrainerStockBackground")
   if not texture and ClassTrainerFrame and type(ClassTrainerFrame.CreateTexture) == "function" then
     texture = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerStockBackground", "BACKGROUND")
     texture:SetTexture(0, 0, 0, 1)
-    texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 0, -256)
-    texture:SetPoint("BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", 0, 256)
   end
   if not texture then return end
+  texture:ClearAllPoints()
+  texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, -256)
+  texture:SetWidth(331)
+  texture:SetHeight(frameHeight - 512)
   if type(SkinCollapseButton) == "function" then
     texture:Hide()
   else
@@ -185,6 +195,7 @@ local function applyExpandedModeGeometry()
   local trade = isTradeTrainer()
   local height = trade and TRADE_FRAME_HEIGHT or CLASS_FRAME_HEIGHT
   ClassTrainerFrame:SetHeight(height)
+  updateStockBackground(height)
   ClassTrainerListScrollFrame:SetHeight(TRAINER_LIST_HEIGHT)
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
   ClassTrainerDetailScrollFrame:SetHeight(trade and 135 or 119)
@@ -209,9 +220,6 @@ function ShirsLazyTrix.ApplyTrainerLayout()
 
   local oldBackdrop = getglobal("ShirsLazyTrixTrainerDetailsBackdrop")
   if oldBackdrop and type(oldBackdrop.Hide) == "function" then oldBackdrop:Hide() end
-  updateStockBackground()
-  local button = createTrainAllButton()
-  button:Show()
   layoutApplied = true
   applyExpandedModeGeometry()
   if type(ClassTrainerFrame_Update) == "function" then ClassTrainerFrame_Update() end
@@ -219,7 +227,6 @@ function ShirsLazyTrix.ApplyTrainerLayout()
 end
 
 function ShirsLazyTrix.RestoreTrainerLayout()
-  ShirsLazyTrix.CancelTrainAll()
   if not layoutApplied or not originalLayout then return false end
 
   if type(UIPanelWindows) == "table" and originalLayout.panel then
@@ -247,8 +254,6 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   if backdrop then backdrop:Hide() end
   local stockBackground = getglobal("ShirsLazyTrixTrainerStockBackground")
   if stockBackground then stockBackground:Hide() end
-  local button = getglobal("ShirsLazyTrixTrainAllButton")
-  if button then button:Hide() end
   if type(IsTradeskillTrainer) == "function" and IsTradeskillTrainer() then
     CLASS_TRAINER_SKILLS_DISPLAYED = 10
   else
@@ -262,12 +267,29 @@ end
 function ShirsLazyTrix.RefreshTrainerFeature()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
   if ShirsLazyTrix.InstallTrainerHooks then ShirsLazyTrix.InstallTrainerHooks() end
-  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
+  local expansion = expandedTrainerEnabled()
+  local bulk = trainAllEnabled()
+  if expansion then
+    if not trainerFramesAvailable() then return false end
+    ShirsLazyTrix.ApplyTrainerLayout()
+  else
     ShirsLazyTrix.RestoreTrainerLayout()
-    return false
   end
-  if not trainerFramesAvailable() then return false end
-  return ShirsLazyTrix.ApplyTrainerLayout()
+
+  local button = getglobal("ShirsLazyTrixTrainAllButton")
+  if bulk and trainerFramesAvailable() then
+    button = createTrainAllButton()
+    setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM)
+    button:Show()
+    ShirsLazyTrix.UpdateTrainAllButton()
+  else
+    ShirsLazyTrix.CancelTrainAll()
+    if button then
+      button:Disable()
+      button:Hide()
+    end
+  end
+  return expansion or bulk
 end
 
 local function trainerApisAvailable()
@@ -317,7 +339,7 @@ local function readServiceCost(index)
 end
 
 local function buildTrainAllSnapshot()
-  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+  if not trainAllEnabled() or
      not trainerVisible() or not trainerApisAvailable() then return nil, nil end
   local number = safeServiceCount()
   if not number then return nil, nil end
@@ -328,8 +350,7 @@ local function buildTrainAllSnapshot()
   for i = 1, number do
     local info = readServiceInfo(i)
     if not info then return nil, nil end
-    if info.serviceType == "available" then
-      if not string.find(info.subText, "%S") then return nil, nil end
+    if info.serviceType == "available" and string.find(info.subText, "%S") then
       local money, cp1, cp2 = readServiceCost(i)
       if money == nil then return nil, nil end
       if cp1 == 0 and cp2 == 0 then
@@ -468,7 +489,7 @@ end
 
 local function submitCurrentSnapshot(retry)
   if not trainAllActive or trainAllSubmitting or not trainAllSnapshot then return false end
-  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+  if not trainAllEnabled() or
      not trainerVisible() or not trainerApisAvailable() then
     ShirsLazyTrix.CancelTrainAll()
     return false
@@ -541,7 +562,7 @@ function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
     ShirsLazyTrix.UpdateTrainAllButton()
   end
   if not trainAllActive or not trainAllWaiting or trainAllSubmitting then return false end
-  if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+  if not trainAllEnabled() or
      not trainerVisible() or not trainerApisAvailable() then
     ShirsLazyTrix.CancelTrainAll()
     return false
@@ -598,7 +619,7 @@ end
 
 function ShirsLazyTrix.StartTrainAll()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
-  if trainAllActive or not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
+  if trainAllActive or not trainAllEnabled() or
      not trainerVisible() then return false end
   if type(ExpandTrainerSkillLine) == "function" then ExpandTrainerSkillLine(0) end
   local snapshot, total = buildTrainAllSnapshot()
@@ -653,13 +674,13 @@ function ShirsLazyTrix.InstallTrainerHooks()
   originalClassMode = ClassTrainer_SetToClassTrainer
   ClassTrainer_SetToTradeSkillTrainer = function()
     originalTradeSkillMode()
-    if layoutApplied and ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
+    if layoutApplied and expandedTrainerEnabled() then
       applyExpandedModeGeometry()
     end
   end
   ClassTrainer_SetToClassTrainer = function()
     originalClassMode()
-    if layoutApplied and ShirsLazyTrixDB and exactBoolean(ShirsLazyTrixDB.enhanceTrainers) then
+    if layoutApplied and expandedTrainerEnabled() then
       applyExpandedModeGeometry()
     end
   end

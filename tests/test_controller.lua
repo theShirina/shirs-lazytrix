@@ -81,9 +81,23 @@ assertEqual(ShirsLazyTrixDB.autoSellGray, false, "automatic gray sale default")
 assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "automatic repair default")
 assertEqual(ShirsLazyTrixDB.autoAcceptOpenWorldRes, false, "open-world resurrection default")
 assertEqual(ShirsLazyTrixDB.autoRemoveImmolationOnStealth, false, "stealth immolation cleanup default")
-assertEqual(ShirsLazyTrixDB.enhanceTrainers, false, "enhanced trainer default")
+assertEqual(ShirsLazyTrixDB.expandTrainers, false, "expanded trainer default")
+assertEqual(ShirsLazyTrixDB.trainAll, false, "Train All default")
+assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "retired combined trainer key default")
 assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "automatic trainer gossip default")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
+
+ShirsLazyTrixDB = { enhanceTrainers = true }
+ShirsLazyTrix.EnsureDatabase()
+assertEqual(ShirsLazyTrixDB.expandTrainers, true, "legacy trainer setting migrates to expansion")
+assertEqual(ShirsLazyTrixDB.trainAll, true, "legacy trainer setting migrates to Train All")
+assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "legacy trainer setting is removed")
+
+ShirsLazyTrixDB = { expandTrainers = true, trainAll = false, enhanceTrainers = false }
+ShirsLazyTrix.EnsureDatabase()
+assertEqual(ShirsLazyTrixDB.expandTrainers, true, "independent expansion setting is preserved")
+assertEqual(ShirsLazyTrixDB.trainAll, false, "independent Train All setting is preserved")
+assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "stale combined trainer key is removed")
 
 ShirsLazyTrixDB = {
   turnInNormal = false,
@@ -109,7 +123,9 @@ assertEqual(ShirsLazyTrixDB.autoSellGray, false, "invalid automatic gray sale se
 assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "invalid automatic repair setting repairs")
 assertEqual(ShirsLazyTrixDB.autoAcceptOpenWorldRes, false, "invalid open-world resurrection setting repairs")
 assertEqual(ShirsLazyTrixDB.autoRemoveImmolationOnStealth, false, "invalid stealth immolation cleanup setting repairs")
-assertEqual(ShirsLazyTrixDB.enhanceTrainers, false, "invalid enhanced trainer setting repairs")
+assertEqual(ShirsLazyTrixDB.expandTrainers, false, "invalid expanded trainer setting repairs")
+assertEqual(ShirsLazyTrixDB.trainAll, false, "invalid Train All setting repairs")
+assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "invalid combined trainer key is removed")
 assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "invalid automatic trainer gossip setting repairs")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "invalid minimap angle repairs")

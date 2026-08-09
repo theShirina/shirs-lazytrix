@@ -18,7 +18,8 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Automatically repair all gear at repair vendors
 - Automatically accept open-world resurrection requests
 - Remove immolation effects on stealth or invisibility
-- Expand trainer windows and add Train All
+- Expand trainer windows
+- Enable Train All
 - Automatically open trainer services
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
@@ -41,6 +42,6 @@ STEALTH AND INVISIBILITY
 "Remove immolation effects on stealth or invisibility" is off by default. When enabled, LazyTrix removes Oil of Immolation and Immolation Aura after the client reports Stealth, Lesser Invisibility, or Invisibility. It checks Oil's Immolation texture so it will not remove a warlock imp's same-named Fire Shield. It works without SuperMacro and does not send a chat message.
 
 TRAINERS
-"Expand trainer windows and add Train All" is off by default. When enabled, class and profession trainers keep their stock width, grow downward to 18 rows, and gain a manual Train All button. LazyTrix freezes the listed services and quoted costs when clicked, checks the full cost first, paces purchases, retries an unchanged unpaid service at most twice, and skips entries that consume a profession slot. Newly unlocked ranks wait for another click. Closing the trainer stops the queue.
+"Expand trainer windows" and "Enable Train All" are separate and off by default. Expansion keeps the stock width and grows class and profession trainers downward to 18 rows. Train All works with either the stock or expanded trainer. It freezes the listed services and quoted costs when clicked, checks the full cost first, paces purchases, retries an unchanged unpaid service at most twice, and skips entries that consume a profession slot. Newly unlocked ranks wait for another click. Closing the trainer stops the queue.
 
 "Automatically open trainer services" is off by default. When enabled, LazyTrix selects the trainer-type gossip entry without relying on class-specific wording. Hold Shift while speaking to the trainer to keep the gossip menu open for talent resets and other choices.

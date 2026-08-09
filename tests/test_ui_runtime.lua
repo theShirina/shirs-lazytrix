@@ -114,7 +114,9 @@ function GameTooltip:Show() self.shown = true end
 function GameTooltip:Hide() self.shown = false end
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, enhanceTrainers = false, autoOpenTrainers = false, minimapAngle = 220 }
+local trainerRefreshes = 0
+ShirsLazyTrix.RefreshTrainerFeature = function() trainerRefreshes = trainerRefreshes + 1 end
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -122,7 +124,7 @@ ShirsLazyTrix.CreateUI()
 local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 if not settings or not minimap then error("UI frames were not constructed", 2) end
-if settings.width ~= 340 or settings.height ~= 480 then error("minimal settings geometry mismatch", 2) end
+if settings.width ~= 340 or settings.height ~= 510 then error("minimal settings geometry mismatch", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
 if minimap.width ~= 32 or minimap.height ~= 32 then error("minimap button geometry mismatch", 2) end
@@ -158,16 +160,18 @@ local autoSellGray = named.ShirsLazyTrixAutoSellGray
 local autoRepairAll = named.ShirsLazyTrixAutoRepairAll
 local autoAcceptOpenWorldRes = named.ShirsLazyTrixAutoAcceptOpenWorldRes
 local autoRemoveImmolationOnStealth = named.ShirsLazyTrixAutoRemoveImmolationOnStealth
-local enhanceTrainers = named.ShirsLazyTrixEnhanceTrainers
+local expandTrainers = named.ShirsLazyTrixExpandTrainers
+local trainAll = named.ShirsLazyTrixTrainAll
 local autoOpenTrainers = named.ShirsLazyTrixAutoOpenTrainers
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
 if not autoRepairAll then error("automatic repair checkbox missing", 2) end
 if not autoAcceptOpenWorldRes then error("open-world resurrection checkbox missing", 2) end
 if not autoRemoveImmolationOnStealth then error("stealth immolation cleanup checkbox missing", 2) end
-if not enhanceTrainers then error("enhanced trainer checkbox missing", 2) end
+if not expandTrainers then error("expanded trainer checkbox missing", 2) end
+if not trainAll then error("Train All checkbox missing", 2) end
 if not autoOpenTrainers then error("automatic trainer gossip checkbox missing", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or enhanceTrainers.checked ~= nil or autoOpenTrainers.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -192,10 +196,15 @@ autoRemoveImmolationOnStealth.checked = 1
 this = autoRemoveImmolationOnStealth
 autoRemoveImmolationOnStealth.scripts.OnClick()
 if ShirsLazyTrixDB.autoRemoveImmolationOnStealth ~= true then error("stealth immolation cleanup checkbox did not save true", 2) end
-enhanceTrainers.checked = 1
-this = enhanceTrainers
-enhanceTrainers.scripts.OnClick()
-if ShirsLazyTrixDB.enhanceTrainers ~= true then error("enhanced trainer checkbox did not save true", 2) end
+expandTrainers.checked = 1
+this = expandTrainers
+expandTrainers.scripts.OnClick()
+if ShirsLazyTrixDB.expandTrainers ~= true or ShirsLazyTrixDB.trainAll ~= false then error("expanded trainer checkbox did not save independently", 2) end
+trainAll.checked = 1
+this = trainAll
+trainAll.scripts.OnClick()
+if ShirsLazyTrixDB.trainAll ~= true or ShirsLazyTrixDB.expandTrainers ~= true then error("Train All checkbox did not save independently", 2) end
+if trainerRefreshes ~= 2 then error("trainer setting clicks did not refresh the feature independently", 2) end
 autoOpenTrainers.checked = 1
 this = autoOpenTrainers
 autoOpenTrainers.scripts.OnClick()

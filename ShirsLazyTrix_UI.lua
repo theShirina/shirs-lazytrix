@@ -17,7 +17,7 @@ local function createCheckbox(parent, name, labelText, key, y)
   label:SetTextColor(0.9, 0.92, 0.95)
   check:SetScript("OnClick", function()
     ShirsLazyTrixDB[key] = this:GetChecked() and true or false
-    if name == "ShirsLazyTrixEnhanceTrainers" and ShirsLazyTrix.RefreshTrainerFeature then
+    if (name == "ShirsLazyTrixExpandTrainers" or name == "ShirsLazyTrixTrainAll") and ShirsLazyTrix.RefreshTrainerFeature then
       ShirsLazyTrix.RefreshTrainerFeature()
     end
   end)
@@ -33,7 +33,8 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixAutoRepairAll:SetChecked(ShirsLazyTrixDB.autoRepairAll and 1 or nil)
   ShirsLazyTrixAutoAcceptOpenWorldRes:SetChecked(ShirsLazyTrixDB.autoAcceptOpenWorldRes and 1 or nil)
   ShirsLazyTrixAutoRemoveImmolationOnStealth:SetChecked(ShirsLazyTrixDB.autoRemoveImmolationOnStealth and 1 or nil)
-  ShirsLazyTrixEnhanceTrainers:SetChecked(ShirsLazyTrixDB.enhanceTrainers and 1 or nil)
+  ShirsLazyTrixExpandTrainers:SetChecked(ShirsLazyTrixDB.expandTrainers and 1 or nil)
+  ShirsLazyTrixTrainAll:SetChecked(ShirsLazyTrixDB.trainAll and 1 or nil)
   ShirsLazyTrixAutoOpenTrainers:SetChecked(ShirsLazyTrixDB.autoOpenTrainers and 1 or nil)
 end
 
@@ -42,7 +43,7 @@ local function createSettingsFrame()
 
   local frame = CreateFrame("Frame", "ShirsLazyTrixSettingsFrame", UIParent)
   frame:SetWidth(340)
-  frame:SetHeight(480)
+  frame:SetHeight(510)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
@@ -98,25 +99,26 @@ local function createSettingsFrame()
 
   createCheckbox(frame, "ShirsLazyTrixAutoAcceptOpenWorldRes", "Automatically accept open-world resurrection requests", "autoAcceptOpenWorldRes", -214)
   createCheckbox(frame, "ShirsLazyTrixAutoRemoveImmolationOnStealth", "Remove immolation effects on stealth or invisibility", "autoRemoveImmolationOnStealth", -244)
-  createCheckbox(frame, "ShirsLazyTrixEnhanceTrainers", "Expand trainer windows and add Train All", "enhanceTrainers", -274)
-  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", -304)
+  createCheckbox(frame, "ShirsLazyTrixExpandTrainers", "Expand trainer windows", "expandTrainers", -274)
+  createCheckbox(frame, "ShirsLazyTrixTrainAll", "Enable Train All", "trainAll", -304)
+  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", -334)
 
   local merchantDivider = frame:CreateTexture(nil, "ARTWORK")
   merchantDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
   merchantDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
-  merchantDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -340)
+  merchantDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -370)
   merchantDivider:SetWidth(300)
   merchantDivider:SetHeight(1)
 
   local merchantSection = createText(frame, "MERCHANT", 11)
-  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -354)
+  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -384)
   merchantSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Automatically sell gray items at vendors", "autoSellGray", -369)
-  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Automatically repair all gear at repair vendors", "autoRepairAll", -399)
+  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Automatically sell gray items at vendors", "autoSellGray", -399)
+  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Automatically repair all gear at repair vendors", "autoRepairAll", -429)
 
   local merchantNote = createText(frame, "Sells gray-quality items only. Vendor options run independently.", 11)
-  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -433)
+  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -463)
   merchantNote:SetWidth(290)
   merchantNote:SetHeight(24)
   merchantNote:SetJustifyH("LEFT")

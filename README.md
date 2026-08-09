@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 adds an optional expanded trainer window with a guarded Train All queue.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 adds independent options for expanded trainer windows and a guarded Train All queue.
 
 ## Features
 
@@ -24,6 +24,7 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Uses the exact client buff index API and does not require SuperMacro.
 - Optionally grows stock-width class and profession trainers downward to 18 visible rows.
 - Adds a manual Train All button with paced, bounded purchase retries.
+- Lets you enable trainer expansion and Train All independently.
 - Freezes the exact services and quoted costs when clicked; newly unlocked ranks wait for another click.
 - Checks the full plan cost before spending and skips services that consume a profession slot.
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
@@ -48,7 +49,8 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Automatically repair all gear at repair vendors: off.
 - Automatically accept open-world resurrection requests: off.
 - Remove immolation effects on stealth or invisibility: off.
-- Expand trainer windows and add Train All: off.
+- Expand trainer windows: off.
+- Enable Train All: off.
 - Automatically open trainer services: off.
 
 ## Installation

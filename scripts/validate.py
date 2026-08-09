@@ -143,6 +143,8 @@ def validate_source() -> None:
         "CLASS_FRAME_HEIGHT = 596",
         "TRADE_FRAME_HEIGHT = 612",
         "TRAINER_ACTION_BOTTOM = 47",
+        "expandedTrainerEnabled()",
+        "trainAllEnabled()",
         'RegisterEvent("TRAINER_SHOW")',
         'RegisterEvent("TRAINER_UPDATE")',
         'RegisterEvent("TRAINER_CLOSED")',
@@ -157,7 +159,7 @@ def validate_source() -> None:
         "TRAINER_MAX_RETRIES = 2",
         "TRAINER_TIMEOUT_SECONDS = 3",
         "money == lastPurchaseMoney",
-        'not string.find(info.subText, "%S")',
+        'info.serviceType == "available" and string.find(info.subText, "%S")',
         "currentTrainerListSignature()",
         "listSignature ~= lastPurchaseListSignature",
         "buildTrainAllSnapshot()",
@@ -167,8 +169,9 @@ def validate_source() -> None:
         "trainAllSubmitting",
         "trainerVisible()",
         'CreateTexture("ShirsLazyTrixTrainerStockBackground", "BACKGROUND")',
-        'texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 0, -256)',
-        'texture:SetPoint("BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", 0, 256)',
+        'texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, -256)',
+        "texture:SetWidth(331)",
+        "texture:SetHeight(frameHeight - 512)",
         "trainerShowPending and trainerVisible()",
         "if ShirsLazyTrix.InstallTrainerHooks then ShirsLazyTrix.InstallTrainerHooks() end",
         "pcall(SkinCollapseButton, button)",
@@ -230,7 +233,7 @@ def validate_source() -> None:
     assert 'CancelBuff("' not in world, "stealth cleanup must not depend on SuperMacro"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "enhanceTrainers", "autoOpenTrainers"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "expandTrainers", "trainAll", "autoOpenTrainers"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -240,7 +243,8 @@ def validate_source() -> None:
     assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
     assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
     assert "Remove immolation effects on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
-    assert "Expand trainer windows and add Train All" in ui, "UI must expose trainer enhancement"
+    assert "Expand trainer windows" in ui, "UI must expose trainer expansion"
+    assert "Enable Train All" in ui, "UI must expose Train All independently"
     assert "Automatically open trainer services" in ui, "UI must expose automatic trainer gossip"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
