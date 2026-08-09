@@ -1,0 +1,46 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build Lua 5.0.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/lua-5.0.3.tar.gz"
+          curl --fail --location --silent --show-error \
+            https://www.lua.org/ftp/lua-5.0.3.tar.gz \
+            --output "$archive"
+          echo "1193a61b0e08acaa6eee0eecf29709179ee49c71baebc59b682a25c3b5a45671  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          make -C "$RUNNER_TEMP/lua-5.0.3"
+          echo "LUA_ROOT=$RUNNER_TEMP/lua-5.0.3" >> "$GITHUB_ENV"
+
+      - name: Validate source and tests
+        run: |
+          python scripts/validate.py \
+            --lua "$LUA_ROOT/bin/lua" \
+            --luac "$LUA_ROOT/bin/luac"
+
+      - name: Verify deterministic package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/build_release.py --output-dir "$RUNNER_TEMP/build-a"
+          python scripts/build_release.py --output-dir "$RUNNER_TEMP/build-b"
+          cmp "$RUNNER_TEMP/build-a/ShirsLazyTrix-v0.0.1.zip" \
+              "$RUNNER_TEMP/build-b/ShirsLazyTrix-v0.0.1.zip"
+          cd "$RUNNER_TEMP/build-a"
+          sha256sum --check ShirsLazyTrix-v0.0.1.zip.sha256

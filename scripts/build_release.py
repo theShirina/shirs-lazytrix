@@ -40,6 +40,7 @@ def build(output_dir: Path) -> Path:
                 if not source.is_file():
                     raise SystemExit(f"missing runtime file: {name}")
                 info = zipfile.ZipInfo(f"ShirsLazyTrix/{name}", STAMP)
+                info.create_system = 3
                 info.compress_type = zipfile.ZIP_DEFLATED
                 info.external_attr = 0o100644 << 16
                 data = source.read_bytes().replace(b"\r\n", b"\n")

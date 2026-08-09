@@ -1,8 +1,6 @@
 local DEFAULTS = {
-  turnInNormal = true,
-  pickUpNormal = true,
-  turnInRepeatable = false,
-  pickUpRepeatable = false,
+  turnIn = true,
+  pickUp = true,
 }
 
 local function npcName()
@@ -13,12 +11,12 @@ local function npcName()
   return name or ""
 end
 
-local function questIsRepeatable(title)
-  return ShirsLazyTrix.IsRepeatable(npcName(), title, ShirsLazyTrixDB)
+local function shiftHeld()
+  return type(IsShiftKeyDown) == "function" and IsShiftKeyDown() and true or false
 end
 
 local function incompleteKey(npc, title)
-  return ShirsLazyTrix.QuestKey(npc, title)
+  return (npc or "") .. "\031" .. (title or "")
 end
 
 local function applyIncompleteObservation(npc, title, complete)
@@ -39,6 +37,13 @@ function ShirsLazyTrix.EnsureDatabase()
     ShirsLazyTrixDB = {}
   end
 
+  if ShirsLazyTrixDB.turnIn == nil and ShirsLazyTrixDB.turnInNormal ~= nil then
+    ShirsLazyTrixDB.turnIn = ShirsLazyTrixDB.turnInNormal and true or false
+  end
+  if ShirsLazyTrixDB.pickUp == nil and ShirsLazyTrixDB.pickUpNormal ~= nil then
+    ShirsLazyTrixDB.pickUp = ShirsLazyTrixDB.pickUpNormal and true or false
+  end
+
   local key, value
   for key, value in pairs(DEFAULTS) do
     if ShirsLazyTrixDB[key] == nil then
@@ -46,37 +51,18 @@ function ShirsLazyTrix.EnsureDatabase()
     end
   end
 
-  if type(ShirsLazyTrixDB.repeatableByCharacter) ~= "table" then
-    ShirsLazyTrixDB.repeatableByCharacter = {}
-  end
-
-  if type(ShirsLazyTrixDB.repeatable) == "table" then
-    local repeatables = ShirsLazyTrix.CharacterRepeatables(ShirsLazyTrixDB)
-    local questKey, learned
-    for questKey, learned in pairs(ShirsLazyTrixDB.repeatable) do
-      if learned then
-        repeatables[questKey] = true
-      end
-    end
-    ShirsLazyTrixDB.repeatable = nil
-  end
-end
-
-local function observeAvailable(npc, available)
-  local titles = {}
-  local i
-  for i = 1, table.getn(available) do
-    titles[i] = available[i].title
-  end
-  ShirsLazyTrix.ObserveAvailable(npc, titles, ShirsLazyTrixDB)
-
-  for i = 1, table.getn(available) do
-    available[i].repeatable = ShirsLazyTrix.IsRepeatable(npc, available[i].title, ShirsLazyTrixDB)
-  end
+  ShirsLazyTrixDB.turnInNormal = nil
+  ShirsLazyTrixDB.pickUpNormal = nil
+  ShirsLazyTrixDB.turnInRepeatable = nil
+  ShirsLazyTrixDB.pickUpRepeatable = nil
+  ShirsLazyTrixDB.repeatable = nil
+  ShirsLazyTrixDB.repeatableByCharacter = nil
 end
 
 function ShirsLazyTrix.HandleQuestGreeting()
   ShirsLazyTrix.EnsureDatabase()
+  if shiftHeld() then return end
+
   local npc = npcName()
   local active = {}
   local available = {}
@@ -87,7 +73,6 @@ function ShirsLazyTrix.HandleQuestGreeting()
     active[i] = {
       title = title,
       complete = applyIncompleteObservation(npc, title, complete),
-      repeatable = ShirsLazyTrix.IsRepeatable(npc, title, ShirsLazyTrixDB),
     }
   end
 
@@ -95,7 +80,6 @@ function ShirsLazyTrix.HandleQuestGreeting()
     available[i] = { title = GetAvailableTitle(i) }
   end
 
-  observeAvailable(npc, available)
   local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, ShirsLazyTrixDB)
   if action == "active" then
     SelectActiveQuest(index)
@@ -119,6 +103,8 @@ end
 
 function ShirsLazyTrix.HandleGossipShow()
   ShirsLazyTrix.EnsureDatabase()
+  if shiftHeld() then return end
+
   local npc = npcName()
   local active = collectGossipQuests({ GetGossipActiveQuests() })
   local available = collectGossipQuests({ GetGossipAvailableQuests() })
@@ -126,10 +112,8 @@ function ShirsLazyTrix.HandleGossipShow()
 
   for i = 1, table.getn(active) do
     active[i].complete = applyIncompleteObservation(npc, active[i].title, nil)
-    active[i].repeatable = ShirsLazyTrix.IsRepeatable(npc, active[i].title, ShirsLazyTrixDB)
   end
 
-  observeAvailable(npc, available)
   local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, ShirsLazyTrixDB)
   if action == "active" then
     SelectGossipActiveQuest(index)
@@ -140,17 +124,17 @@ end
 
 function ShirsLazyTrix.HandleQuestDetail()
   ShirsLazyTrix.EnsureDatabase()
-  local title = GetTitleText()
-  local repeatable = questIsRepeatable(title)
-  if ShirsLazyTrix.IsCategoryEnabled(ShirsLazyTrixDB, "pickup", repeatable) then
+  if shiftHeld() then return end
+  if ShirsLazyTrixDB.pickUp then
     AcceptQuest()
   end
 end
 
 function ShirsLazyTrix.HandleQuestProgress()
   ShirsLazyTrix.EnsureDatabase()
+  if shiftHeld() then return end
+
   local title = GetTitleText()
-  local repeatable = questIsRepeatable(title)
   local completable = IsQuestCompletable()
   ShirsLazyTrix.incompleteSeen = ShirsLazyTrix.incompleteSeen or {}
   local key = incompleteKey(npcName(), title)
@@ -159,22 +143,23 @@ function ShirsLazyTrix.HandleQuestProgress()
     return
   end
   ShirsLazyTrix.incompleteSeen[key] = nil
-  if ShirsLazyTrix.ShouldCompleteProgress(title, completable, repeatable, ShirsLazyTrixDB) then
+  if ShirsLazyTrix.ShouldCompleteProgress(completable, ShirsLazyTrixDB) then
     CompleteQuest()
   end
 end
 
 function ShirsLazyTrix.HandleQuestComplete()
   ShirsLazyTrix.EnsureDatabase()
-  local title = GetTitleText()
-  local repeatable = questIsRepeatable(title)
-  if not ShirsLazyTrix.IsCategoryEnabled(ShirsLazyTrixDB, "turnin", repeatable) then
+  if shiftHeld() or not ShirsLazyTrixDB.turnIn then
     return
   end
 
   local count = GetNumQuestChoices()
   if count <= 1 then
-    ShirsLazyTrix.RememberTurnIn(npcName(), title, ShirsLazyTrixDB)
     GetQuestReward(count)
   end
+end
+
+function ShirsLazyTrix.HandleQuestFinished()
+  ShirsLazyTrix.incompleteSeen = nil
 end

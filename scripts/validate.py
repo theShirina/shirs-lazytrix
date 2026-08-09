@@ -20,7 +20,32 @@ TESTS = [
     "tests/test_ui_structure.lua",
     "tests/test_event_structure.lua",
 ]
+PYTHON_TESTS = [
+    "tests/test_build_release.py",
+]
 TOC_ORDER = LUA_FILES
+PUBLIC_FILES = {
+    ".gitattributes",
+    ".github/workflows/validate.yml",
+    ".gitignore",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "README.txt",
+    "ShirsLazyTrix.lua",
+    "ShirsLazyTrix.toc",
+    "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_Engine.lua",
+    "ShirsLazyTrix_UI.lua",
+    "docs/precedents.md",
+    "scripts/build_release.py",
+    "scripts/validate.py",
+    "tests/test_build_release.py",
+    "tests/test_controller.lua",
+    "tests/test_engine.lua",
+    "tests/test_event_structure.lua",
+    "tests/test_ui_structure.lua",
+}
 
 
 def run(command: list[str]) -> None:
@@ -28,7 +53,36 @@ def run(command: list[str]) -> None:
     subprocess.run(command, cwd=ROOT, check=True, creationflags=flags)
 
 
+def validate_public_boundary() -> None:
+    actual = {
+        path.relative_to(ROOT).as_posix()
+        for path in ROOT.rglob("*")
+        if path.is_file()
+        and ".git" not in path.parts
+        and "dist" not in path.parts
+        and "__pycache__" not in path.parts
+    }
+    assert actual == PUBLIC_FILES, f"unexpected public files: {sorted(actual ^ PUBLIC_FILES)}"
+
+    forbidden = (
+        b"c:" + b"/users/",
+        b"c:" + b"\\users\\",
+        b"e:" + b"/hermes",
+        b"e:" + b"\\hermes",
+        b"appdata" + b"/local/hermes",
+        b"discord.com/api/" + b"webhooks",
+        b"gh" + b"o_",
+    )
+    for name in sorted(actual):
+        data = (ROOT / name).read_bytes()
+        assert b"\0" not in data, f"unexpected binary file: {name}"
+        lowered = data.lower()
+        for token in forbidden:
+            assert token not in lowered, f"private token or path in {name}: {token!r}"
+
+
 def validate_source() -> None:
+    validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
     assert re.search(r"^## Version:\s*0\.0\.1\s*$", toc, re.MULTILINE), "TOC version must be 0.0.1"
@@ -41,12 +95,25 @@ def validate_source() -> None:
 
     controller = (ROOT / "ShirsLazyTrix_Controller.lua").read_text(encoding="utf-8")
     assert "IsQuestCompletable()" in controller, "missing incomplete-quest guard"
+    assert "IsShiftKeyDown()" in controller, "missing physical Shift bypass"
     assert controller.count("CompleteQuest()") == 1, "turn-in must have one guarded completion call"
+    assert controller.count("AcceptQuest()") == 1, "pickup must have one guarded acceptance call"
     assert "GetQuestReward(count)" in controller, "reward choice must use bounded count"
+    for removed in ("InstallRewardHook", "RememberTurnIn", "ObserveAvailable", "IsRepeatable"):
+        assert removed not in controller, f"removed learner behavior remains: {removed}"
+
+    engine = (ROOT / "ShirsLazyTrix_Engine.lua").read_text(encoding="utf-8")
+    assert "repeatable" not in engine.lower(), "engine must not classify quest recurrence"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnInNormal", "pickUpNormal", "turnInRepeatable", "pickUpRepeatable"):
+    for key in ("turnIn", "pickUp"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
+    assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
+    assert "Hold Shift to handle a quest manually." in ui, "UI must explain Shift bypass"
+
+    for name in ("README.md", "README.txt", "CHANGELOG.md", "docs/precedents.md"):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        assert "repeatable" not in text.lower(), f"obsolete recurrence wording remains in {name}"
 
     combined = "\n".join((ROOT / name).read_text(encoding="utf-8") for name in LUA_FILES)
     forbidden = ("C_QuestLog", "QUEST_ACCEPT_CONFIRM", "QUEST_AUTOCOMPLETE", "hooksecurefunc")
@@ -65,6 +132,8 @@ def main() -> None:
         run([args.luac, "-p", str(ROOT / name)])
     for name in TESTS:
         run([args.lua, str(ROOT / name), str(ROOT)])
+    for name in PYTHON_TESTS:
+        run([sys.executable, str(ROOT / name)])
     print("validation: PASS")
 
 

@@ -14,11 +14,13 @@ local required = {
   'RegisterEvent("QUEST_DETAIL")',
   'RegisterEvent("QUEST_PROGRESS")',
   'RegisterEvent("QUEST_COMPLETE")',
+  'RegisterEvent("QUEST_FINISHED")',
   'ShirsLazyTrix.HandleGossipShow()',
   'ShirsLazyTrix.HandleQuestGreeting()',
   'ShirsLazyTrix.HandleQuestDetail()',
   'ShirsLazyTrix.HandleQuestProgress()',
   'ShirsLazyTrix.HandleQuestComplete()',
+  'ShirsLazyTrix.HandleQuestFinished()',
   'SLASH_SHIRSLAZYTRIX1 = "/lazytrix"',
   'SLASH_SHIRSLAZYTRIX2 = "/slt"',
 }
@@ -33,5 +35,9 @@ end
 if string.find(source, "QUEST_LOG_UPDATE", 1, true) then
   error("v0.0.1 must not poll the quest log", 2)
 end
+if string.find(source, "InstallRewardHook", 1, true) then
+  error("repeatable reward hook must be removed", 2)
+end
 
 print("event-wiring: PASS")
+print("event-repeatable-hook-removed: PASS")

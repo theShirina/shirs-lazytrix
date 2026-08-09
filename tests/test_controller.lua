@@ -12,8 +12,7 @@ local title = ""
 local completable = false
 local choices = 0
 local npc = "Quest Giver"
-local player = "Shirina"
-local realm = "Icecrown"
+local shiftDown = false
 
 local function resetCalls()
   calls = {}
@@ -43,10 +42,11 @@ local function assertEqual(actual, expected, message)
 end
 
 function UnitName(unit)
-  if unit == "player" then return player end
+  if unit == "player" then return "Shirina" end
   return npc
 end
-function GetRealmName() return realm end
+function GetRealmName() return "Icecrown" end
+function IsShiftKeyDown() return shiftDown and 1 or nil end
 function GetNumActiveQuests() return table.getn(active) end
 function GetActiveTitle(index) return active[index].title, active[index].complete end
 function GetNumAvailableQuests() return table.getn(available) end
@@ -68,20 +68,28 @@ dofile(root .. "/ShirsLazyTrix_Controller.lua")
 
 ShirsLazyTrixDB = nil
 ShirsLazyTrix.EnsureDatabase()
-assertEqual(ShirsLazyTrixDB.turnInNormal, true, "normal turn-in default")
-assertEqual(ShirsLazyTrixDB.pickUpNormal, true, "normal pickup default")
-assertEqual(ShirsLazyTrixDB.turnInRepeatable, false, "repeatable turn-in default")
-assertEqual(ShirsLazyTrixDB.pickUpRepeatable, false, "repeatable pickup default")
+assertEqual(ShirsLazyTrixDB.turnIn, true, "turn-in default")
+assertEqual(ShirsLazyTrixDB.pickUp, true, "pickup default")
 
-local legacyQuestKey = ShirsLazyTrix.QuestKey("Legacy NPC", "Legacy Repeatable")
-ShirsLazyTrixDB.repeatable = { [legacyQuestKey] = true }
-ShirsLazyTrixDB.repeatableByCharacter = nil
+ShirsLazyTrixDB = {
+  turnInNormal = false,
+  pickUpNormal = true,
+  turnInRepeatable = true,
+  pickUpRepeatable = true,
+  repeatable = { old = true },
+  repeatableByCharacter = { old = true },
+}
 ShirsLazyTrix.EnsureDatabase()
-assertEqual(ShirsLazyTrixDB.repeatable, nil, "shared repeatable registry is removed after migration")
-assertEqual(ShirsLazyTrix.IsRepeatable("Legacy NPC", "Legacy Repeatable", ShirsLazyTrixDB), true, "legacy registry migrates to current character")
-player = "ShirinaF2P"
-assertEqual(ShirsLazyTrix.IsRepeatable("Legacy NPC", "Legacy Repeatable", ShirsLazyTrixDB), false, "migrated registry does not cross characters")
-player = "Shirina"
+assertEqual(ShirsLazyTrixDB.turnIn, false, "old normal turn-in setting migrates")
+assertEqual(ShirsLazyTrixDB.pickUp, true, "old normal pickup setting migrates")
+assertEqual(ShirsLazyTrixDB.turnInNormal, nil, "old normal turn-in key removed")
+assertEqual(ShirsLazyTrixDB.pickUpNormal, nil, "old normal pickup key removed")
+assertEqual(ShirsLazyTrixDB.turnInRepeatable, nil, "old repeatable turn-in key removed")
+assertEqual(ShirsLazyTrixDB.pickUpRepeatable, nil, "old repeatable pickup key removed")
+assertEqual(ShirsLazyTrixDB.repeatable, nil, "old shared learner removed")
+assertEqual(ShirsLazyTrixDB.repeatableByCharacter, nil, "old character learner removed")
+ShirsLazyTrixDB.turnIn = true
+ShirsLazyTrixDB.pickUp = true
 
 active = {
   { title = "Incomplete", complete = false },
@@ -93,6 +101,20 @@ ShirsLazyTrix.HandleQuestGreeting()
 assertEqual(lastCall("SelectActiveQuest")[2], 2, "completed greeting quest is prioritized")
 assertEqual(countCalls("SelectAvailableQuest"), 0, "pickup waits for turn-in")
 
+shiftDown = true
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 0, "Shift bypasses greeting turn-in selection")
+assertEqual(countCalls("SelectAvailableQuest"), 0, "Shift bypasses greeting pickup selection")
+
+gossipActive = { "Complete Gossip Quest", 30 }
+gossipAvailable = { "Available Gossip Quest", 30 }
+resetCalls()
+ShirsLazyTrix.HandleGossipShow()
+assertEqual(countCalls("SelectGossipActiveQuest"), 0, "Shift bypasses gossip turn-in selection")
+assertEqual(countCalls("SelectGossipAvailableQuest"), 0, "Shift bypasses gossip pickup selection")
+
+shiftDown = false
 active = { { title = "Legacy Active", complete = nil } }
 available = { { title = "Available" } }
 resetCalls()
@@ -107,58 +129,52 @@ assertEqual(countCalls("CompleteQuest"), 0, "incomplete quest is never completed
 
 resetCalls()
 ShirsLazyTrix.HandleQuestGreeting()
-assertEqual(lastCall("SelectAvailableQuest")[2], 1, "inspected incomplete quest does not loop or block pickup")
+assertEqual(lastCall("SelectAvailableQuest")[2], 1, "inspected incomplete quest does not block pickup")
 assertEqual(countCalls("SelectActiveQuest"), 0, "inspected incomplete quest stays skipped")
+
+ShirsLazyTrix.HandleQuestFinished()
+gossipActive = { "Legacy Active", 30 }
+gossipAvailable = {}
+resetCalls()
+ShirsLazyTrix.HandleGossipShow()
+assertEqual(lastCall("SelectGossipActiveQuest")[2], 1, "new NPC interaction rechecks formerly incomplete quest")
+
+shiftDown = true
+title = "Manual Pickup"
+resetCalls()
+ShirsLazyTrix.HandleQuestDetail()
+assertEqual(countCalls("AcceptQuest"), 0, "Shift bypasses automatic pickup")
 
 completable = true
 resetCalls()
 ShirsLazyTrix.HandleQuestProgress()
-assertEqual(countCalls("CompleteQuest"), 1, "completable normal quest continues")
+assertEqual(countCalls("CompleteQuest"), 0, "Shift bypasses automatic turn-in progress")
+
+choices = 1
+resetCalls()
+ShirsLazyTrix.HandleQuestComplete()
+assertEqual(countCalls("GetQuestReward"), 0, "Shift bypasses automatic reward submission")
+
+shiftDown = false
+resetCalls()
+ShirsLazyTrix.HandleQuestDetail()
+assertEqual(countCalls("AcceptQuest"), 1, "pickup resumes when Shift is released")
+
+resetCalls()
+ShirsLazyTrix.HandleQuestProgress()
+assertEqual(countCalls("CompleteQuest"), 1, "turn-in resumes when Shift is released")
+
+resetCalls()
+ShirsLazyTrix.HandleQuestComplete()
+assertEqual(lastCall("GetQuestReward")[2], 1, "single reward is selected")
 
 choices = 2
 resetCalls()
 ShirsLazyTrix.HandleQuestComplete()
 assertEqual(countCalls("GetQuestReward"), 0, "multiple rewards wait for player")
 
-choices = 1
-resetCalls()
-ShirsLazyTrix.HandleQuestComplete()
-assertEqual(lastCall("GetQuestReward")[2], 1, "single reward is selected")
-
--- Exact Vanilla gossip tuples are title/level pairs.
-gossipActive = { "Active Gossip Quest", 30 }
-gossipAvailable = { "Available Gossip Quest", 30 }
-resetCalls()
-ShirsLazyTrix.HandleGossipShow()
-assertEqual(lastCall("SelectGossipActiveQuest")[2], 1, "gossip active quest is inspected before pickup")
-assertEqual(countCalls("SelectGossipAvailableQuest"), 0, "gossip pickup waits for active quest")
-
--- The just-completed title reappears from the same NPC and becomes repeatable.
-active = {}
-available = { { title = "Legacy Active" } }
-resetCalls()
-ShirsLazyTrix.HandleQuestGreeting()
-assertEqual(ShirsLazyTrix.IsRepeatable(npc, "Legacy Active", ShirsLazyTrixDB), true, "repeatable learned after confirmed reward")
-assertEqual(countCalls("SelectAvailableQuest"), 0, "disabled repeatable pickup stays closed")
-
--- Normal detail accepts; learned repeatable detail obeys its separate switch.
-title = "Normal Offer"
-resetCalls()
-ShirsLazyTrix.HandleQuestDetail()
-assertEqual(countCalls("AcceptQuest"), 1, "normal pickup")
-
-title = "Legacy Active"
-resetCalls()
-ShirsLazyTrix.HandleQuestDetail()
-assertEqual(countCalls("AcceptQuest"), 0, "disabled repeatable pickup")
-
-ShirsLazyTrixDB.pickUpRepeatable = true
-resetCalls()
-ShirsLazyTrix.HandleQuestDetail()
-assertEqual(countCalls("AcceptQuest"), 1, "enabled repeatable pickup")
-
-print("controller-defaults: PASS")
+print("controller-defaults-and-migration: PASS")
 print("controller-priority: PASS")
 print("controller-incomplete-guard: PASS")
+print("controller-shift-bypass: PASS")
 print("controller-rewards: PASS")
-print("controller-repeatable: PASS")

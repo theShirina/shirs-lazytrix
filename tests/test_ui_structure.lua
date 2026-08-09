@@ -15,6 +15,12 @@ local function assertContains(text, message)
   end
 end
 
+local function assertAbsent(text, message)
+  if string.find(string.lower(source), string.lower(text), 1, true) then
+    error(message .. ": found " .. text, 2)
+  end
+end
+
 local function count(text)
   local total = 0
   local start = 1
@@ -27,19 +33,16 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(360)', "minimal settings width")
-assertContains('frame:SetHeight(290)', "minimal settings height")
 assertContains('button:SetWidth(24)', "minimap button width")
 assertContains('button:SetHeight(24)', "minimap button height")
-assertContains('"Normal quests"', "normal section")
-assertContains('"Repeatable quests"', "repeatable section")
-assertContains('"Turn in completed quests", "turnInNormal"', "normal turn-in checkbox")
-assertContains('"Pick up quests", "pickUpNormal"', "normal pickup checkbox")
-assertContains('"Turn in completed quests", "turnInRepeatable"', "repeatable turn-in checkbox")
-assertContains('"Pick up quests", "pickUpRepeatable"', "repeatable pickup checkbox")
-assertContains("Repeatable quests are learned separately per character after their first completed cycle.", "repeatable learning note")
+assertContains('"Turn in completed quests", "turnIn"', "turn-in checkbox")
+assertContains('"Pick up quests", "pickUp"', "pickup checkbox")
+assertContains("Hold Shift to handle a quest manually.", "Shift bypass note")
+assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 5 then
-  error("UI must define exactly four checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 3 then
+  error("UI must define exactly two checkbox calls plus the helper", 2)
 end
 
-print("ui-minimal-structure: PASS")
+print("ui-two-setting-structure: PASS")
+print("ui-shift-note: PASS")
