@@ -1,8 +1,9 @@
 local TRAINER_ROWS = 18
 local TRAINER_LIST_HEIGHT = 296
-local CLASS_FRAME_HEIGHT = 624
-local TRADE_FRAME_HEIGHT = 640
+local CLASS_FRAME_HEIGHT = 596
+local TRADE_FRAME_HEIGHT = 612
 local TRAINER_HORIZONTAL_Y = -387
+local TRAINER_ACTION_BOTTOM = 47
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
@@ -23,6 +24,7 @@ local trainAllSnapshot = nil
 local trainAllPosition = 0
 local trainAllSubmitting = false
 local trainAllSawUpdate = false
+local trainerShowPending = false
 local layoutApplied = false
 local originalLayout = nil
 local trainerHooksInstalled = false
@@ -124,6 +126,22 @@ local function ensureTrainerRows()
   end
 end
 
+local function updateStockBackground()
+  local texture = getglobal("ShirsLazyTrixTrainerStockBackground")
+  if not texture and ClassTrainerFrame and type(ClassTrainerFrame.CreateTexture) == "function" then
+    texture = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerStockBackground", "BACKGROUND")
+    texture:SetTexture(0, 0, 0, 1)
+    texture:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", 0, -256)
+    texture:SetPoint("BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", 0, 256)
+  end
+  if not texture then return end
+  if type(SkinCollapseButton) == "function" then
+    texture:Hide()
+  else
+    texture:Show()
+  end
+end
+
 local function buttonTooltip()
   if not GameTooltip or type(GameTooltip.SetOwner) ~= "function" then return end
   local count, total = ShirsLazyTrix.GetTrainAllPlan()
@@ -145,7 +163,7 @@ local function createTrainAllButton()
   button:SetWidth(90)
   button:SetHeight(22)
   button:SetText("Train All")
-  button:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, 54)
+  button:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM)
   button:SetScript("OnClick", function() ShirsLazyTrix.StartTrainAll() end)
   button:SetScript("OnEnter", buttonTooltip)
   button:SetScript("OnLeave", function()
@@ -170,14 +188,14 @@ local function applyExpandedModeGeometry()
   ClassTrainerListScrollFrame:SetHeight(TRAINER_LIST_HEIGHT)
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
   ClassTrainerDetailScrollFrame:SetHeight(trade and 135 or 119)
-  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 54)
+  setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, TRAINER_ACTION_BOTTOM)
   setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
   if ClassTrainerHorizontalBarLeft then
     setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, TRAINER_HORIZONTAL_Y)
     if type(ClassTrainerHorizontalBarLeft.Show) == "function" then ClassTrainerHorizontalBarLeft:Show() end
   end
   local button = getglobal("ShirsLazyTrixTrainAllButton")
-  if button then setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, 54) end
+  if button then setPoint(button, "BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", 25, TRAINER_ACTION_BOTTOM) end
   if type(UIPanelWindows) == "table" and type(UIPanelWindows["ClassTrainerFrame"]) == "table" then
     UIPanelWindows["ClassTrainerFrame"].height = height
   end
@@ -191,6 +209,7 @@ function ShirsLazyTrix.ApplyTrainerLayout()
 
   local oldBackdrop = getglobal("ShirsLazyTrixTrainerDetailsBackdrop")
   if oldBackdrop and type(oldBackdrop.Hide) == "function" then oldBackdrop:Hide() end
+  updateStockBackground()
   local button = createTrainAllButton()
   button:Show()
   layoutApplied = true
@@ -226,6 +245,8 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   end
   local backdrop = getglobal("ShirsLazyTrixTrainerDetailsBackdrop")
   if backdrop then backdrop:Hide() end
+  local stockBackground = getglobal("ShirsLazyTrixTrainerStockBackground")
+  if stockBackground then stockBackground:Hide() end
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if button then button:Hide() end
   if type(IsTradeskillTrainer) == "function" and IsTradeskillTrainer() then
@@ -514,6 +535,11 @@ local function advanceTrainAllSnapshot()
 end
 
 function ShirsLazyTrix.HandleTrainerOnUpdate(elapsed)
+  if trainerShowPending and trainerVisible() then
+    trainerShowPending = false
+    ShirsLazyTrix.RefreshTrainerFeature()
+    ShirsLazyTrix.UpdateTrainAllButton()
+  end
   if not trainAllActive or not trainAllWaiting or trainAllSubmitting then return false end
   if not ShirsLazyTrixDB or not exactBoolean(ShirsLazyTrixDB.enhanceTrainers) or
      not trainerVisible() or not trainerApisAvailable() then
@@ -599,6 +625,7 @@ end
 
 function ShirsLazyTrix.HandleTrainerEvent(name)
   if name == "TRAINER_CLOSED" then
+    trainerShowPending = false
     ShirsLazyTrix.CancelTrainAll()
     return
   end
@@ -608,6 +635,7 @@ function ShirsLazyTrix.HandleTrainerEvent(name)
       ExpandTrainerSkillLine(0)
     end
     ShirsLazyTrix.UpdateTrainAllButton()
+    trainerShowPending = not trainerVisible()
     return
   end
   if name == "TRAINER_UPDATE" then

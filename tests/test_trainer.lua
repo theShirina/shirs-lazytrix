@@ -23,9 +23,13 @@ local function makeFrame(name)
   function frame:SetHeight(value) self.height = value end
   function frame:GetWidth() return self.width end
   function frame:GetHeight() return self.height end
-  function frame:SetPoint(...) self.point = arg end
+  function frame:SetPoint(...)
+    self.point = arg
+    if not self.points then self.points = {} end
+    table.insert(self.points, arg)
+  end
   function frame:GetPoint() if self.point then return unpack(self.point) end end
-  function frame:ClearAllPoints() self.point = nil end
+  function frame:ClearAllPoints() self.point = nil self.points = {} end
   function frame:SetID(value) self.id = value end
   function frame:SetText(value) self.text = value end
   function frame:GetText() return self.text end
@@ -42,6 +46,18 @@ local function makeFrame(name)
   function frame:SetBackdrop(value) self.backdrop = value end
   function frame:SetBackdropColor(...) self.backdropColor = arg end
   function frame:SetBackdropBorderColor(...) self.backdropBorderColor = arg end
+  function frame:SetTexture(...) self.texture = arg end
+
+  function frame:CreateTexture(childName, layer)
+    local texture = makeFrame(childName)
+    texture.parent = self
+    texture.layer = layer
+    if childName then
+      named[childName] = texture
+      _G[childName] = texture
+    end
+    return texture
+  end
   return frame
 end
 
@@ -186,7 +202,7 @@ assert(ClassTrainerFrame.width == 384 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
 -- Enabled layout preserves stock width and extends downward with 18 rows.
 ShirsLazyTrixDB.enhanceTrainers = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "enabled trainer enhancement did not apply")
-assert(ClassTrainerFrame.width == 384 and ClassTrainerFrame.height == 624,
+assert(ClassTrainerFrame.width == 384 and ClassTrainerFrame.height == 596,
   "downward trainer frame geometry mismatch")
 assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.height == 296,
   "downward trainer list geometry mismatch")
@@ -206,18 +222,35 @@ for i = 12, 18 do
 end
 assert(named.ShirsLazyTrixTrainAllButton, "Train All button was not created")
 assert(not named.ShirsLazyTrixTrainerDetailsBackdrop, "horizontal details backdrop must not be created")
-assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25,
+assert(named.ShirsLazyTrixTrainAllButton.point[1] == "BOTTOMLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 25 and
+  named.ShirsLazyTrixTrainAllButton.point[5] == 47,
   "Train All must remain inside the stock-width frame")
 assert(createdSkillRows == 7, "expected exactly seven additional trainer rows")
+local savedSkinCollapseButton = SkinCollapseButton
+SkinCollapseButton = nil
 ShirsLazyTrix.RefreshTrainerFeature()
+assert(named.ShirsLazyTrixTrainerStockBackground and named.ShirsLazyTrixTrainerStockBackground.shown == true and
+  named.ShirsLazyTrixTrainerStockBackground.layer == "BACKGROUND" and
+  table.getn(named.ShirsLazyTrixTrainerStockBackground.points) == 2 and
+  named.ShirsLazyTrixTrainerStockBackground.points[1][1] == "TOPLEFT" and
+  named.ShirsLazyTrixTrainerStockBackground.points[1][2] == ClassTrainerFrame and
+  named.ShirsLazyTrixTrainerStockBackground.points[1][5] == -256 and
+  named.ShirsLazyTrixTrainerStockBackground.points[2][1] == "BOTTOMRIGHT" and
+  named.ShirsLazyTrixTrainerStockBackground.points[2][2] == ClassTrainerFrame and
+  named.ShirsLazyTrixTrainerStockBackground.points[2][5] == 256,
+  "stock-only expansion did not fill the fixed-artwork gap")
+SkinCollapseButton = savedSkinCollapseButton
+ShirsLazyTrix.RefreshTrainerFeature()
+assert(named.ShirsLazyTrixTrainerStockBackground.shown == false,
+  "stock background was not hidden when pfUI owned the trainer backdrop")
 assert(createdSkillRows == 7, "reapplying trainer layout duplicated rows")
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 640 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 135,
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 612 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 135,
   "profession trainer mode reset the expanded row count")
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 624 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 596 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
   "class trainer mode reset the expanded row count")
 
 local function resetRows(rows, money)
@@ -248,6 +281,16 @@ assert(count == 2 and total == 300, "Train All plan included unsafe or unavailab
 ShirsLazyTrix.UpdateTrainAllButton()
 assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "affordable Train All plan did not enable the button")
+
+-- LazyTrix may receive TRAINER_SHOW before Blizzard's frame handler makes the panel visible.
+ClassTrainerFrame.shown = false
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_SHOW")
+assert(named.ShirsLazyTrixTrainAllButton.enabled == false,
+  "hidden trainer unexpectedly enabled Train All")
+ClassTrainerFrame.shown = true
+named.ShirsLazyTrixTrainerEventFrame.scripts.OnUpdate()
+assert(named.ShirsLazyTrixTrainAllButton.enabled == true and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "deferred visible-frame refresh did not recover Train All after event-order inversion")
 
 assert(ShirsLazyTrix.StartTrainAll() == true, "affordable Train All plan did not start")
 assert(table.getn(bought) == 1 and bought[1] == 2, "Train All must buy exactly one safe service initially")
