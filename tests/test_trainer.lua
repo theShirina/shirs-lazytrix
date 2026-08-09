@@ -23,6 +23,8 @@ local function makeFrame(name)
   function frame:SetHeight(value) self.height = value end
   function frame:GetWidth() return self.width end
   function frame:GetHeight() return self.height end
+  function frame:SetScale(value) self.scale = value end
+  function frame:GetScale() return self.scale or 1 end
   function frame:SetPoint(...)
     self.point = arg
     if not self.points then self.points = {} end
@@ -94,6 +96,7 @@ ClassTrainerCancelButton = makeFrame("ClassTrainerCancelButton")
 ClassTrainerFrameCloseButton = makeFrame("ClassTrainerFrameCloseButton")
 ClassTrainerFrameFilterDropDown = makeFrame("ClassTrainerFrameFilterDropDown")
 ClassTrainerMoneyFrame = makeFrame("ClassTrainerMoneyFrame")
+ClassTrainerMoneyFrame.scale = 1
 ClassTrainerGreetingText = makeFrame("ClassTrainerGreetingText")
 ClassTrainerSkillHighlightFrame = makeFrame("ClassTrainerSkillHighlightFrame")
 ClassTrainerHorizontalBarLeft = makeFrame("ClassTrainerHorizontalBarLeft")
@@ -240,9 +243,15 @@ ShirsLazyTrixDB.trainAll = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "combined trainer features did not apply")
 assert(named.ShirsLazyTrixTrainAllButton and named.ShirsLazyTrixTrainAllButton.shown == true,
   "combined mode did not show Train All")
-assert(named.ShirsLazyTrixTrainAllButton.point[1] == "TOPLEFT" and named.ShirsLazyTrixTrainAllButton.point[4] == 100 and
-  named.ShirsLazyTrixTrainAllButton.point[5] == -70,
-  "Train All must occupy the free stock toolbar slot")
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and
+  named.ShirsLazyTrixTrainAllButton.point[1] == "CENTER" and
+  named.ShirsLazyTrixTrainAllButton.point[2] == ClassTrainerFrame and
+  named.ShirsLazyTrixTrainAllButton.point[3] == "BOTTOMLEFT" and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
+  ClassTrainerMoneyFrame.scale == 0.6 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
+  ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
+  ClassTrainerMoneyFrame.point[4] == 180 and ClassTrainerMoneyFrame.point[5] == 89,
+  "Train All and money were not split across the bottom-left action area")
 local savedSkinCollapseButton = SkinCollapseButton
 SkinCollapseButton = nil
 ShirsLazyTrix.RefreshTrainerFeature()
@@ -261,10 +270,21 @@ assert(stockLeft and stockRight and stockLeft.shown == true and stockRight.shown
   stockLeft.texCoord[1] == 0 and stockLeft.texCoord[2] == 1 and stockLeft.texCoord[3] == 0 and
   stockLeft.texCoord[4] == 0.328125 and stockRight.texCoord[4] == 0.328125,
   "stock-only expansion did not extend the exact frame artwork through the gap")
+local trainAllSocket = named.ShirsLazyTrixTrainerTrainAllSocket
+assert(trainAllSocket and trainAllSocket.shown == true and trainAllSocket.layer == "BORDER" and
+  trainAllSocket.texture[1] == "Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotRight" and
+  trainAllSocket.point[1] == "BOTTOMLEFT" and trainAllSocket.point[2] == ClassTrainerFrame and
+  trainAllSocket.point[3] == "BOTTOMLEFT" and trainAllSocket.point[4] == 14 and trainAllSocket.point[5] == 74 and
+  trainAllSocket.width == 90 and trainAllSocket.height == 31 and
+  trainAllSocket.texCoord[1] == 0.03125 and trainAllSocket.texCoord[2] == 0.734375 and
+  trainAllSocket.texCoord[3] == 0.58984375 and trainAllSocket.texCoord[4] == 0.7109375,
+  "Train All did not receive the exact stock action-socket artwork crop")
 SkinCollapseButton = savedSkinCollapseButton
 ShirsLazyTrix.RefreshTrainerFeature()
 assert(stockLeft.shown == false and stockRight.shown == false,
   "stock artwork extensions were not hidden when pfUI owned the trainer backdrop")
+assert(trainAllSocket.shown == false,
+  "stock Train All socket was not hidden when pfUI owned the trainer backdrop")
 assert(createdSkillRows == 7, "reapplying trainer layout duplicated rows")
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
@@ -314,39 +334,44 @@ assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "Train All-only mode did n
 assert(ClassTrainerFrame.height == 512 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
   "Train All-only mode did not restore stock geometry")
 assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTrainAllButton.enabled == true and
-  named.ShirsLazyTrixTrainAllButton.point[1] == "TOPLEFT" and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 100 and named.ShirsLazyTrixTrainAllButton.point[5] == -70,
-  "Train All-only mode did not keep its button in the stock toolbar")
+  named.ShirsLazyTrixTrainAllButton.point[1] == "CENTER" and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and named.ShirsLazyTrixTrainAllButton.point[5] == 92 and
+  ClassTrainerMoneyFrame.scale == 0.6 and ClassTrainerMoneyFrame.point[1] == "BOTTOMRIGHT" and
+  ClassTrainerMoneyFrame.point[2] == ClassTrainerFrame and ClassTrainerMoneyFrame.point[3] == "BOTTOMLEFT" and
+  ClassTrainerMoneyFrame.point[4] == 180 and ClassTrainerMoneyFrame.point[5] == 89,
+  "Train All-only mode did not keep its button in the bottom-left socket")
 
--- Exact stock checkbox filters occupy x=92..344; compact Train All into x=69..91.
+-- Toolbar filter variants must not move the bottom Train All control.
 ClassTrainerSortFrame = makeFrame("ClassTrainerSortFrame")
 named.ClassTrainerSortFrame = ClassTrainerSortFrame
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 22 and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 69 and
-  named.ShirsLazyTrixTrainAllButton.text == "2",
-  "stock checkbox filters collided with the compact Train All slot")
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+  named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "stock checkbox filters moved the bottom Train All control")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 90 and
-  named.ShirsLazyTrixTrainAllButton.point[4] == 100 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and
+  named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
-  "dropdown filter layout did not restore the full Train All button")
+  "dropdown filter layout moved the bottom Train All control")
 
--- Direct trainer mode setters must preserve the recomputed compact/full state text.
+-- Direct trainer mode setters must preserve the bottom socket and full state text.
 ShirsLazyTrixDB.expandTrainers = true
 ClassTrainerSortFrame.shown = true
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 22 and named.ShirsLazyTrixTrainAllButton.text == "2",
-  "profession mode setter left stale compact Train All text")
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+  named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "profession mode setter moved or relabeled bottom Train All")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 90 and named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
-  "class mode setter left stale full Train All text")
+assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.point[4] == 59 and
+  named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
+  "class mode setter moved or relabeled bottom Train All")
 ShirsLazyTrixDB.expandTrainers = false
 ShirsLazyTrix.RefreshTrainerFeature()
 
@@ -541,8 +566,9 @@ ShirsLazyTrixDB.expandTrainers = true
 ShirsLazyTrixDB.trainAll = false
 ShirsLazyTrix.RefreshTrainerFeature()
 assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive() and
-  named.ShirsLazyTrixTrainAllButton.shown == false and ClassTrainerFrame.height == 596,
-  "disabling Train All did not stop its queue while preserving expansion")
+  named.ShirsLazyTrixTrainAllButton.shown == false and ClassTrainerFrame.height == 596 and
+  ClassTrainerMoneyFrame.scale == 1 and trainAllSocket.shown == false,
+  "disabling Train All did not stop its queue, restore money, and preserve expansion")
 
 resetRows({
   { name = "Throw A", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },

@@ -10,9 +10,16 @@ local CLASS_TRAINER_HORIZONTAL_Y = -355
 local TRADE_TRAINER_HORIZONTAL_Y = -387
 local TRAINER_CANCEL_X = -39
 local TRAINER_BUTTON_BOTTOM = 81
-local TRAIN_ALL_X = 100
-local TRAIN_ALL_Y = -70
-local TRAIN_ALL_COMPACT_X = 69
+local TRAIN_ALL_WIDTH = 80
+local TRAIN_ALL_CENTER_X = 59
+local TRAIN_ALL_CENTER_Y = 92
+local TRAIN_ALL_SOCKET_X = 14
+local TRAIN_ALL_SOCKET_Y = 74
+local TRAIN_ALL_SOCKET_WIDTH = 90
+local TRAIN_ALL_SOCKET_HEIGHT = 31
+local TRAINER_MONEY_SCALE = 0.6
+local TRAINER_MONEY_RIGHT = 180
+local TRAINER_MONEY_BOTTOM = 89
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
@@ -33,7 +40,6 @@ local trainAllSnapshot = nil
 local trainAllPosition = 0
 local trainAllSubmitting = false
 local trainAllSawUpdate = false
-local trainAllCompact = false
 local trainerShowPending = false
 local layoutApplied = false
 local originalLayout = nil
@@ -79,6 +85,7 @@ local function saveFrame(frame)
   }
   if type(frame.GetWidth) == "function" then saved.width = frame:GetWidth() end
   if type(frame.GetHeight) == "function" then saved.height = frame:GetHeight() end
+  if type(frame.GetScale) == "function" then saved.scale = frame:GetScale() end
   return saved
 end
 
@@ -86,6 +93,7 @@ local function restoreFrame(frame, saved)
   if not frame or not saved then return end
   if saved.width and type(frame.SetWidth) == "function" then frame:SetWidth(saved.width) end
   if saved.height and type(frame.SetHeight) == "function" then frame:SetHeight(saved.height) end
+  if saved.scale and type(frame.SetScale) == "function" then frame:SetScale(saved.scale) end
   if saved.point and saved.point[1] and type(frame.ClearAllPoints) == "function" and type(frame.SetPoint) == "function" then
     frame:ClearAllPoints()
     frame:SetPoint(unpack(saved.point))
@@ -144,6 +152,10 @@ local function ensureTrainerRows()
   end
 end
 
+local function stockArtworkAllowed()
+  return type(SkinCollapseButton) ~= "function"
+end
+
 local function updateStockBackground(frameHeight)
   if not ClassTrainerFrame or type(ClassTrainerFrame.CreateTexture) ~= "function" then return end
   local left = getglobal("ShirsLazyTrixTrainerStockBackgroundLeft")
@@ -169,7 +181,7 @@ local function updateStockBackground(frameHeight)
   right:SetTexCoord(0, 1, 0, gap / 256)
   local old = getglobal("ShirsLazyTrixTrainerStockBackground")
   if old and type(old.Hide) == "function" then old:Hide() end
-  if type(SkinCollapseButton) == "function" then
+  if not stockArtworkAllowed() then
     left:Hide()
     right:Hide()
   else
@@ -192,27 +204,36 @@ local function buttonTooltip()
   GameTooltip:Show()
 end
 
-local function stockSortFrameVisible()
-  local frame = getglobal("ClassTrainerSortFrame")
-  if not frame then return false end
-  if type(frame.IsShown) ~= "function" then return true end
-  local ok, shown = pcall(frame.IsShown, frame)
-  if not ok then return true end
-  return shown == true or shown == 1
+local function updateTrainAllSocket(enabled)
+  if not ClassTrainerFrame or type(ClassTrainerFrame.CreateTexture) ~= "function" then return end
+  local socket = getglobal("ShirsLazyTrixTrainerTrainAllSocket")
+  if not socket then
+    socket = ClassTrainerFrame:CreateTexture("ShirsLazyTrixTrainerTrainAllSocket", "BORDER")
+    socket:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-BotRight")
+  end
+  socket:ClearAllPoints()
+  socket:SetPoint("BOTTOMLEFT", ClassTrainerFrame, "BOTTOMLEFT", TRAIN_ALL_SOCKET_X, TRAIN_ALL_SOCKET_Y)
+  socket:SetWidth(TRAIN_ALL_SOCKET_WIDTH)
+  socket:SetHeight(TRAIN_ALL_SOCKET_HEIGHT)
+  socket:SetTexCoord(0.03125, 0.734375, 0.58984375, 0.7109375)
+  if enabled and stockArtworkAllowed() then socket:Show() else socket:Hide() end
 end
 
 local function positionTrainAllButton(button)
-  trainAllCompact = stockSortFrameVisible()
   button:ClearAllPoints()
-  if trainAllCompact then
-    button:SetWidth(22)
-    button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_COMPACT_X, TRAIN_ALL_Y)
-    button:SetText("+")
-  else
-    button:SetWidth(90)
-    button:SetPoint("TOPLEFT", ClassTrainerFrame, "TOPLEFT", TRAIN_ALL_X, TRAIN_ALL_Y)
-    button:SetText("Train All")
+  button:SetWidth(TRAIN_ALL_WIDTH)
+  button:SetPoint("CENTER", ClassTrainerFrame, "BOTTOMLEFT", TRAIN_ALL_CENTER_X, TRAIN_ALL_CENTER_Y)
+  button:SetText("Train All")
+  if ClassTrainerMoneyFrame then
+    if type(ClassTrainerMoneyFrame.SetScale) == "function" then ClassTrainerMoneyFrame:SetScale(TRAINER_MONEY_SCALE) end
+    setPoint(ClassTrainerMoneyFrame, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMLEFT", TRAINER_MONEY_RIGHT, TRAINER_MONEY_BOTTOM)
   end
+  updateTrainAllSocket(true)
+end
+
+local function restoreTrainAllFurniture()
+  updateTrainAllSocket(false)
+  if originalLayout and originalLayout.money then restoreFrame(ClassTrainerMoneyFrame, originalLayout.money) end
 end
 
 local function createTrainAllButton()
@@ -257,7 +278,7 @@ local function applyExpandedModeGeometry()
     if type(ClassTrainerHorizontalBarLeft.Show) == "function" then ClassTrainerHorizontalBarLeft:Show() end
   end
   local button = getglobal("ShirsLazyTrixTrainAllButton")
-  if button then positionTrainAllButton(button) end
+  if button and trainAllEnabled() then positionTrainAllButton(button) end
   if type(UIPanelWindows) == "table" and type(UIPanelWindows["ClassTrainerFrame"]) == "table" then
     UIPanelWindows["ClassTrainerFrame"].height = height
   end
@@ -338,12 +359,14 @@ function ShirsLazyTrix.RefreshTrainerFeature()
 
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if bulk and trainerFramesAvailable() then
+    saveOriginalLayout()
     button = createTrainAllButton()
     positionTrainAllButton(button)
     button:Show()
     ShirsLazyTrix.UpdateTrainAllButton()
   else
     ShirsLazyTrix.CancelTrainAll()
+    restoreTrainAllFurniture()
     if button then
       button:Disable()
       button:Hide()
@@ -471,16 +494,14 @@ function ShirsLazyTrix.UpdateTrainAllButton()
   local button = getglobal("ShirsLazyTrixTrainAllButton")
   if not button then return end
   if trainAllActive then
-    if trainAllCompact then button:SetText("...") else button:SetText("Training...") end
+    button:SetText("Training...")
     button:Disable()
     return
   end
   local count, total = ShirsLazyTrix.GetTrainAllPlan()
   local ok, money = false, nil
   if type(GetMoney) == "function" then ok, money = pcall(GetMoney) end
-  if trainAllCompact then
-    if count > 0 then button:SetText(tostring(count)) else button:SetText("+") end
-  elseif count > 0 then
+  if count > 0 then
     button:SetText("Train All (" .. count .. ")")
   else
     button:SetText("Train All")
