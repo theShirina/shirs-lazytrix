@@ -27,6 +27,7 @@ frame:SetScript("OnEvent", function()
   elseif event == "QUEST_LOG_UPDATE" then
     ShirsLazyTrix.HandleQuestLogUpdate()
   elseif event == "MERCHANT_SHOW" then
+    ShirsLazyTrix.TryAutoRepairAll()
     ShirsLazyTrix.StartAutoGraySale()
   elseif event == "MERCHANT_CLOSED" then
     ShirsLazyTrix.CancelGraySale()

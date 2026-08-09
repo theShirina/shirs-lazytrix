@@ -1,8 +1,8 @@
 ## Interface: 11200
 ## Title: Shir's LazyTrix
-## Notes: Minimal quest and gray-item vendor automation for Microbot.
+## Notes: Minimal quest and vendor automation for Microbot.
 ## Author: Shirina
-## Version: 0.0.2
+## Version: 0.0.3
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua

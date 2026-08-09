@@ -33,7 +33,7 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(340)', "minimal settings width")
-assertContains('frame:SetHeight(310)', "minimal settings height")
+assertContains('frame:SetHeight(350)', "minimal settings height")
 assertContains('UI-Tooltip-Background', "addon-family dark panel background")
 assertContains('UI-Tooltip-Border', "addon-family thin panel border")
 assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
@@ -59,14 +59,15 @@ assertContains('"Only automate while Shift is held", "automationOnShift"', "Shif
 assertContains("When enabled, Shift triggers both pickup and turn-in.", "Shift behavior note")
 assertContains('"MERCHANT"', "merchant section heading")
 assertContains('"Automatically sell gray items at vendors", "autoSellGray"', "gray-only merchant checkbox")
-assertContains("Sells gray-quality items only.", "gray-only merchant note")
+assertContains('"Automatically repair all gear at repair vendors", "autoRepairAll"', "automatic repair checkbox")
+assertContains("Sells gray-quality items only. Vendor options run independently.", "merchant boundary note")
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 5 then
-  error("UI must define exactly four checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 6 then
+  error("UI must define exactly five checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")
 print("ui-movable-filled-minimap: PASS")
-print("ui-four-setting-structure: PASS")
+print("ui-five-setting-structure: PASS")

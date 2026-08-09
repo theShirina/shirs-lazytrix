@@ -74,6 +74,57 @@ local function formatMoney(copper)
   return sign .. table.concat(parts, " ")
 end
 
+local MAX_COPPER = 2147483647
+
+local function validCopper(value, allowZero)
+  if type(value) ~= "number" then return false end
+  if allowZero then
+    return value >= 0 and value <= MAX_COPPER
+  end
+  return value > 0 and value <= MAX_COPPER
+end
+
+local function apiTrue(value)
+  return value == true or value == 1
+end
+
+function ShirsLazyTrix.TryAutoRepairAll()
+  if type(ShirsLazyTrixDB) ~= "table" or not ShirsLazyTrixDB.autoRepairAll then
+    return false, "disabled"
+  end
+  if type(CanMerchantRepair) ~= "function" or not apiTrue(CanMerchantRepair()) then
+    return false, "merchant"
+  end
+
+  local cost, canRepair = GetRepairAllCost()
+  if not validCopper(cost, false) then
+    return false, "none", cost
+  end
+  if not apiTrue(canRepair) then
+    return false, "none", cost
+  end
+
+  if type(GetMoney) ~= "function" then
+    return false, "money", cost
+  end
+  local availableMoney = GetMoney()
+  if not validCopper(availableMoney, true) then
+    return false, "money", cost
+  end
+  if cost > availableMoney then
+    if DEFAULT_CHAT_FRAME then
+      DEFAULT_CHAT_FRAME:AddMessage("|cff68ccefShir's LazyTrix:|r not enough money to repair (" .. formatMoney(cost) .. ").")
+    end
+    return false, "funds", cost
+  end
+
+  RepairAllItems()
+  if DEFAULT_CHAT_FRAME then
+    DEFAULT_CHAT_FRAME:AddMessage("|cff68ccefShir's LazyTrix:|r repaired all gear for " .. formatMoney(cost) .. ".")
+  end
+  return true, "repaired", cost
+end
+
 function ShirsLazyTrix.StartAutoGraySale()
   if type(ShirsLazyTrixDB) ~= "table" or not ShirsLazyTrixDB.autoSellGray then
     graySaleState = nil

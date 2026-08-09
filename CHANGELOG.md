@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.3
+
+- Added an opt-in setting that repairs all gear when an eligible repair vendor opens.
+- Checks the full repair cost and available money before submitting one repair action.
+- Reports successful repairs and insufficient funds in the chat frame.
+- Keeps automatic repair independent from gray-item selling and quest Shift behavior.
+- Stops retrying an NPC and quest after two turn-in selections without confirmation from that same NPC's next quest list.
+
 ## 0.0.2
 
 - Redesigned the settings panel with the shared dark navy, blue, and gold addon style.

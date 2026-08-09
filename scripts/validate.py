@@ -19,6 +19,7 @@ TESTS = [
     "tests/test_engine.lua",
     "tests/test_controller.lua",
     "tests/test_merchant.lua",
+    "tests/test_repair.lua",
     "tests/test_ui_structure.lua",
     "tests/test_ui_runtime.lua",
     "tests/test_event_structure.lua",
@@ -52,6 +53,7 @@ PUBLIC_FILES = {
     "tests/test_event_runtime.lua",
     "tests/test_event_structure.lua",
     "tests/test_merchant.lua",
+    "tests/test_repair.lua",
     "tests/test_ui_structure.lua",
     "tests/test_ui_runtime.lua",
 }
@@ -95,7 +97,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.2\s*$", toc, re.MULTILINE), "TOC version must be 0.0.2"
+    assert re.search(r"^## Version:\s*0\.0\.3\s*$", toc, re.MULTILINE), "TOC version must be 0.0.3"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -109,6 +111,15 @@ def validate_source() -> None:
     assert controller.count("CompleteQuest()") == 1, "turn-in must have one guarded completion call"
     assert controller.count("AcceptQuest()") == 1, "pickup must have one guarded acceptance call"
     assert "GetQuestReward(count)" in controller, "reward choice must use bounded count"
+    assert "turnInAttempts" in controller, "missing two-attempt turn-in fallback"
+    assert "pendingTurnInSuccess" in controller, "turn-in fallback must wait for a reward attempt"
+    assert controller.count("confirmMissingTurnIns(npc, active)") == 3, "both quest dialogs must confirm success from the same NPC list"
+    assert "lastQuestLogTitles" not in controller, "title-only quest-log success evidence is ambiguous"
+    assert "GetQuestLogTitle" not in controller, "NPC-scoped guards must not clear from title-only quest-log data"
+    confirmation_helper = controller.split("local function confirmMissingTurnIns", 1)[1].split(
+        "local function turnInAttemptAvailable", 1
+    )[0]
+    assert "incompleteSeen" not in confirmation_helper, "quest-list omission must not clear the incomplete latch"
     for removed in ("InstallRewardHook", "RememberTurnIn", "ObserveAvailable", "IsRepeatable"):
         assert removed not in controller, f"removed learner behavior remains: {removed}"
 
@@ -119,17 +130,26 @@ def validate_source() -> None:
     assert merchant.count("UseContainerItem(") == 1, "merchant module must have one revalidated sale call"
     assert "quality ~= 0" in merchant, "merchant sale must reject every non-gray quality"
     assert "GetContainerItemInfo(entry.bag, entry.slot)" in merchant, "merchant sale must revalidate the live slot"
+    for token in ("CanMerchantRepair()", "GetRepairAllCost()", "GetMoney()", "RepairAllItems()"):
+        assert token in merchant, f"automatic repair path is missing exact-client API: {token}"
+    assert merchant.count("RepairAllItems()") == 1, "automatic repair must have one guarded submission call"
+    assert "validCopper(cost, false)" in merchant, "repair cost must pass the exact-runtime finite copper guard"
+    assert "validCopper(availableMoney, true)" in merchant, "available money must pass the exact-runtime finite copper guard"
+    assert "MAX_COPPER = 2147483647" in merchant, "finite copper guard must use the Vanilla signed range"
+    assert "value == true or value == 1" in merchant, "repair eligibility must accept only Vanilla boolean forms"
+    assert merchant.count("apiTrue(") == 3, "both repair eligibility values must use the strict boolean guard"
     for removed in ("junkItems", "ToggleJunk", "SetJunkMark", "Sell Junk", "ShouldShowMerchantSellButton"):
         assert removed not in merchant, f"manual junk or merchant-button behavior remains: {removed}"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
     assert "junk" not in ui.lower(), "UI must not expose junk marking or a junk button"
     assert "When enabled, Shift triggers both pickup and turn-in." in ui, "UI must explain unified Shift behavior"
     assert "Sells gray-quality items only." in ui, "UI must state the gray-only merchant boundary"
+    assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

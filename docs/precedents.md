@@ -2,9 +2,9 @@
 
 ## Exact-client source
 
-LazyPig 5.37 declares Interface `11200` and handles `QUEST_GREETING`, `GOSSIP_SHOW`, `QUEST_PROGRESS`, and `QUEST_COMPLETE`. It selects active or available quests through stock Vanilla functions and proves `IsShiftKeyDown()` is available in the exact client. It calls `CompleteQuest()` without checking `IsQuestCompletable()`.
+LazyPig 6.0.4 declares Interface `11200` and handles `QUEST_GREETING`, `GOSSIP_SHOW`, `QUEST_PROGRESS`, and `QUEST_COMPLETE`. It selects active or available quests through stock Vanilla functions and proves `IsShiftKeyDown()` is available in the exact client. It calls `CompleteQuest()` without checking `IsQuestCompletable()`.
 
-Microbot's effective FrameXML parses `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` as title/level pairs. Those gossip lists do not expose completion state. Exact-client pfQuest code reads the sixth `GetQuestLogTitle()` value as completion state, which provides a safe event-driven signal after `IsQuestCompletable()` rejects an attempted gossip turn-in.
+Microbot's effective FrameXML parses `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` as title/level pairs. Those gossip lists do not expose completion state. Exact-client pfQuest code reads the sixth `GetQuestLogTitle()` value as completion state, but the quest log exposes no NPC identity. LazyTrix therefore does not use title-only quest-log matches to clear NPC-scoped safety state.
 
 ## Later-client references
 
@@ -19,6 +19,16 @@ Shir's LazyTrix uses only APIs present in Microbot's 1.12 client. It provides tw
 Shir's Inventory 0.5.3 at commit `a8ebe56c921d3896a09944dac66590981e9940a0` declares Interface `11200` and supplies the proven local merchant precedent. Its MIT-licensed sale path builds a queue on `MERCHANT_SHOW`, submits one stack per timed tick, revalidates bag/slot identity and quality, cancels outside the merchant sell tab, and waits for delayed money updates before reporting proceeds.
 
 LazyTrix adapts only that queue and settlement behavior. Its candidate list admits quality `0` items only. It does not read marked-item data, alter item-click behavior, or create a merchant button. The setting is account-wide and defaults off.
+
+## v0.0.3 automatic repair precedent
+
+Microbot's stock Interface `11200` `MerchantFrame.lua` shows repair controls only when `CanMerchantRepair()` succeeds and reads `GetRepairAllCost()` to decide whether the repair-all action is available. The currently installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) uses `CanMerchantRepair()`, `GetRepairAllCost()`, `GetMoney()`, and `RepairAllItems()` on this exact client. No licence file was found in that installed LazyPig folder, so it is study-only and no source is copied.
+
+LazyTrix uses an original, narrow implementation. Its account-wide setting defaults off. On `MERCHANT_SHOW`, it first confirms that the vendor repairs gear, reads the full repair cost, checks available money, and calls `RepairAllItems()` at most once. Zero-cost, unavailable, and insufficient-funds paths do not submit a repair. Repair and gray sale settings remain independent.
+
+## v0.0.3 two-attempt turn-in fallback
+
+LazyTrix uses `IsQuestCompletable()` for its first incomplete-turn-in guard. Some custom quests can still report true while refusing completion, so v0.0.3 adds a second runtime fallback keyed by NPC and quest title. It allows two active-quest selections, blocks the third, and shares the count across greeting and gossip dialogs. After a reward attempt, a count clears only when that same NPC's next active-quest list no longer contains the title. Quest-log changes from another NPC and logless custom quests cannot reset it.
 
 ## Settings and minimap precedents
 

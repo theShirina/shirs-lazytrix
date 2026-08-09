@@ -1,4 +1,4 @@
--- Event wiring contract for Shir's LazyTrix 0.0.2
+-- Event wiring contract for Shir's LazyTrix 0.0.3
 
 local root = arg and arg[1] or "."
 local path = root .. "/ShirsLazyTrix.lua"

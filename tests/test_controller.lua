@@ -78,6 +78,7 @@ assertEqual(ShirsLazyTrixDB.turnIn, true, "turn-in default")
 assertEqual(ShirsLazyTrixDB.pickUp, true, "pickup default")
 assertEqual(ShirsLazyTrixDB.automationOnShift, false, "Shift-required automation default")
 assertEqual(ShirsLazyTrixDB.autoSellGray, false, "automatic gray sale default")
+assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "automatic repair default")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
 
 ShirsLazyTrixDB = {
@@ -89,6 +90,7 @@ ShirsLazyTrixDB = {
   repeatableByCharacter = { old = true },
   turnInOnShift = true,
   autoSellGray = "invalid",
+  autoRepairAll = "invalid",
   minimapAngle = "invalid",
 }
 ShirsLazyTrix.EnsureDatabase()
@@ -96,6 +98,7 @@ assertEqual(ShirsLazyTrixDB.turnIn, false, "old normal turn-in setting migrates"
 assertEqual(ShirsLazyTrixDB.pickUp, true, "old normal pickup setting migrates")
 assertEqual(ShirsLazyTrixDB.automationOnShift, true, "temporary turn-in-only Shift setting migrates")
 assertEqual(ShirsLazyTrixDB.autoSellGray, false, "invalid automatic gray sale setting repairs")
+assertEqual(ShirsLazyTrixDB.autoRepairAll, false, "invalid automatic repair setting repairs")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "invalid minimap angle repairs")
 assertEqual(ShirsLazyTrixDB.turnInNormal, nil, "old normal turn-in key removed")
@@ -167,7 +170,13 @@ questLog[1].complete = true
 ShirsLazyTrix.HandleQuestLogUpdate()
 resetCalls()
 ShirsLazyTrix.HandleGossipShow()
-assertEqual(lastCall("SelectGossipActiveQuest")[2], 1, "quest-log completion allows the turn-in to be retried")
+assertEqual(countCalls("SelectGossipActiveQuest"), 0, "same-title quest-log completion must not clear an NPC-scoped guard")
+
+active = { { title = "Legacy Active", complete = true } }
+gossipActive = {}
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(lastCall("SelectActiveQuest")[2], 1, "same NPC dialog completion clears its incomplete guard")
 
 questLog = {}
 ShirsLazyTrix.HandleQuestLogUpdate()
@@ -205,6 +214,127 @@ choices = 2
 resetCalls()
 ShirsLazyTrix.HandleQuestComplete()
 assertEqual(countCalls("GetQuestReward"), 0, "multiple rewards wait for player")
+
+-- A custom quest can report completable while refusing the submitted reward.
+-- Allow two selections, block the third, and reset only after reward submission
+-- is followed by the title disappearing from the same NPC's active quest list.
+ShirsLazyTrix.incompleteSeen = {}
+ShirsLazyTrix.turnInAttempts = {}
+ShirsLazyTrix.pendingTurnInSuccess = {}
+npc = "Custom Quest Giver"
+title = "Misreported Custom Quest"
+active = { { title = title, complete = true } }
+available = {}
+questLog = { { title = title, complete = true } }
+completable = true
+choices = 1
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 1, "first custom quest turn-in attempt is allowed")
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 1, "second custom quest turn-in attempt is allowed")
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 0, "third failed custom quest turn-in attempt is blocked")
+
+active = {}
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+active = { { title = title, complete = true } }
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 1, "same-NPC active-list disappearance clears the retry fallback")
+
+ShirsLazyTrix.turnInAttempts = {}
+ShirsLazyTrix.pendingTurnInSuccess = {}
+npc = "Mixed Dialog Quest Giver"
+title = "Mixed Dialog Custom Quest"
+active = { { title = title, complete = true } }
+gossipActive = { title, 30 }
+questLog = { { title = title, complete = true } }
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 1, "mixed-dialog first greeting attempt is allowed")
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+
+resetCalls()
+ShirsLazyTrix.HandleGossipShow()
+assertEqual(countCalls("SelectGossipActiveQuest"), 1, "mixed-dialog second gossip attempt is allowed")
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 0, "greeting and gossip attempts share the two-try limit")
+
+ShirsLazyTrix.turnInAttempts = {}
+ShirsLazyTrix.pendingTurnInSuccess = {}
+ShirsLazyTrix.lastQuestLogTitles = {}
+npc = "Logless Custom Quest Giver"
+title = "Logless Custom Quest"
+active = { { title = title, complete = true } }
+gossipActive = {}
+questLog = { { title = title, complete = true } }
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestLogUpdate()
+questLog = {}
+ShirsLazyTrix.HandleQuestLogUpdate()
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 0, "an unrelated same-title log transition must not reset a logless NPC quest")
+
+-- An older reward-attempt latch must never clear a newer incomplete latch.
+ShirsLazyTrix.incompleteSeen = {}
+ShirsLazyTrix.turnInAttempts = {}
+ShirsLazyTrix.pendingTurnInSuccess = {}
+npc = "Interleaved Custom Quest Giver"
+title = "Interleaved Custom Quest"
+active = { { title = title, complete = true } }
+gossipActive = {}
+questLog = {}
+completable = true
+choices = 1
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestComplete()
+
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+completable = false
+ShirsLazyTrix.HandleQuestProgress()
+
+gossipActive = {}
+resetCalls()
+ShirsLazyTrix.HandleGossipShow()
+gossipActive = { title, 30 }
+resetCalls()
+ShirsLazyTrix.HandleGossipShow()
+assertEqual(countCalls("SelectGossipActiveQuest"), 0, "same-NPC omission must not clear a newer incomplete latch")
 
 ShirsLazyTrixDB.automationOnShift = true
 active = { { title = "Shift Turn-In", complete = true } }
@@ -276,6 +406,7 @@ ShirsLazyTrixDB.automationOnShift = false
 print("controller-defaults-and-migration: PASS")
 print("controller-priority: PASS")
 print("controller-incomplete-guard: PASS")
+print("controller-two-attempt-fallback: PASS")
 print("controller-shift-bypass: PASS")
 print("controller-shift-required-automation: PASS")
 print("controller-rewards: PASS")

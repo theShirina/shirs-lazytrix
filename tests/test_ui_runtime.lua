@@ -114,7 +114,7 @@ function GameTooltip:Show() self.shown = true end
 function GameTooltip:Hide() self.shown = false end
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, minimapAngle = 220 }
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -122,7 +122,7 @@ ShirsLazyTrix.CreateUI()
 local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 if not settings or not minimap then error("UI frames were not constructed", 2) end
-if settings.width ~= 340 or settings.height ~= 310 then error("minimal settings geometry mismatch", 2) end
+if settings.width ~= 340 or settings.height ~= 350 then error("minimal settings geometry mismatch", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
 if minimap.width ~= 32 or minimap.height ~= 32 then error("minimap button geometry mismatch", 2) end
@@ -155,9 +155,11 @@ local turnIn = named.ShirsLazyTrixTurnIn
 local pickUp = named.ShirsLazyTrixPickUp
 local shiftAutomation = named.ShirsLazyTrixShiftAutomation
 local autoSellGray = named.ShirsLazyTrixAutoSellGray
+local autoRepairAll = named.ShirsLazyTrixAutoRepairAll
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if not autoRepairAll then error("automatic repair checkbox missing", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -170,6 +172,10 @@ autoSellGray.checked = 1
 this = autoSellGray
 autoSellGray.scripts.OnClick()
 if ShirsLazyTrixDB.autoSellGray ~= true then error("automatic gray sale checkbox did not save true", 2) end
+autoRepairAll.checked = 1
+this = autoRepairAll
+autoRepairAll.scripts.OnClick()
+if ShirsLazyTrixDB.autoRepairAll ~= true then error("automatic repair checkbox did not save true", 2) end
 
 print("ui-runtime-construction: PASS")
 print("ui-runtime-minimap-drag: PASS")

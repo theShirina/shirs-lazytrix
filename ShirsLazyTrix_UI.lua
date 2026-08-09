@@ -27,6 +27,7 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixPickUp:SetChecked(ShirsLazyTrixDB.pickUp and 1 or nil)
   ShirsLazyTrixShiftAutomation:SetChecked(ShirsLazyTrixDB.automationOnShift and 1 or nil)
   ShirsLazyTrixAutoSellGray:SetChecked(ShirsLazyTrixDB.autoSellGray and 1 or nil)
+  ShirsLazyTrixAutoRepairAll:SetChecked(ShirsLazyTrixDB.autoRepairAll and 1 or nil)
 end
 
 local function createSettingsFrame()
@@ -34,7 +35,7 @@ local function createSettingsFrame()
 
   local frame = CreateFrame("Frame", "ShirsLazyTrixSettingsFrame", UIParent)
   frame:SetWidth(340)
-  frame:SetHeight(310)
+  frame:SetHeight(350)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
@@ -100,11 +101,12 @@ local function createSettingsFrame()
   merchantSection:SetTextColor(1, 0.82, 0)
 
   createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Automatically sell gray items at vendors", "autoSellGray", -249)
+  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Automatically repair all gear at repair vendors", "autoRepairAll", -279)
 
-  local merchantNote = createText(frame, "Sells gray-quality items only.", 11)
-  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -281)
+  local merchantNote = createText(frame, "Sells gray-quality items only. Vendor options run independently.", 11)
+  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -313)
   merchantNote:SetWidth(290)
-  merchantNote:SetHeight(18)
+  merchantNote:SetHeight(24)
   merchantNote:SetJustifyH("LEFT")
   merchantNote:SetTextColor(0.62, 0.7, 0.8)
 
