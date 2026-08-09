@@ -1,8 +1,13 @@
 local TRAINER_ROWS = 18
-local TRAINER_LIST_HEIGHT = 296
+local CLASS_TRAINER_ROWS = 16
+local CLASS_TRAINER_LIST_HEIGHT = 264
+local TRADE_TRAINER_LIST_HEIGHT = 296
+local CLASS_TRAINER_DETAIL_HEIGHT = 151
+local TRADE_TRAINER_DETAIL_HEIGHT = 135
 local CLASS_FRAME_HEIGHT = 596
 local TRADE_FRAME_HEIGHT = 612
-local TRAINER_HORIZONTAL_Y = -387
+local CLASS_TRAINER_HORIZONTAL_Y = -355
+local TRADE_TRAINER_HORIZONTAL_Y = -387
 local TRAIN_ALL_X = 100
 local TRAIN_ALL_Y = -70
 local TRAIN_ALL_COMPACT_X = 69
@@ -234,15 +239,19 @@ end
 local function applyExpandedModeGeometry()
   local trade = isTradeTrainer()
   local height = trade and TRADE_FRAME_HEIGHT or CLASS_FRAME_HEIGHT
+  local rows = trade and TRAINER_ROWS or CLASS_TRAINER_ROWS
+  local listHeight = trade and TRADE_TRAINER_LIST_HEIGHT or CLASS_TRAINER_LIST_HEIGHT
+  local detailHeight = trade and TRADE_TRAINER_DETAIL_HEIGHT or CLASS_TRAINER_DETAIL_HEIGHT
+  local horizontalY = trade and TRADE_TRAINER_HORIZONTAL_Y or CLASS_TRAINER_HORIZONTAL_Y
   ClassTrainerFrame:SetHeight(height)
   updateStockBackground(height)
-  ClassTrainerListScrollFrame:SetHeight(TRAINER_LIST_HEIGHT)
+  ClassTrainerListScrollFrame:SetHeight(listHeight)
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
-  ClassTrainerDetailScrollFrame:SetHeight(trade and 135 or 119)
+  ClassTrainerDetailScrollFrame:SetHeight(detailHeight)
   setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", -42, 47)
   setPoint(ClassTrainerTrainButton, "RIGHT", ClassTrainerCancelButton, "LEFT", -1, 0)
   if ClassTrainerHorizontalBarLeft then
-    setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, TRAINER_HORIZONTAL_Y)
+    setPoint(ClassTrainerHorizontalBarLeft, "TOPLEFT", ClassTrainerFrame, "TOPLEFT", 15, horizontalY)
     if type(ClassTrainerHorizontalBarLeft.Show) == "function" then ClassTrainerHorizontalBarLeft:Show() end
   end
   local button = getglobal("ShirsLazyTrixTrainAllButton")
@@ -250,7 +259,12 @@ local function applyExpandedModeGeometry()
   if type(UIPanelWindows) == "table" and type(UIPanelWindows["ClassTrainerFrame"]) == "table" then
     UIPanelWindows["ClassTrainerFrame"].height = height
   end
-  CLASS_TRAINER_SKILLS_DISPLAYED = TRAINER_ROWS
+  CLASS_TRAINER_SKILLS_DISPLAYED = rows
+  local i
+  for i = rows + 1, TRAINER_ROWS do
+    local row = getglobal("ClassTrainerSkill" .. i)
+    if row and type(row.Hide) == "function" then row:Hide() end
+  end
 end
 
 function ShirsLazyTrix.ApplyTrainerLayout()

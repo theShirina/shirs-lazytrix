@@ -200,21 +200,23 @@ assert(ShirsLazyTrix.RefreshTrainerFeature() == false, "disabled trainer feature
 assert(ClassTrainerFrame.width == 384 and CLASS_TRAINER_SKILLS_DISPLAYED == 11,
   "disabled trainer features changed stock layout")
 
--- Expansion alone preserves stock width and extends downward with 18 rows.
+-- Class expansion preserves stock width and reserves enough space for wrapped details.
 ShirsLazyTrixDB.expandTrainers = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "trainer expansion did not apply")
 assert(ClassTrainerFrame.width == 384 and ClassTrainerFrame.height == 596,
   "downward trainer frame geometry mismatch")
-assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.height == 296,
+assert(ClassTrainerListScrollFrame.width == 293 and ClassTrainerListScrollFrame.height == 264,
   "downward trainer list geometry mismatch")
-assert(ClassTrainerDetailScrollFrame.width == 296 and ClassTrainerDetailScrollFrame.height == 119,
+assert(ClassTrainerDetailScrollFrame.width == 296 and ClassTrainerDetailScrollFrame.height == 151,
   "downward trainer detail geometry mismatch")
 assert(ClassTrainerDetailScrollFrame.point[1] == "TOPLEFT" and ClassTrainerDetailScrollFrame.point[2] == ClassTrainerListScrollFrame and
   ClassTrainerDetailScrollFrame.point[3] == "BOTTOMLEFT" and ClassTrainerDetailScrollFrame.point[4] == 0 and ClassTrainerDetailScrollFrame.point[5] == -8,
   "detail pane must remain below the trainer list")
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18, "expanded trainer row count mismatch")
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 16, "expanded class trainer row count mismatch")
 assert(named.ClassTrainerSkill18 and named.ClassTrainerSkill18.id == 18,
   "additional trainer rows were not created")
+assert(named.ClassTrainerSkill17.shown == false and named.ClassTrainerSkill18.shown == false,
+  "class detail spacing left stale rows 17-18 visible")
 for i = 12, 18 do
   assert(named["ClassTrainerSkill" .. i].pfUISkinned == true,
     "added trainer row did not inherit pfUI collapse-button styling")
@@ -266,8 +268,9 @@ assert(stockLeft.width == 256 and stockRight.width == 128 and stockLeft.height =
   "profession stock artwork extensions did not retain exact bounded geometry")
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(CLASS_TRAINER_SKILLS_DISPLAYED == 18 and ClassTrainerFrame.height == 596 and ClassTrainerListScrollFrame.height == 296 and ClassTrainerDetailScrollFrame.height == 119,
-  "class trainer mode reset the expanded row count")
+assert(CLASS_TRAINER_SKILLS_DISPLAYED == 16 and ClassTrainerFrame.height == 596 and ClassTrainerListScrollFrame.height == 264 and ClassTrainerDetailScrollFrame.height == 151 and
+  ClassTrainerHorizontalBarLeft.point[5] == -355 and named.ClassTrainerSkill17.shown == false and named.ClassTrainerSkill18.shown == false,
+  "class trainer mode did not preserve protected detail spacing")
 
 local function resetRows(rows, money)
   local i

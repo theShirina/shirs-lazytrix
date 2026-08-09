@@ -139,7 +139,13 @@ def validate_source() -> None:
     trainer = (ROOT / "ShirsLazyTrix_Trainer.lua").read_text(encoding="utf-8")
     for token in (
         "TRAINER_ROWS = 18",
-        "TRAINER_LIST_HEIGHT = 296",
+        "CLASS_TRAINER_ROWS = 16",
+        "CLASS_TRAINER_LIST_HEIGHT = 264",
+        "TRADE_TRAINER_LIST_HEIGHT = 296",
+        "CLASS_TRAINER_DETAIL_HEIGHT = 151",
+        "TRADE_TRAINER_DETAIL_HEIGHT = 135",
+        "CLASS_TRAINER_HORIZONTAL_Y = -355",
+        "TRADE_TRAINER_HORIZONTAL_Y = -387",
         "CLASS_FRAME_HEIGHT = 596",
         "TRADE_FRAME_HEIGHT = 612",
         "TRAIN_ALL_X = 100",

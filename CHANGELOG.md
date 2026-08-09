@@ -4,7 +4,8 @@
 
 - Added a default-off downward layout for class and profession trainers.
 - Trainer expansion and Train All now have separate default-off settings and work independently.
-- Increased the visible trainer list to 18 rows while preserving stock width and the detail pane beneath it.
+- Shows 16 class-training rows and 18 profession-training rows while preserving stock width.
+- Reserves extra class-detail space so wrapped descriptions stay clear of the money bar.
 - Extends the exact stock bottom-left and bottom-right artwork through the added middle band, while leaving pfUI's backdrop in charge when enabled.
 - Refreshes Train All after Blizzard makes its load-on-demand trainer frame visible.
 - Added a manual Train All button with a fixed click-time service and cost snapshot.
