@@ -1,0 +1,31 @@
+local frame = CreateFrame("Frame", "ShirsLazyTrixEventFrame")
+
+frame:RegisterEvent("VARIABLES_LOADED")
+frame:RegisterEvent("GOSSIP_SHOW")
+frame:RegisterEvent("QUEST_GREETING")
+frame:RegisterEvent("QUEST_DETAIL")
+frame:RegisterEvent("QUEST_PROGRESS")
+frame:RegisterEvent("QUEST_COMPLETE")
+
+frame:SetScript("OnEvent", function()
+  if event == "VARIABLES_LOADED" then
+    ShirsLazyTrix.EnsureDatabase()
+    ShirsLazyTrix.CreateUI()
+  elseif event == "GOSSIP_SHOW" then
+    ShirsLazyTrix.HandleGossipShow()
+  elseif event == "QUEST_GREETING" then
+    ShirsLazyTrix.HandleQuestGreeting()
+  elseif event == "QUEST_DETAIL" then
+    ShirsLazyTrix.HandleQuestDetail()
+  elseif event == "QUEST_PROGRESS" then
+    ShirsLazyTrix.HandleQuestProgress()
+  elseif event == "QUEST_COMPLETE" then
+    ShirsLazyTrix.HandleQuestComplete()
+  end
+end)
+
+SLASH_SHIRSLAZYTRIX1 = "/lazytrix"
+SLASH_SHIRSLAZYTRIX2 = "/slt"
+SlashCmdList["SHIRSLAZYTRIX"] = function()
+  ShirsLazyTrix.ToggleSettings()
+end

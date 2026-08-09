@@ -1,0 +1,37 @@
+-- Event wiring contract for Shir's LazyTrix 0.0.1
+
+local root = arg and arg[1] or "."
+local path = root .. "/ShirsLazyTrix.lua"
+local file = io.open(path, "rb")
+if not file then error("missing ShirsLazyTrix.lua", 2) end
+local source = file:read("*a")
+file:close()
+
+local required = {
+  'RegisterEvent("VARIABLES_LOADED")',
+  'RegisterEvent("GOSSIP_SHOW")',
+  'RegisterEvent("QUEST_GREETING")',
+  'RegisterEvent("QUEST_DETAIL")',
+  'RegisterEvent("QUEST_PROGRESS")',
+  'RegisterEvent("QUEST_COMPLETE")',
+  'ShirsLazyTrix.HandleGossipShow()',
+  'ShirsLazyTrix.HandleQuestGreeting()',
+  'ShirsLazyTrix.HandleQuestDetail()',
+  'ShirsLazyTrix.HandleQuestProgress()',
+  'ShirsLazyTrix.HandleQuestComplete()',
+  'SLASH_SHIRSLAZYTRIX1 = "/lazytrix"',
+  'SLASH_SHIRSLAZYTRIX2 = "/slt"',
+}
+
+local i
+for i = 1, table.getn(required) do
+  if not string.find(source, required[i], 1, true) then
+    error("missing event contract: " .. required[i], 2)
+  end
+end
+
+if string.find(source, "QUEST_LOG_UPDATE", 1, true) then
+  error("v0.0.1 must not poll the quest log", 2)
+end
+
+print("event-wiring: PASS")
