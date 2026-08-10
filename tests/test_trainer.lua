@@ -11,6 +11,10 @@ local selectedGossip = {}
 local shiftDown = false
 local tradeskillTrainer = false
 local playerSkills = {}
+local trainerInfoReads = 0
+local trainerInfoMutation = nil
+local trainerSkillLineReads = 0
+local trainerSkillLineMutation = nil
 
 local function makeFrame(name)
   local frame = {
@@ -95,6 +99,8 @@ ClassTrainerFrame.shown = true
 ClassTrainerListScrollFrame = makeFrame("ClassTrainerListScrollFrame")
 ClassTrainerListScrollFrame.width = 293
 ClassTrainerListScrollFrame.height = 184
+ClassTrainerListScrollFrameScrollBarScrollUpButton = makeFrame("ClassTrainerListScrollFrameScrollBarScrollUpButton")
+ClassTrainerListScrollFrameScrollBarScrollDownButton = makeFrame("ClassTrainerListScrollFrameScrollBarScrollDownButton")
 ClassTrainerDetailScrollFrame = makeFrame("ClassTrainerDetailScrollFrame")
 ClassTrainerDetailScrollFrame.width = 296
 ClassTrainerDetailScrollFrame.height = 119
@@ -133,6 +139,8 @@ ClassTrainerHorizontalBarLeft = makeFrame("ClassTrainerHorizontalBarLeft")
 
 named.ClassTrainerFrame = ClassTrainerFrame
 named.ClassTrainerListScrollFrame = ClassTrainerListScrollFrame
+named.ClassTrainerListScrollFrameScrollBarScrollUpButton = ClassTrainerListScrollFrameScrollBarScrollUpButton
+named.ClassTrainerListScrollFrameScrollBarScrollDownButton = ClassTrainerListScrollFrameScrollBarScrollDownButton
 named.ClassTrainerDetailScrollFrame = ClassTrainerDetailScrollFrame
 named.ClassTrainerTrainButton = ClassTrainerTrainButton
 named.ClassTrainerCancelButton = ClassTrainerCancelButton
@@ -162,6 +170,8 @@ function IsTradeskillTrainer() return tradeskillTrainer end
 function GetMoney() return playerMoney end
 function GetNumTrainerServices() return table.getn(services) end
 function GetTrainerServiceInfo(index)
+  trainerInfoReads = trainerInfoReads + 1
+  if trainerInfoMutation then trainerInfoMutation(trainerInfoReads, index) end
   local row = services[index]
   if not row then return nil end
   return row.name, row.subText, row.serviceType, row.expanded
@@ -172,6 +182,8 @@ function GetTrainerServiceCost(index)
   return row.money, row.cp1, row.cp2
 end
 function GetTrainerServiceSkillLine(index)
+  trainerSkillLineReads = trainerSkillLineReads + 1
+  if trainerSkillLineMutation then trainerSkillLineMutation(trainerSkillLineReads, index) end
   local row = services[index]
   if not row then return nil end
   return row.skillLine
@@ -280,7 +292,7 @@ ShirsLazyTrixDB.trainAll = true
 assert(ShirsLazyTrix.RefreshTrainerFeature() == true, "combined trainer features did not apply")
 assert(named.ShirsLazyTrixTrainAllButton and named.ShirsLazyTrixTrainAllButton.shown == true,
   "combined mode did not show Train All")
-assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 76 and named.ShirsLazyTrixTrainAllButton.height == 18 and
   named.ShirsLazyTrixTrainAllButton.point[1] == "CENTER" and
   named.ShirsLazyTrixTrainAllButton.point[2] == ClassTrainerFrame and
   named.ShirsLazyTrixTrainAllButton.point[3] == "BOTTOMLEFT" and
@@ -327,12 +339,27 @@ assert(trainAllSocket and trainAllSocket.shown == true and trainAllSocket.layer 
   trainAllSocket.texCoord[1] == 0.03125 and trainAllSocket.texCoord[2] == 0.734375 and
   trainAllSocket.texCoord[3] == 0.58984375 and trainAllSocket.texCoord[4] == 0.7109375,
   "Train All did not receive the exact stock action-socket artwork crop")
+local listTrackMiddle = named.ShirsLazyTrixTrainerListTrackMiddle
+assert(listTrackMiddle and listTrackMiddle.shown == true and listTrackMiddle.layer == "BACKGROUND" and
+  listTrackMiddle.texture[1] == "Interface\\ClassTrainerFrame\\UI-ClassTrainer-ScrollBar" and
+  listTrackMiddle.width == 30 and table.getn(listTrackMiddle.points) == 2 and
+  listTrackMiddle.points[1][1] == "TOP" and
+  listTrackMiddle.points[1][2] == ClassTrainerListScrollFrameScrollBarScrollUpButton and
+  listTrackMiddle.points[1][3] == "TOP" and listTrackMiddle.points[1][4] == -2 and listTrackMiddle.points[1][5] == -118 and
+  listTrackMiddle.points[2][1] == "BOTTOM" and
+  listTrackMiddle.points[2][2] == ClassTrainerListScrollFrameScrollBarScrollDownButton and
+  listTrackMiddle.points[2][3] == "BOTTOM" and listTrackMiddle.points[2][4] == -2 and listTrackMiddle.points[2][5] == 122 and
+  listTrackMiddle.texCoord[1] == 0 and listTrackMiddle.texCoord[2] == 0.46875 and
+  listTrackMiddle.texCoord[3] == 0.5 and listTrackMiddle.texCoord[4] == 0.5078125,
+  "expanded stock trainer did not fill the fixed scrollbar artwork gap")
 SkinCollapseButton = savedSkinCollapseButton
 ShirsLazyTrix.RefreshTrainerFeature()
 assert(stockLeft.shown == false and stockRight.shown == false,
   "stock artwork extensions were not hidden when pfUI owned the trainer backdrop")
 assert(trainAllSocket.shown == false,
   "stock Train All socket was not hidden when pfUI owned the trainer backdrop")
+assert(listTrackMiddle.shown == false,
+  "stock scrollbar track extension was not hidden when pfUI owned the trainer backdrop")
 assert(createdSkillRows == 7, "reapplying trainer layout duplicated rows")
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
@@ -359,6 +386,10 @@ local function resetRows(rows, money, skills)
   ClassTrainerFrame.shown = true
   ShirsLazyTrixDB.trainAll = true
   ShirsLazyTrix.CancelTrainAll()
+  trainerInfoReads = 0
+  trainerInfoMutation = nil
+  trainerSkillLineReads = 0
+  trainerSkillLineMutation = nil
 end
 
 local safeRows = {
@@ -394,13 +425,13 @@ assert(named.ShirsLazyTrixTrainAllButton.shown == true and named.ShirsLazyTrixTr
 ClassTrainerSortFrame = makeFrame("ClassTrainerSortFrame")
 named.ClassTrainerSortFrame = ClassTrainerSortFrame
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 76 and named.ShirsLazyTrixTrainAllButton.height == 18 and
   named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "stock checkbox filters moved the bottom Train All control")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
-assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 76 and named.ShirsLazyTrixTrainAllButton.height == 18 and
   named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "dropdown filter layout moved the bottom Train All control")
@@ -411,14 +442,14 @@ ClassTrainerSortFrame.shown = true
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = true
 ClassTrainer_SetToTradeSkillTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 76 and named.ShirsLazyTrixTrainAllButton.height == 18 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "profession mode setter moved or relabeled bottom Train All")
 ClassTrainerSortFrame.shown = false
 ShirsLazyTrix.RefreshTrainerFeature()
 tradeskillTrainer = false
 ClassTrainer_SetToClassTrainer()
-assert(named.ShirsLazyTrixTrainAllButton.width == 80 and named.ShirsLazyTrixTrainAllButton.height == 22 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
+assert(named.ShirsLazyTrixTrainAllButton.width == 76 and named.ShirsLazyTrixTrainAllButton.height == 18 and named.ShirsLazyTrixTrainAllButton.point[4] == 56 and
   named.ShirsLazyTrixTrainAllButton.text == "Train All (2)",
   "class mode setter moved or relabeled bottom Train All")
 ShirsLazyTrixDB.expandTrainers = false
@@ -491,20 +522,163 @@ end
 assert(table.getn(bought) == 6 and not ShirsLazyTrix.IsTrainAllActive(),
   "Train All stopped before completing more than three services")
 
--- The physical click freezes its service set; newly unlocked rows are not absorbed.
+-- The click freezes an unavailable-only unlock allowlist; listed ranks may enter bounded follow-up passes.
 resetRows({
   { name = "Rank One", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
   { name = "Rank Two", subText = "Rank 2", serviceType = "unavailable", money = 20, cp1 = 0, cp2 = 0 },
+  { name = "Rank Three", subText = "Rank 3", serviceType = "unavailable", money = 30, cp1 = 0, cp2 = 0 },
 }, 100)
 assert(ShirsLazyTrix.StartTrainAll() == true, "unlock snapshot did not start")
 services[1].serviceType = "used"
 services[2].serviceType = "available"
 ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
-assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
-  "newly unlocked service was absorbed into the click snapshot")
+assert(table.getn(bought) == 2 and bought[2] == 2 and ShirsLazyTrix.IsTrainAllActive(),
+  "first newly unlocked rank did not enter a follow-up pass")
+services[2].serviceType = "used"
+services[3].serviceType = "available"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 3 and bought[3] == 3 and ShirsLazyTrix.IsTrainAllActive(),
+  "second newly unlocked rank did not enter another follow-up pass")
+services[3].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 3 and not ShirsLazyTrix.IsTrainAllActive(),
+  "bounded unlock passes did not stop after the click-time unlock allowlist was exhausted")
 
--- Insertions are ignored while the original identity can move to a new index.
+-- A row that was already used at click time cannot enter a later pass.
+resetRows({
+  { name = "Used Gate", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Previously Used", subText = "Rank 2", serviceType = "used", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "used-gate snapshot did not start")
+services[1].serviceType = "used"
+services[2].serviceType = "available"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "used-at-click service entered a follow-up pass")
+
+-- An initially available but excluded row cannot become eligible in a later pass.
+resetRows({
+  { name = "Excluded Gate", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Excluded Point Cost", subText = "Rank 2", serviceType = "available", money = 20, cp1 = 1, cp2 = 0 },
+}, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "excluded-gate snapshot did not start")
+services[1].serviceType = "used"
+services[2].cp1 = 0
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "initially excluded available service entered a follow-up pass")
+
+-- The click-time available snapshot and unlock allowlist must come from one atomic census.
+resetRows({
+  { name = "Atomic Used Gate", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Atomic Used Candidate", subText = "Rank 2", serviceType = "used", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+trainerInfoMutation = function(readCount)
+  if readCount == 3 then
+    services[2].serviceType = "available"
+    trainerInfoMutation = nil
+  end
+end
+assert(ShirsLazyTrix.StartTrainAll() == true, "atomic used snapshot did not start")
+services[1].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "used identity changed between click-time scans and was purchased")
+
+resetRows({
+  { name = "Atomic Insert Gate", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Atomic Existing", subText = "Rank 2", serviceType = "used", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+trainerInfoMutation = function(readCount)
+  if readCount == 3 then
+    table.insert(services, 2, {
+      name = "Atomic Inserted", subText = "Rank 9", serviceType = "available", money = 1, cp1 = 0, cp2 = 0,
+    })
+    trainerInfoMutation = nil
+  end
+end
+assert(ShirsLazyTrix.StartTrainAll() == true, "atomic insertion snapshot did not start")
+services[1].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "inserted identity changed between click-time scans and was purchased")
+
+resetRows({
+  { name = "Atomic Excluded Gate", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Atomic Excluded Candidate", subText = "Rank 2", serviceType = "available", money = 20, cp1 = 1, cp2 = 0 },
+}, 100)
+trainerInfoMutation = function(readCount)
+  if readCount == 3 then
+    services[2].cp1 = 0
+    trainerInfoMutation = nil
+  end
+end
+assert(ShirsLazyTrix.StartTrainAll() == true, "atomic excluded snapshot did not start")
+services[1].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 1 and not ShirsLazyTrix.IsTrainAllActive(),
+  "excluded identity changed between click-time scans and was purchased")
+
+-- A list mutation during the pre-submit signature census must not leave a stale purchase index.
+resetRows({
+  { name = "Signature Target", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Signature Guard", subText = "Rank 2", serviceType = "used", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+trainerInfoMutation = function(readCount)
+  if readCount == 5 then
+    table.insert(services, 1, {
+      name = "Inserted During Signature", subText = "Rank 9", serviceType = "available", money = 1, cp1 = 0, cp2 = 0,
+    })
+    trainerInfoMutation = nil
+  end
+end
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0 and not ShirsLazyTrix.IsTrainAllActive(),
+  "signature-time insertion shifted the resolved index into a destructive purchase")
+
+-- The last service-info validation must be followed by an identity-only check before purchase.
+resetRows({
+  { name = "Final Identity Target", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  { name = "Final Identity Guard", subText = "Rank 2", serviceType = "used", money = 20, cp1 = 0, cp2 = 0 },
+}, 100)
+trainerSkillLineMutation = function(readCount)
+  if readCount == 7 then
+    table.insert(services, 1, {
+      name = "Inserted During Final Skill Read", subText = "Rank 9", serviceType = "available", money = 1, cp1 = 0, cp2 = 0,
+    })
+    trainerSkillLineMutation = nil
+  end
+end
+assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0 and not ShirsLazyTrix.IsTrainAllActive(),
+  "final skill-line read shifted the validated index into a destructive purchase")
+
+-- Follow-up rescans have a hard eight-pass bound even when the server keeps unlocking ranks.
+local boundedRows = {}
+for i = 1, 10 do
+  table.insert(boundedRows, {
+    name = "Bounded Rank", subText = "Rank " .. i,
+    serviceType = i == 1 and "available" or "unavailable", money = 1, cp1 = 0, cp2 = 0,
+  })
+end
+resetRows(boundedRows, 100)
+assert(ShirsLazyTrix.StartTrainAll() == true, "bounded pass snapshot did not start")
+for i = 1, 8 do
+  services[i].serviceType = "used"
+  if services[i + 1] then services[i + 1].serviceType = "available" end
+  ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+  ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+end
+assert(table.getn(bought) == 8 and not ShirsLazyTrix.IsTrainAllActive(),
+  "Train All exceeded or failed to reach its eight-pass unlock bound")
+
+-- Insertions outside the click-time identity universe remain ignored while original identities may move.
 resetRows({
   { name = "Snapshot A", subText = "Rank 1", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
   { name = "Snapshot B", subText = "Rank 1", serviceType = "available", money = 20, cp1 = 0, cp2 = 0 },
@@ -516,6 +690,11 @@ ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
 ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
 assert(table.getn(bought) == 2 and bought[2] == 3,
   "Train All bought an inserted service instead of the moved snapshot identity")
+services[3].serviceType = "used"
+ShirsLazyTrix.HandleTrainerEvent("TRAINER_UPDATE")
+ShirsLazyTrix.HandleTrainerOnUpdate(0.4)
+assert(table.getn(bought) == 2 and not ShirsLazyTrix.IsTrainAllActive(),
+  "follow-up pass absorbed an identity inserted after the physical click")
 
 -- A quoted cost change cancels the remaining snapshot.
 resetRows({
@@ -751,6 +930,47 @@ ShirsLazyTrix.UpdateTrainAllButton()
 assert(named.ShirsLazyTrixTrainAllButton.enabled == false, "unaffordable Train All plan remained enabled")
 assert(ShirsLazyTrix.StartTrainAll() == false and table.getn(bought) == 0,
   "unaffordable Train All plan spent money")
+
+-- Non-finite service and skill-line counts must fail before enumeration on the exact Windows Lua 5.0.3 runtime.
+local invalidCounts = { 0/0, 1/0, -1/0 }
+local savedServiceCountApi = GetNumTrainerServices
+local savedTrainerInfoApi = GetTrainerServiceInfo
+for i = 1, table.getn(invalidCounts) do
+  resetRows({
+    { name = "Invalid Count", serviceType = "available", money = 10, cp1 = 0, cp2 = 0 },
+  }, 100)
+  local trainerInfoCalls = 0
+  GetNumTrainerServices = function() return invalidCounts[i] end
+  GetTrainerServiceInfo = function()
+    trainerInfoCalls = trainerInfoCalls + 1
+    error("invalid service count reached trainer enumeration")
+  end
+  local countSafe, countStarted = pcall(ShirsLazyTrix.StartTrainAll)
+  GetNumTrainerServices = savedServiceCountApi
+  GetTrainerServiceInfo = savedTrainerInfoApi
+  assert(countSafe and countStarted == false and trainerInfoCalls == 0 and table.getn(bought) == 0,
+    "non-finite trainer service count reached enumeration or purchase")
+end
+
+local savedSkillCountApi = GetNumSkillLines
+local savedSkillInfoApi = GetSkillLineInfo
+for i = 1, table.getn(invalidCounts) do
+  resetRows({
+    { name = "Invalid Skill Count", serviceType = "available", money = 10, cp1 = 0, cp2 = 1,
+      skillLine = "Tailoring" },
+  }, 100, { "Tailoring" })
+  local skillInfoCalls = 0
+  GetNumSkillLines = function() return invalidCounts[i] end
+  GetSkillLineInfo = function()
+    skillInfoCalls = skillInfoCalls + 1
+    error("invalid skill-line count reached enumeration")
+  end
+  local skillSafe, skillStarted = pcall(ShirsLazyTrix.StartTrainAll)
+  GetNumSkillLines = savedSkillCountApi
+  GetSkillLineInfo = savedSkillInfoApi
+  assert(skillSafe and skillStarted == false and skillInfoCalls == 0 and table.getn(bought) == 0,
+    "non-finite skill-line count reached enumeration or purchase")
+end
 
 -- Missing APIs fail closed.
 local savedCost = GetTrainerServiceCost

@@ -10,8 +10,8 @@ local CLASS_TRAINER_HORIZONTAL_Y = -355
 local TRADE_TRAINER_HORIZONTAL_Y = -387
 local TRAINER_CANCEL_X = -39
 local TRAINER_BUTTON_BOTTOM = 81
-local TRAIN_ALL_WIDTH = 80
-local TRAIN_ALL_HEIGHT = 22
+local TRAIN_ALL_WIDTH = 76
+local TRAIN_ALL_HEIGHT = 18
 local TRAIN_ALL_CENTER_X = 56
 local TRAIN_ALL_CENTER_Y = 92
 local TRAIN_ALL_SOCKET_X = 14
@@ -25,12 +25,18 @@ local TRAINER_MONEY_BUTTON_WIDTH = 27
 local TRAINER_MONEY_ELEMENT_HEIGHT = 11
 local TRAINER_MONEY_FONT_REDUCTION = 2
 local TRAINER_MONEY_GAP = -3
+local TRAINER_LIST_TRACK_WIDTH = 30
+local TRAINER_LIST_TRACK_TOP_X = -2
+local TRAINER_LIST_TRACK_TOP_Y = -118
+local TRAINER_LIST_TRACK_BOTTOM_X = -2
+local TRAINER_LIST_TRACK_BOTTOM_Y = 122
 local TRAINER_MAX_CLEANUP_ROWS = 22
 local MAX_COPPER = 2147483647
 local TRAINER_PACE_SECONDS = 0.35
 local TRAINER_RETRY_SECONDS = 0.75
 local TRAINER_TIMEOUT_SECONDS = 3
 local TRAINER_MAX_RETRIES = 2
+local TRAINER_MAX_PASSES = 8
 
 local trainerFrame = nil
 local trainAllActive = false
@@ -43,6 +49,9 @@ local trainAllStuckElapsed = 0
 local trainAllRetryCount = 0
 local trainAllSnapshot = nil
 local trainAllPosition = 0
+local trainAllUnlockAllowlist = nil
+local trainAllPurchased = nil
+local trainAllPass = 0
 local trainAllSubmitting = false
 local trainAllSawUpdate = false
 local trainerShowPending = false
@@ -248,6 +257,27 @@ local function stockArtworkAllowed()
   return type(SkinCollapseButton) ~= "function"
 end
 
+local function updateListScrollBarTrack(enabled)
+  if not ClassTrainerListScrollFrame or type(ClassTrainerListScrollFrame.CreateTexture) ~= "function" then return end
+  local track = getglobal("ShirsLazyTrixTrainerListTrackMiddle")
+  if not track then
+    track = ClassTrainerListScrollFrame:CreateTexture("ShirsLazyTrixTrainerListTrackMiddle", "BACKGROUND")
+    track:SetTexture("Interface\\ClassTrainerFrame\\UI-ClassTrainer-ScrollBar")
+  end
+  local up = getglobal("ClassTrainerListScrollFrameScrollBarScrollUpButton")
+  local down = getglobal("ClassTrainerListScrollFrameScrollBarScrollDownButton")
+  if not up or not down then
+    track:Hide()
+    return
+  end
+  track:ClearAllPoints()
+  track:SetPoint("TOP", up, "TOP", TRAINER_LIST_TRACK_TOP_X, TRAINER_LIST_TRACK_TOP_Y)
+  track:SetPoint("BOTTOM", down, "BOTTOM", TRAINER_LIST_TRACK_BOTTOM_X, TRAINER_LIST_TRACK_BOTTOM_Y)
+  track:SetWidth(TRAINER_LIST_TRACK_WIDTH)
+  track:SetTexCoord(0, 0.46875, 0.5, 0.5078125)
+  if enabled then track:Show() else track:Hide() end
+end
+
 local function updateStockBackground(frameHeight)
   if not ClassTrainerFrame or type(ClassTrainerFrame.CreateTexture) ~= "function" then return end
   local left = getglobal("ShirsLazyTrixTrainerStockBackgroundLeft")
@@ -364,6 +394,7 @@ local function applyExpandedModeGeometry()
   ClassTrainerFrame:SetHeight(height)
   updateStockBackground(height)
   ClassTrainerListScrollFrame:SetHeight(listHeight)
+  updateListScrollBarTrack(stockArtworkAllowed())
   setPoint(ClassTrainerDetailScrollFrame, "TOPLEFT", ClassTrainerListScrollFrame, "BOTTOMLEFT", 0, -8)
   ClassTrainerDetailScrollFrame:SetHeight(detailHeight)
   setPoint(ClassTrainerCancelButton, "BOTTOMRIGHT", ClassTrainerFrame, "BOTTOMRIGHT", TRAINER_CANCEL_X, TRAINER_BUTTON_BOTTOM)
@@ -431,6 +462,8 @@ function ShirsLazyTrix.RestoreTrainerLayout()
   if stockBackgroundLeft then stockBackgroundLeft:Hide() end
   local stockBackgroundRight = getglobal("ShirsLazyTrixTrainerStockBackgroundRight")
   if stockBackgroundRight then stockBackgroundRight:Hide() end
+  local listTrack = getglobal("ShirsLazyTrixTrainerListTrackMiddle")
+  if listTrack then listTrack:Hide() end
   if type(IsTradeskillTrainer) == "function" and IsTradeskillTrainer() then
     CLASS_TRAINER_SKILLS_DISPLAYED = 10
   else
@@ -483,12 +516,16 @@ local function trainerVisible()
   return ok and (visible == true or visible == 1)
 end
 
+local function validTrainerCount(number)
+  if type(number) ~= "number" or not (number >= 0 and number <= 1000) then return false end
+  local wholeOk, whole = pcall(math.floor, number)
+  return wholeOk and whole == number
+end
+
 local function safeServiceCount()
   if type(GetNumTrainerServices) ~= "function" then return nil end
   local ok, number = pcall(GetNumTrainerServices)
-  if not ok or type(number) ~= "number" or number < 0 or number > 1000 then return nil end
-  local wholeOk, whole = pcall(math.floor, number)
-  if not wholeOk or whole ~= number then return nil end
+  if not ok or not validTrainerCount(number) then return nil end
   return number
 end
 
@@ -517,6 +554,15 @@ local function readServiceInfo(index)
   return { identity = identity, name = name, subText = subText or "", serviceType = serviceType, skillLine = skillLine }
 end
 
+local function readServiceIdentityType(index)
+  if type(GetTrainerServiceInfo) ~= "function" then return nil, nil end
+  local ok, name, subText, serviceType = pcall(GetTrainerServiceInfo, index)
+  if not ok or type(serviceType) ~= "string" then return nil, nil end
+  local identity = serviceIdentity(name, subText)
+  if not identity then return nil, nil end
+  return identity, serviceType
+end
+
 local function readServiceCost(index)
   if type(GetTrainerServiceCost) ~= "function" then return nil end
   local ok, money, cp1, cp2 = pcall(GetTrainerServiceCost, index)
@@ -528,9 +574,7 @@ local function playerHasSkillLine(skillLine)
   if type(skillLine) ~= "string" or not string.find(skillLine, "%S") or
      type(GetNumSkillLines) ~= "function" or type(GetSkillLineInfo) ~= "function" then return false end
   local ok, number = pcall(GetNumSkillLines)
-  if not ok or type(number) ~= "number" or number < 0 or number > 1000 then return false end
-  local wholeOk, whole = pcall(math.floor, number)
-  if not wholeOk or whole ~= number then return false end
+  if not ok or not validTrainerCount(number) then return false end
   local i
   for i = 1, number do
     local lineOk, name = pcall(GetSkillLineInfo, i)
@@ -546,7 +590,47 @@ local function serviceCostsAllowed(info, talentCost, professionCost)
   return info and playerHasSkillLine(info.skillLine)
 end
 
-local function buildTrainAllSnapshot()
+local function captureTrainAllClickState()
+  if not trainAllEnabled() or not trainerVisible() or not trainerApisAvailable() then return nil, nil, nil end
+  local number = safeServiceCount()
+  if not number then return nil, nil, nil end
+  local snapshot = {}
+  local seen = {}
+  local unlockAllowlist = {}
+  local total = 0
+  local i
+  for i = 1, number do
+    local info = readServiceInfo(i)
+    if not info then return nil, nil, nil end
+    if info.serviceType ~= "header" then
+      if seen[info.identity] then return nil, nil, nil end
+      seen[info.identity] = true
+      if info.serviceType == "unavailable" then
+        unlockAllowlist[info.identity] = true
+      elseif info.serviceType == "available" then
+        local money, cp1, cp2 = readServiceCost(i)
+        if money == nil then return nil, nil, nil end
+        if serviceCostsAllowed(info, cp1, cp2) then
+          if total > MAX_COPPER - money then return nil, nil, nil end
+          total = total + money
+          table.insert(snapshot, {
+            identity = info.identity,
+            name = info.name,
+            subText = info.subText,
+            skillLine = info.skillLine,
+            money = money,
+            talentCost = cp1,
+            professionCost = cp2,
+            initialIndex = i,
+          })
+        end
+      end
+    end
+  end
+  return snapshot, total, unlockAllowlist
+end
+
+local function buildTrainAllSnapshot(allowedIdentities, purchasedIdentities)
   if not trainAllEnabled() or
      not trainerVisible() or not trainerApisAvailable() then return nil, nil end
   local number = safeServiceCount()
@@ -559,22 +643,26 @@ local function buildTrainAllSnapshot()
     local info = readServiceInfo(i)
     if not info then return nil, nil end
     if info.serviceType == "available" then
-      local money, cp1, cp2 = readServiceCost(i)
-      if money == nil then return nil, nil end
-      if serviceCostsAllowed(info, cp1, cp2) then
-        if seen[info.identity] or total > MAX_COPPER - money then return nil, nil end
-        seen[info.identity] = true
-        total = total + money
-        table.insert(snapshot, {
-          identity = info.identity,
-          name = info.name,
-          subText = info.subText,
-          skillLine = info.skillLine,
-          money = money,
-          talentCost = cp1,
-          professionCost = cp2,
-          initialIndex = i,
-        })
+      if seen[info.identity] then return nil, nil end
+      seen[info.identity] = true
+      if (not allowedIdentities or allowedIdentities[info.identity]) and
+         (not purchasedIdentities or not purchasedIdentities[info.identity]) then
+        local money, cp1, cp2 = readServiceCost(i)
+        if money == nil then return nil, nil end
+        if serviceCostsAllowed(info, cp1, cp2) then
+          if total > MAX_COPPER - money then return nil, nil end
+          total = total + money
+          table.insert(snapshot, {
+            identity = info.identity,
+            name = info.name,
+            subText = info.subText,
+            skillLine = info.skillLine,
+            money = money,
+            talentCost = cp1,
+            professionCost = cp2,
+            initialIndex = i,
+          })
+        end
       end
     end
   end
@@ -652,6 +740,9 @@ function ShirsLazyTrix.CancelTrainAll()
   trainAllRetryCount = 0
   trainAllSnapshot = nil
   trainAllPosition = 0
+  trainAllUnlockAllowlist = nil
+  trainAllPurchased = nil
+  trainAllPass = 0
   trainAllSubmitting = false
   trainAllSawUpdate = false
   ShirsLazyTrix.UpdateTrainAllButton()
@@ -732,6 +823,23 @@ local function submitCurrentSnapshot(retry)
     ShirsLazyTrix.CancelTrainAll()
     return false
   end
+  local finalMoneyCost, finalCp1, finalCp2 = readServiceCost(index)
+  if finalMoneyCost == nil or finalMoneyCost ~= entry.money or finalCp1 ~= entry.talentCost or
+     finalCp2 ~= entry.professionCost or not serviceCostsAllowed(info, finalCp1, finalCp2) then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local finalInfo = readServiceInfo(index)
+  if not finalInfo or finalInfo.identity ~= entry.identity or finalInfo.serviceType ~= "available" or
+     finalInfo.skillLine ~= entry.skillLine then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  local finalIdentity, finalServiceType = readServiceIdentityType(index)
+  if finalIdentity ~= entry.identity or finalServiceType ~= "available" then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
   if entry.identity ~= lastPurchaseKey then
     trainAllRetryCount = 0
     trainAllStuckElapsed = 0
@@ -755,11 +863,41 @@ local function submitCurrentSnapshot(retry)
   return true
 end
 
-local function advanceTrainAllSnapshot()
-  trainAllPosition = trainAllPosition + 1
-  if not trainAllSnapshot or trainAllPosition > table.getn(trainAllSnapshot) then
+local function beginFollowUpPass()
+  if trainAllPass >= TRAINER_MAX_PASSES or not trainAllUnlockAllowlist or not trainAllPurchased then
     ShirsLazyTrix.CancelTrainAll()
     return false
+  end
+  local snapshot, total = buildTrainAllSnapshot(trainAllUnlockAllowlist, trainAllPurchased)
+  local moneyOk, money = false, nil
+  if type(GetMoney) == "function" then moneyOk, money = pcall(GetMoney) end
+  if not snapshot or table.getn(snapshot) == 0 or not moneyOk or not validCopper(money) or total > money then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  trainAllPass = trainAllPass + 1
+  trainAllSnapshot = snapshot
+  trainAllPosition = 1
+  trainAllWaiting = false
+  trainAllElapsed = 0
+  trainAllStuckElapsed = 0
+  trainAllRetryCount = 0
+  lastPurchaseKey = nil
+  lastPurchaseMoney = nil
+  lastPurchaseListSignature = nil
+  return submitCurrentSnapshot(false)
+end
+
+local function advanceTrainAllSnapshot()
+  local completed = trainAllSnapshot and trainAllSnapshot[trainAllPosition] or nil
+  if not completed or not trainAllPurchased or trainAllPurchased[completed.identity] then
+    ShirsLazyTrix.CancelTrainAll()
+    return false
+  end
+  trainAllPurchased[completed.identity] = true
+  trainAllPosition = trainAllPosition + 1
+  if not trainAllSnapshot or trainAllPosition > table.getn(trainAllSnapshot) then
+    return beginFollowUpPass()
   end
   trainAllWaiting = false
   trainAllElapsed = 0
@@ -839,10 +977,10 @@ function ShirsLazyTrix.StartTrainAll()
   if trainAllActive or not trainAllEnabled() or
      not trainerVisible() then return false end
   if type(ExpandTrainerSkillLine) == "function" then ExpandTrainerSkillLine(0) end
-  local snapshot, total = buildTrainAllSnapshot()
+  local snapshot, total, unlockAllowlist = captureTrainAllClickState()
   local moneyOk, money = false, nil
   if type(GetMoney) == "function" then moneyOk, money = pcall(GetMoney) end
-  if not snapshot or table.getn(snapshot) == 0 or not moneyOk or not validCopper(money) or total > money then
+  if not unlockAllowlist or not snapshot or table.getn(snapshot) == 0 or not moneyOk or not validCopper(money) or total > money then
     ShirsLazyTrix.UpdateTrainAllButton()
     return false
   end
@@ -850,6 +988,9 @@ function ShirsLazyTrix.StartTrainAll()
   trainAllWaiting = false
   trainAllSnapshot = snapshot
   trainAllPosition = 1
+  trainAllUnlockAllowlist = unlockAllowlist
+  trainAllPurchased = {}
+  trainAllPass = 1
   trainAllSubmitting = false
   trainAllSawUpdate = false
   lastPurchaseKey = nil

@@ -9,8 +9,10 @@
 - Centers the Train and Exit buttons in the matching stock artwork sockets.
 - Extends the exact stock bottom-left and bottom-right artwork through the added middle band, while leaving pfUI's backdrop in charge when enabled.
 - Refreshes Train All after Blizzard makes its load-on-demand trainer frame visible.
-- Added a manual Train All button with a fixed click-time service and cost snapshot.
-- Centers Train All within its matching bottom-left socket and reduces the money text and coin icons by two pixels to fit the recess beside it.
+- Added a manual Train All button with a guarded click-time service and cost snapshot.
+- Continues through already-listed ranks that unlock after earlier purchases, with an eight-pass limit.
+- Centers a smaller Train All button within its matching bottom-left socket and reduces the money text and coin icons by two pixels to fit beside it.
+- Fills the exposed middle of the expanded stock scrollbar track and leaves pfUI artwork unchanged.
 - Trains unique blank-rank recipes while rejecting duplicate service identities.
 - Paces purchases and tolerates intermediate trainer updates without stopping after a few abilities.
 - Retries an unchanged unpaid service at most twice, then stops after a bounded timeout.
