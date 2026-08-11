@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 adds independent options for expanded trainer windows and a guarded Train All queue.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.7 adds an optional current-character profession cooldown panel.
 
 ## Features
 
@@ -29,6 +29,12 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.6 ad
 - Checks the full plan cost before spending, includes unique recipes and owned profession rank upgrades, and skips new profession skill lines.
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
 - Holding Shift always leaves trainer gossip open for talent resets and other choices.
+- Optional movable panel for Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.
+- Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use.
+- Stores cooldown observations and panel position per realm and character.
+- Ten seconds after login, announces ready saved cooldowns for your other characters; the current character is excluded.
+- Includes a small panel lock and an option to hide the panel during combat and while inside battlegrounds, raids, or dungeons.
+- Corrects Salt Shaker cooldowns across the client's uptime wrap instead of showing roughly 50 days.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -52,10 +58,12 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Expand trainer windows: off.
 - Enable Train All: off.
 - Automatically open trainer services: off.
+- Show profession cooldown panel: off.
+- Hide cooldown panel in combat and instances: off.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.6.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.6/ShirsLazyTrix-v0.0.6.zip).
+1. Download [`ShirsLazyTrix-v0.0.7.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.7/ShirsLazyTrix-v0.0.7.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.

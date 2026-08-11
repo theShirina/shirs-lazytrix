@@ -10,6 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LUA_FILES = [
     "ShirsLazyTrix_Engine.lua",
+    "ShirsLazyTrix_Cooldowns.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Trainer.lua",
@@ -19,6 +20,7 @@ LUA_FILES = [
 ]
 TESTS = [
     "tests/test_engine.lua",
+    "tests/test_cooldowns.lua",
     "tests/test_controller.lua",
     "tests/test_trainer.lua",
     "tests/test_world.lua",
@@ -44,6 +46,7 @@ PUBLIC_FILES = {
     "README.md",
     "README.txt",
     "ShirsLazyTrix.lua",
+    "ShirsLazyTrix_Cooldowns.lua",
     "ShirsLazyTrix.toc",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Engine.lua",
@@ -56,6 +59,7 @@ PUBLIC_FILES = {
     "scripts/validate.py",
     "tests/test_build_release.py",
     "tests/test_controller.lua",
+    "tests/test_cooldowns.lua",
     "tests/test_trainer.lua",
     "tests/test_world.lua",
     "tests/test_stealth.lua",
@@ -107,7 +111,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.6\s*$", toc, re.MULTILINE), "TOC version must be 0.0.6"
+    assert re.search(r"^## Version:\s*0\.0\.7\s*$", toc, re.MULTILINE), "TOC version must be 0.0.7"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -296,7 +300,7 @@ def validate_source() -> None:
     assert 'CancelBuff("' not in world, "stealth cleanup must not depend on SuperMacro"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
-    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "expandTrainers", "trainAll", "autoOpenTrainers"):
+    for key in ("turnIn", "pickUp", "automationOnShift", "autoSellGray", "autoRepairAll", "autoAcceptOpenWorldRes", "autoRemoveImmolationOnStealth", "expandTrainers", "trainAll", "autoOpenTrainers", "showCooldownPanel"):
         assert ui.count(f'"{key}"') == 1, f"settings key must appear once in UI: {key}"
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
@@ -309,6 +313,27 @@ def validate_source() -> None:
     assert "Expand trainer windows" in ui, "UI must expose trainer expansion"
     assert "Enable Train All" in ui, "UI must expose Train All independently"
     assert "Automatically open trainer services" in ui, "UI must expose automatic trainer gossip"
+    assert "Show movable profession cooldown panel" in ui, "UI must expose the profession cooldown panel"
+
+    cooldowns = (ROOT / "ShirsLazyTrix_Cooldowns.lua").read_text(encoding="utf-8")
+    for token in (
+        "GetTradeSkillCooldown(index)",
+        "GetContainerItemCooldown(bag, slot)",
+        "GetTradeSkillItemLink(index)",
+        "GetContainerItemLink(bag, slot)",
+        "CastSpellByName(definition.profession)",
+        "DoTradeSkill(row.index, 1)",
+        "UseContainerItem(bag, slot)",
+        "SALT_SHAKER_ITEM_ID = 15846",
+        "resultItemID = 14342",
+        "resultItemID = 12360",
+        "cooldownsByCharacter",
+        "unsafeSaltShakerContext()",
+        "PENDING_CRAFT_TIMEOUT = 4",
+    ):
+        assert token in cooldowns, f"profession cooldown feature is missing exact-client behavior: {token}"
+    assert cooldowns.count("DoTradeSkill(row.index, 1)") == 1, "profession click must have one craft submission call"
+    assert cooldowns.count("UseContainerItem(bag, slot)") == 1, "Salt Shaker click must have one item-use submission call"
 
     icon = (ROOT / "LazyTrixIcon.tga").read_bytes()
     pixel_end = 18 + (64 * 64 * 4)

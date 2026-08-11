@@ -9,6 +9,9 @@ local DEFAULTS = {
   expandTrainers = false,
   trainAll = false,
   autoOpenTrainers = false,
+  showCooldownPanel = false,
+  cooldownPanelLocked = false,
+  hideCooldownPanelInCombat = false,
   minimapAngle = 220,
 }
 
@@ -168,6 +171,21 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.autoOpenTrainers) ~= "boolean" then
     ShirsLazyTrixDB.autoOpenTrainers = DEFAULTS.autoOpenTrainers
+  end
+  if type(ShirsLazyTrixDB.showCooldownPanel) ~= "boolean" then
+    ShirsLazyTrixDB.showCooldownPanel = DEFAULTS.showCooldownPanel
+  end
+  if type(ShirsLazyTrixDB.cooldownPanelLocked) ~= "boolean" then
+    ShirsLazyTrixDB.cooldownPanelLocked = DEFAULTS.cooldownPanelLocked
+  end
+  if type(ShirsLazyTrixDB.hideCooldownPanelInCombat) ~= "boolean" then
+    ShirsLazyTrixDB.hideCooldownPanelInCombat = DEFAULTS.hideCooldownPanelInCombat
+  end
+  if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
+    ShirsLazyTrixDB.cooldownsByCharacter = {}
+  end
+  if ShirsLazyTrixDB.cooldownPanelPosition ~= nil and type(ShirsLazyTrixDB.cooldownPanelPosition) ~= "table" then
+    ShirsLazyTrixDB.cooldownPanelPosition = nil
   end
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
      ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then

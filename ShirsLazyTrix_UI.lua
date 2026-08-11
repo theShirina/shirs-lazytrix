@@ -19,6 +19,10 @@ local function createCheckbox(parent, name, labelText, key, y)
     ShirsLazyTrixDB[key] = this:GetChecked() and true or false
     if (name == "ShirsLazyTrixExpandTrainers" or name == "ShirsLazyTrixTrainAll") and ShirsLazyTrix.RefreshTrainerFeature then
       ShirsLazyTrix.RefreshTrainerFeature()
+    elseif name == "ShirsLazyTrixShowCooldownPanel" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
+      ShirsLazyTrix.RefreshCooldownPanelVisibility()
+    elseif name == "ShirsLazyTrixHideCooldownPanelInCombat" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
+      ShirsLazyTrix.RefreshCooldownPanelVisibility()
     end
   end)
   return check
@@ -36,6 +40,185 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixExpandTrainers:SetChecked(ShirsLazyTrixDB.expandTrainers and 1 or nil)
   ShirsLazyTrixTrainAll:SetChecked(ShirsLazyTrixDB.trainAll and 1 or nil)
   ShirsLazyTrixAutoOpenTrainers:SetChecked(ShirsLazyTrixDB.autoOpenTrainers and 1 or nil)
+  ShirsLazyTrixShowCooldownPanel:SetChecked(ShirsLazyTrixDB.showCooldownPanel and 1 or nil)
+  ShirsLazyTrixHideCooldownPanelInCombat:SetChecked(ShirsLazyTrixDB.hideCooldownPanelInCombat and 1 or nil)
+end
+
+local cooldownPanelInCombat = false
+
+local function configureCooldownRow(button, key, labelText, y)
+  button:SetWidth(222)
+  button:SetHeight(22)
+  button:SetPoint("TOPLEFT", button.parent or ShirsLazyTrixCooldownPanel, "TOPLEFT", 14, y)
+
+  local background = button:CreateTexture(nil, "BACKGROUND")
+  background:SetAllPoints(button)
+  background:SetTexture("Interface\\Buttons\\WHITE8X8")
+  background:SetVertexColor(0.09, 0.14, 0.2, 0.9)
+
+  local label = createText(button, labelText, 11)
+  label:SetPoint("LEFT", button, "LEFT", 7, 0)
+  label:SetTextColor(0.85, 0.9, 0.96)
+  button.label = label
+
+  local status = createText(button, "Not known", 11)
+  status:SetPoint("RIGHT", button, "RIGHT", -7, 0)
+  status:SetTextColor(0.58, 0.64, 0.72)
+  button.status = status
+  button.cooldownKey = key
+
+  button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+  button:SetScript("OnClick", function()
+    ShirsLazyTrix.ClickProfessionCooldown(key)
+  end)
+  button:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    GameTooltip:SetText(labelText)
+    GameTooltip:AddLine("Click to attempt exactly one craft when ready.", 1, 1, 1)
+    if key == "salt" then
+      GameTooltip:AddLine("The Salt Shaker must be in your bags.", 0.7, 0.8, 0.9)
+    else
+      GameTooltip:AddLine("LazyTrix opens and rechecks the profession first.", 0.7, 0.8, 0.9)
+    end
+    GameTooltip:Show()
+  end)
+  button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
+local function createCooldownPanel()
+  if ShirsLazyTrixCooldownPanel then return ShirsLazyTrixCooldownPanel end
+
+  local panel = CreateFrame("Frame", "ShirsLazyTrixCooldownPanel", UIParent)
+  panel:SetWidth(250)
+  panel:SetHeight(112)
+  panel:SetFrameStrata("DIALOG")
+  panel:SetClampedToScreen(true)
+  panel:SetMovable(true)
+  panel:EnableMouse(true)
+  panel:RegisterForDrag("LeftButton")
+  panel:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 16,
+    edgeSize = 10,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 },
+  })
+  panel:SetBackdropColor(0.025, 0.035, 0.055, 0.96)
+  panel:SetBackdropBorderColor(0.3, 0.6, 0.9, 1)
+
+  local point, relativePoint, x, y = ShirsLazyTrix.GetCooldownPanelPosition()
+  panel:SetPoint(point, UIParent, relativePoint, x, y)
+
+  local title = createText(panel, "PROFESSION COOLDOWNS", 11)
+  title:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -10)
+  title:SetTextColor(1, 0.82, 0)
+
+  local dragNote = createText(panel, "drag", 9)
+  dragNote:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -36, -11)
+  dragNote:SetTextColor(0.48, 0.56, 0.66)
+
+  local lock = CreateFrame("Button", "ShirsLazyTrixCooldownLock", panel)
+  lock:SetWidth(18)
+  lock:SetHeight(18)
+  lock:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -8, -7)
+  lock:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
+  lock.lockLabel = lock:CreateFontString(nil, "OVERLAY")
+  lock.lockLabel:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
+  lock.lockLabel:SetPoint("CENTER", lock, "CENTER", 0, 0)
+  lock:SetScript("OnClick", function()
+    ShirsLazyTrixDB.cooldownPanelLocked = not ShirsLazyTrixDB.cooldownPanelLocked
+    ShirsLazyTrix.RefreshCooldownPanelLock()
+  end)
+  lock:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    if ShirsLazyTrixDB.cooldownPanelLocked then
+      GameTooltip:SetText("Unlock cooldown panel")
+    else
+      GameTooltip:SetText("Lock cooldown panel")
+    end
+    GameTooltip:Show()
+  end)
+  lock:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+  local mooncloth = CreateFrame("Button", "ShirsLazyTrixCooldownMooncloth", panel)
+  mooncloth.parent = panel
+  configureCooldownRow(mooncloth, "mooncloth", "Mooncloth", -30)
+  local arcanite = CreateFrame("Button", "ShirsLazyTrixCooldownArcanite", panel)
+  arcanite.parent = panel
+  configureCooldownRow(arcanite, "arcanite", "Transmute: Arcanite", -55)
+  local salt = CreateFrame("Button", "ShirsLazyTrixCooldownSalt", panel)
+  salt.parent = panel
+  configureCooldownRow(salt, "salt", "Salt Shaker", -80)
+
+  panel:SetScript("OnDragStart", function()
+    if not ShirsLazyTrixDB.cooldownPanelLocked then this:StartMoving() end
+  end)
+  panel:SetScript("OnDragStop", function()
+    if ShirsLazyTrixDB.cooldownPanelLocked then return end
+    this:StopMovingOrSizing()
+    local savedPoint, _, savedRelativePoint, savedX, savedY = this:GetPoint()
+    ShirsLazyTrix.SaveCooldownPanelPosition(savedPoint, savedRelativePoint, savedX, savedY)
+  end)
+  panel:Hide()
+  ShirsLazyTrix.RefreshCooldownPanelLock()
+  return panel
+end
+
+function ShirsLazyTrix.RefreshCooldownPanelLock()
+  if not ShirsLazyTrixCooldownPanel or not ShirsLazyTrixCooldownLock then return end
+  local locked = ShirsLazyTrixDB.cooldownPanelLocked and true or false
+  ShirsLazyTrixCooldownPanel:SetMovable(not locked)
+  if locked then
+    ShirsLazyTrixCooldownLock.lockLabel:SetText("L")
+    ShirsLazyTrixCooldownLock.lockLabel:SetTextColor(1, 0.82, 0)
+  else
+    ShirsLazyTrixCooldownLock.lockLabel:SetText("U")
+    ShirsLazyTrixCooldownLock.lockLabel:SetTextColor(0.48, 0.72, 1)
+  end
+end
+
+function ShirsLazyTrix.RefreshCooldownPanel()
+  if not ShirsLazyTrixCooldownPanel then return end
+  local state = ShirsLazyTrix.GetCurrentCooldowns()
+  local rows = {
+    mooncloth = ShirsLazyTrixCooldownMooncloth,
+    arcanite = ShirsLazyTrixCooldownArcanite,
+    salt = ShirsLazyTrixCooldownSalt,
+  }
+  local key, row
+  for key, row in pairs(rows) do
+    local text = ShirsLazyTrix.FormatCooldownStatus(state[key])
+    row.status:SetText(text)
+    if text == "Ready" then
+      row.status:SetTextColor(0.35, 1, 0.45)
+    elseif text == "Not known" then
+      row.status:SetTextColor(0.58, 0.64, 0.72)
+    else
+      row.status:SetTextColor(1, 0.82, 0)
+    end
+  end
+end
+
+function ShirsLazyTrix.RefreshCooldownPanelVisibility()
+  local panel = createCooldownPanel()
+  local insideInstance = false
+  if ShirsLazyTrixDB.hideCooldownPanelInCombat and type(IsInInstance) == "function" then
+    local instanceState = IsInInstance()
+    insideInstance = instanceState == true or instanceState == 1
+  end
+  if ShirsLazyTrixDB.showCooldownPanel and
+     not (ShirsLazyTrixDB.hideCooldownPanelInCombat and (cooldownPanelInCombat or insideInstance)) then
+    ShirsLazyTrix.RefreshCooldownPanel()
+    panel:Show()
+  else
+    panel:Hide()
+  end
+end
+
+function ShirsLazyTrix.SetCooldownPanelCombatState(active)
+  cooldownPanelInCombat = active and true or false
+  ShirsLazyTrix.RefreshCooldownPanelVisibility()
 end
 
 local function createSettingsFrame()
@@ -43,7 +226,7 @@ local function createSettingsFrame()
 
   local frame = CreateFrame("Frame", "ShirsLazyTrixSettingsFrame", UIParent)
   frame:SetWidth(340)
-  frame:SetHeight(510)
+  frame:SetHeight(600)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
@@ -123,6 +306,20 @@ local function createSettingsFrame()
   merchantNote:SetHeight(24)
   merchantNote:SetJustifyH("LEFT")
   merchantNote:SetTextColor(0.62, 0.7, 0.8)
+
+  local cooldownDivider = frame:CreateTexture(nil, "ARTWORK")
+  cooldownDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
+  cooldownDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
+  cooldownDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -500)
+  cooldownDivider:SetWidth(300)
+  cooldownDivider:SetHeight(1)
+
+  local cooldownSection = createText(frame, "PROFESSION COOLDOWNS", 11)
+  cooldownSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -514)
+  cooldownSection:SetTextColor(1, 0.82, 0)
+
+  createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable profession cooldown panel", "showCooldownPanel", -529)
+  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide cooldown panel in combat and instances", "hideCooldownPanelInCombat", -559)
 
   frame:SetScript("OnShow", ShirsLazyTrix.RefreshSettings)
   frame:Hide()
@@ -215,4 +412,6 @@ function ShirsLazyTrix.CreateUI()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
   createSettingsFrame()
   createMinimapButton()
+  createCooldownPanel()
+  ShirsLazyTrix.RefreshCooldownPanelVisibility()
 end

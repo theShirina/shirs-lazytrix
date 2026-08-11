@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.0.7
+
+- Added a default-off movable panel for the current character's Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.
+- Saves panel position and observed cooldown times per realm and character.
+- Clicking a ready row revalidates the live recipe or bag item before requesting exactly one craft or use.
+- Blocks duplicate and reentrant Salt Shaker submissions while the first request is pending.
+- Corrects Salt Shaker cooldowns after the client's uptime counter wraps.
+- Added a small lock button and moved the drag hint left to make room for it.
+- Added a default-off option to hide the cooldown panel during combat.
+- Added login notices for ready saved cooldowns on other characters, excluding the character currently logged in.
+- Delayed other-character cooldown notices by ten seconds so server welcome text does not bury them.
+- Expanded the combat-hide option to hide the panel inside battlegrounds, raids, and dungeons.
+
 ## 0.0.6
 
 - Added a default-off downward layout for class and profession trainers.

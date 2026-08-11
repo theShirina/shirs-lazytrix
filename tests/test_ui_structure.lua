@@ -33,7 +33,7 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(340)', "minimal settings width")
-assertContains('frame:SetHeight(510)', "minimal settings height")
+assertContains('frame:SetHeight(600)', "minimal settings height")
 assertContains('UI-Tooltip-Background', "addon-family dark panel background")
 assertContains('UI-Tooltip-Border', "addon-family thin panel border")
 assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
@@ -62,6 +62,17 @@ assertContains('"Remove immolation effects on stealth or invisibility", "autoRem
 assertContains('"Expand trainer windows", "expandTrainers"', "expanded trainer checkbox")
 assertContains('"Enable Train All", "trainAll"', "Train All checkbox")
 assertContains('"Automatically open trainer services", "autoOpenTrainers"', "automatic trainer gossip checkbox")
+assertContains('"Show movable profession cooldown panel", "showCooldownPanel"', "profession cooldown panel checkbox")
+assertContains('"Hide cooldown panel in combat and instances", "hideCooldownPanelInCombat"', "cooldown combat-and-instance-hide checkbox")
+assertContains('"PROFESSION COOLDOWNS"', "profession cooldown section heading")
+assertContains('CreateFrame("Frame", "ShirsLazyTrixCooldownPanel", UIParent)', "movable cooldown panel")
+assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownMooncloth"', "clickable Mooncloth row")
+assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownArcanite"', "clickable Arcanite row")
+assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownSalt"', "clickable Salt Shaker row")
+assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownLock"', "cooldown panel lock button")
+assertContains('lock.lockLabel = lock:CreateFontString', "asset-independent lock label")
+assertContains('dragNote:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -36, -11)', "cooldown drag note left offset")
+assertContains('ShirsLazyTrix.SaveCooldownPanelPosition', "saved cooldown panel position")
 assertContains('"MERCHANT"', "merchant section heading")
 assertContains('"Automatically sell gray items at vendors", "autoSellGray"', "gray-only merchant checkbox")
 assertContains('"Automatically repair all gear at repair vendors", "autoRepairAll"', "automatic repair checkbox")
@@ -69,10 +80,11 @@ assertContains("Sells gray-quality items only. Vendor options run independently.
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 11 then
-  error("UI must define exactly ten checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 13 then
+  error("UI must define exactly twelve checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")
 print("ui-movable-filled-minimap: PASS")
 print("ui-ten-setting-structure: PASS")
+print("ui-profession-cooldown-structure: PASS")

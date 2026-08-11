@@ -18,6 +18,14 @@ local saleActive = false
 local merchantOrder = {}
 local trainerGossipConsumed = false
 local gossipHandled = 0
+local cooldownInitializations = 0
+local cooldownLoginNotices = 0
+local cooldownBagRefreshes = 0
+local cooldownTradeRefreshes = 0
+local cooldownTradeCloses = 0
+local cooldownUpdateElapsed = 0
+local cooldownCombatStates = {}
+local cooldownVisibilityRefreshes = 0
 ShirsLazyTrix = {
   EnsureDatabase = function() end,
   CreateUI = function() end,
@@ -60,6 +68,30 @@ ShirsLazyTrix = {
   SellNextGray = function()
     ticks = ticks + 1
   end,
+  InitializeCooldowns = function()
+    cooldownInitializations = cooldownInitializations + 1
+  end,
+  NotifyReadyCooldownsForOtherCharacters = function()
+    cooldownLoginNotices = cooldownLoginNotices + 1
+  end,
+  RefreshCooldownObservations = function()
+    cooldownBagRefreshes = cooldownBagRefreshes + 1
+  end,
+  HandleTradeSkillCooldownEvent = function()
+    cooldownTradeRefreshes = cooldownTradeRefreshes + 1
+  end,
+  HandleTradeSkillClosed = function()
+    cooldownTradeCloses = cooldownTradeCloses + 1
+  end,
+  HandleCooldownOnUpdate = function(elapsed)
+    cooldownUpdateElapsed = cooldownUpdateElapsed + elapsed
+  end,
+  SetCooldownPanelCombatState = function(active)
+    table.insert(cooldownCombatStates, active)
+  end,
+  RefreshCooldownPanelVisibility = function()
+    cooldownVisibilityRefreshes = cooldownVisibilityRefreshes + 1
+  end,
 }
 SlashCmdList = {}
 
@@ -69,7 +101,65 @@ assert(frame.events.MERCHANT_SHOW, "MERCHANT_SHOW is not registered")
 assert(frame.events.MERCHANT_CLOSED, "MERCHANT_CLOSED is not registered")
 assert(frame.events.RESURRECT_REQUEST, "RESURRECT_REQUEST is not registered")
 assert(frame.events.CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS, "stealth buff chat event is not registered")
+assert(frame.events.PLAYER_ENTERING_WORLD, "PLAYER_ENTERING_WORLD is not registered")
+assert(frame.events.BAG_UPDATE, "BAG_UPDATE is not registered")
+assert(frame.events.BAG_UPDATE_COOLDOWN, "BAG_UPDATE_COOLDOWN is not registered")
+assert(frame.events.TRADE_SKILL_SHOW, "TRADE_SKILL_SHOW is not registered")
+assert(frame.events.TRADE_SKILL_UPDATE, "TRADE_SKILL_UPDATE is not registered")
+assert(frame.events.TRADE_SKILL_CLOSE, "TRADE_SKILL_CLOSE is not registered")
+assert(frame.events.PLAYER_REGEN_DISABLED, "PLAYER_REGEN_DISABLED is not registered")
+assert(frame.events.PLAYER_REGEN_ENABLED, "PLAYER_REGEN_ENABLED is not registered")
+assert(frame.events.ZONE_CHANGED_NEW_AREA, "ZONE_CHANGED_NEW_AREA is not registered")
 assert(type(frame.scripts.OnUpdate) == "function", "merchant update driver is missing")
+
+event = "PLAYER_ENTERING_WORLD"
+frame.scripts.OnEvent()
+assert(cooldownLoginNotices == 0, "other-character notices ran before SavedVariables loaded")
+event = "VARIABLES_LOADED"
+frame.scripts.OnEvent()
+assert(cooldownInitializations == 2, "cooldowns were not initialized after SavedVariables")
+event = "PLAYER_ENTERING_WORLD"
+frame.scripts.OnEvent()
+assert(cooldownInitializations == 3, "cooldowns were not initialized on world entry")
+assert(cooldownLoginNotices == 0, "other-character ready cooldowns were announced without the login delay")
+arg1 = -100
+frame.scripts.OnUpdate()
+assert(cooldownLoginNotices == 0, "negative elapsed changed the login delay")
+arg1 = "malformed"
+local malformedElapsedOk = pcall(frame.scripts.OnUpdate)
+assert(malformedElapsedOk, "malformed elapsed raised an error")
+assert(cooldownLoginNotices == 0, "malformed elapsed changed the login delay")
+arg1 = 9.999
+frame.scripts.OnUpdate()
+assert(cooldownLoginNotices == 0, "other-character ready cooldowns were announced before ten seconds")
+arg1 = 0.001
+frame.scripts.OnUpdate()
+assert(cooldownLoginNotices == 1, "other-character ready cooldowns were not announced at ten seconds")
+event = "PLAYER_ENTERING_WORLD"
+frame.scripts.OnEvent()
+assert(cooldownLoginNotices == 1, "other-character ready cooldowns repeated during the same session")
+event = "ZONE_CHANGED_NEW_AREA"
+frame.scripts.OnEvent()
+assert(cooldownVisibilityRefreshes >= 2, "instance visibility was not refreshed on world and zone changes")
+cooldownUpdateElapsed = 0
+event = "BAG_UPDATE"
+frame.scripts.OnEvent()
+event = "BAG_UPDATE_COOLDOWN"
+frame.scripts.OnEvent()
+assert(cooldownBagRefreshes == 2, "bag cooldown observations were not refreshed")
+event = "TRADE_SKILL_SHOW"
+frame.scripts.OnEvent()
+event = "TRADE_SKILL_UPDATE"
+frame.scripts.OnEvent()
+assert(cooldownTradeRefreshes == 2, "trade cooldown observations were not refreshed")
+event = "TRADE_SKILL_CLOSE"
+frame.scripts.OnEvent()
+assert(cooldownTradeCloses == 1, "pending profession craft was not closed")
+event = "PLAYER_REGEN_DISABLED"
+frame.scripts.OnEvent()
+event = "PLAYER_REGEN_ENABLED"
+frame.scripts.OnEvent()
+assert(cooldownCombatStates[1] == true and cooldownCombatStates[2] == false, "combat visibility state was not dispatched")
 
 event = "RESURRECT_REQUEST"
 frame.scripts.OnEvent()
@@ -102,6 +192,7 @@ assert(starts == 1 and saleActive, "vendor open did not start automatic gray sel
 
 arg1 = 0.10
 frame.scripts.OnUpdate()
+assert(cooldownUpdateElapsed == 0.10, "cooldown driver did not run alongside merchant driver")
 assert(ticks == 0, "merchant driver sold before the 0.25-second interval")
 arg1 = 0.15
 frame.scripts.OnUpdate()
@@ -116,5 +207,7 @@ assert(cancels == 1 and not saleActive, "vendor close did not cancel automatic s
 arg1 = 1
 frame.scripts.OnUpdate()
 assert(ticks == 2, "idle merchant driver must not submit sales")
+assert(cooldownUpdateElapsed == 1.75, "cooldown driver must keep running while merchant work is idle")
 
 print("MERCHANT_EVENT_DRIVER_TEST=PASS")
+print("COOLDOWN_EVENT_DRIVER_TEST=PASS")

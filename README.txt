@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.6
+Shir's LazyTrix 0.0.7
 
 Microbot WoW 1.12.1 only.
 
@@ -21,6 +21,8 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Expand trainer windows
 - Enable Train All
 - Automatically open trainer services
+- Show profession cooldown panel
+- Hide cooldown panel in combat and instances
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -45,3 +47,6 @@ TRAINERS
 "Expand trainer windows" and "Enable Train All" are separate and off by default. Expansion keeps the stock width and grows class and profession trainers downward to 18 rows. Train All works with either the stock or expanded trainer. It freezes the listed services and quoted costs when clicked, checks the full cost first, paces purchases, retries an unchanged unpaid service at most twice, and skips entries that consume a profession slot. Newly unlocked ranks wait for another click. Closing the trainer stops the queue.
 
 "Automatically open trainer services" is off by default. When enabled, LazyTrix selects the trainer-type gossip entry without relying on class-specific wording. Hold Shift while speaking to the trainer to keep the gossip menu open for talent resets and other choices.
+
+PROFESSION COOLDOWNS
+"Show profession cooldown panel" is off by default. When enabled, the movable panel shows this character's Mooncloth, Transmute: Arcanite, and Salt Shaker state. Open Tailoring or Alchemy once on each character so LazyTrix can save the live recipe cooldown. Ten seconds after login, LazyTrix announces ready saved cooldowns for your other characters, but not the character you logged into. Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use; the game still checks reagents, location, skill, and bag space. Use the small lock button to keep the panel in place. The separate hide option hides it during combat and while inside battlegrounds, raids, or dungeons, then restores it afterward.

@@ -85,7 +85,25 @@ assertEqual(ShirsLazyTrixDB.expandTrainers, false, "expanded trainer default")
 assertEqual(ShirsLazyTrixDB.trainAll, false, "Train All default")
 assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "retired combined trainer key default")
 assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "automatic trainer gossip default")
+assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "profession cooldown panel default")
+assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "cooldown panel lock default")
+assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "cooldown combat-hide default")
+if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("character cooldown table default missing", 2) end
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
+
+ShirsLazyTrixDB = {
+  showCooldownPanel = true,
+  cooldownsByCharacter = { ["Realm\031Character"] = { mooncloth = { known = true, readyAt = 123 } } },
+  cooldownPanelPosition = { point = "TOPLEFT", relativePoint = "TOPLEFT", x = 5, y = -7 },
+  cooldownPanelLocked = true,
+  hideCooldownPanelInCombat = true,
+}
+ShirsLazyTrix.EnsureDatabase()
+assertEqual(ShirsLazyTrixDB.showCooldownPanel, true, "profession cooldown panel choice is preserved")
+assertEqual(ShirsLazyTrixDB.cooldownsByCharacter["Realm\031Character"].mooncloth.readyAt, 123, "character cooldown state is preserved")
+assertEqual(ShirsLazyTrixDB.cooldownPanelPosition.x, 5, "cooldown panel position is preserved")
+assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, true, "cooldown panel lock is preserved")
+assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, true, "cooldown combat-hide choice is preserved")
 
 ShirsLazyTrixDB = { enhanceTrainers = true }
 ShirsLazyTrix.EnsureDatabase()
@@ -113,6 +131,11 @@ ShirsLazyTrixDB = {
   autoRemoveImmolationOnStealth = "invalid",
   enhanceTrainers = "invalid",
   autoOpenTrainers = "invalid",
+  showCooldownPanel = "invalid",
+  cooldownPanelLocked = "invalid",
+  hideCooldownPanelInCombat = "invalid",
+  cooldownsByCharacter = "invalid",
+  cooldownPanelPosition = "invalid",
   minimapAngle = "invalid",
 }
 ShirsLazyTrix.EnsureDatabase()
@@ -127,6 +150,11 @@ assertEqual(ShirsLazyTrixDB.expandTrainers, false, "invalid expanded trainer set
 assertEqual(ShirsLazyTrixDB.trainAll, false, "invalid Train All setting repairs")
 assertEqual(ShirsLazyTrixDB.enhanceTrainers, nil, "invalid combined trainer key is removed")
 assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "invalid automatic trainer gossip setting repairs")
+assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "invalid profession cooldown panel setting repairs")
+assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "invalid cooldown panel lock repairs")
+assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "invalid cooldown combat-hide setting repairs")
+if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("invalid character cooldown table was not repaired", 2) end
+assertEqual(ShirsLazyTrixDB.cooldownPanelPosition, nil, "invalid cooldown panel position is removed")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "invalid minimap angle repairs")
 assertEqual(ShirsLazyTrixDB.turnInNormal, nil, "old normal turn-in key removed")
