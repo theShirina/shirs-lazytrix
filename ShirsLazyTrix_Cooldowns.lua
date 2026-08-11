@@ -2,6 +2,7 @@ ShirsLazyTrix = ShirsLazyTrix or {}
 
 local SALT_SHAKER_ITEM_ID = 15846
 local COOLDOWN_REFRESH_SECONDS = 0.25
+local TRADE_SKILL_POLL_SECONDS = 0.5
 local PENDING_CRAFT_TIMEOUT = 4
 local MAX_COOLDOWN_SECONDS = 31622400
 local MAX_UPTIME_SECONDS = 2147483647
@@ -30,6 +31,12 @@ local DEFINITIONS = {
   },
 }
 
+local NOTICE_SETTING_KEYS = {
+  mooncloth = "notifyOtherMooncloth",
+  arcanite = "notifyOtherArcanite",
+  salt = "notifyOtherSalt",
+}
+
 local VALID_POINTS = {
   TOPLEFT = true,
   TOP = true,
@@ -45,6 +52,8 @@ local VALID_POINTS = {
 local pendingCraft = nil
 local pendingSaltUse = nil
 local refreshElapsed = 0
+local tradeSkillOpen = false
+local tradeSkillPollElapsed = 0
 
 local function message(text)
   if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
@@ -301,7 +310,9 @@ function ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now)
         for j = 1, table.getn(definitionKeys) do
           local definition = DEFINITIONS[definitionKeys[j]]
           local entry = state[definition.key]
-          if type(entry) == "table" and entry.known == true and
+          local settingKey = NOTICE_SETTING_KEYS[definition.key]
+          if ShirsLazyTrixDB[settingKey] ~= false and
+             type(entry) == "table" and entry.known == true and
              numberInRange(entry.readyAt, 0, MAX_READY_TIME) and entry.readyAt <= observedAt then
             message(owner .. ": " .. definition.label .. " is ready.")
             notices = notices + 1
@@ -504,7 +515,15 @@ function ShirsLazyTrix.HandleTradeSkillCooldownEvent(now)
   if ShirsLazyTrix.RefreshCooldownPanel then ShirsLazyTrix.RefreshCooldownPanel() end
 end
 
+function ShirsLazyTrix.HandleTradeSkillShown(now)
+  tradeSkillOpen = true
+  tradeSkillPollElapsed = 0
+  ShirsLazyTrix.HandleTradeSkillCooldownEvent(now)
+end
+
 function ShirsLazyTrix.HandleTradeSkillClosed()
+  tradeSkillOpen = false
+  tradeSkillPollElapsed = 0
   -- Switching professions can close one trade-skill view before opening the next.
   -- Keep the one-craft request until the target recipe appears or the timeout expires.
   if ShirsLazyTrix.RefreshCooldownPanel then ShirsLazyTrix.RefreshCooldownPanel() end
@@ -512,6 +531,14 @@ end
 
 function ShirsLazyTrix.HandleCooldownOnUpdate(elapsed)
   refreshElapsed = refreshElapsed + (elapsed or 0)
+  if tradeSkillOpen then
+    tradeSkillPollElapsed = tradeSkillPollElapsed + (elapsed or 0)
+    if tradeSkillPollElapsed >= TRADE_SKILL_POLL_SECONDS then
+      tradeSkillPollElapsed = 0
+      scanTradeSkills(wallTime())
+      if ShirsLazyTrix.RefreshCooldownPanel then ShirsLazyTrix.RefreshCooldownPanel() end
+    end
+  end
   if pendingCraft and uptime() - pendingCraft.startedAt >= PENDING_CRAFT_TIMEOUT then
     local label = DEFINITIONS[pendingCraft.key].label
     pendingCraft = nil

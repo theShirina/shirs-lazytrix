@@ -22,13 +22,18 @@ local cooldownInitializations = 0
 local cooldownLoginNotices = 0
 local cooldownBagRefreshes = 0
 local cooldownTradeRefreshes = 0
+local cooldownTradeShows = 0
 local cooldownTradeCloses = 0
 local cooldownUpdateElapsed = 0
 local cooldownCombatStates = {}
 local cooldownVisibilityRefreshes = 0
+local tooltipHookInitializations = 0
 ShirsLazyTrix = {
   EnsureDatabase = function() end,
   CreateUI = function() end,
+  InstallItemIDTooltipHooks = function()
+    tooltipHookInitializations = tooltipHookInitializations + 1
+  end,
   HandleGossipShow = function()
     gossipHandled = gossipHandled + 1
     table.insert(merchantOrder, "quest-gossip")
@@ -80,6 +85,9 @@ ShirsLazyTrix = {
   HandleTradeSkillCooldownEvent = function()
     cooldownTradeRefreshes = cooldownTradeRefreshes + 1
   end,
+  HandleTradeSkillShown = function()
+    cooldownTradeShows = cooldownTradeShows + 1
+  end,
   HandleTradeSkillClosed = function()
     cooldownTradeCloses = cooldownTradeCloses + 1
   end,
@@ -118,6 +126,7 @@ assert(cooldownLoginNotices == 0, "other-character notices ran before SavedVaria
 event = "VARIABLES_LOADED"
 frame.scripts.OnEvent()
 assert(cooldownInitializations == 2, "cooldowns were not initialized after SavedVariables")
+assert(tooltipHookInitializations == 1, "tooltip hooks were not refreshed after SavedVariables loaded")
 event = "PLAYER_ENTERING_WORLD"
 frame.scripts.OnEvent()
 assert(cooldownInitializations == 3, "cooldowns were not initialized on world entry")
@@ -151,7 +160,8 @@ event = "TRADE_SKILL_SHOW"
 frame.scripts.OnEvent()
 event = "TRADE_SKILL_UPDATE"
 frame.scripts.OnEvent()
-assert(cooldownTradeRefreshes == 2, "trade cooldown observations were not refreshed")
+assert(cooldownTradeShows == 1, "trade-skill show was not dispatched separately")
+assert(cooldownTradeRefreshes == 1, "trade cooldown update was not refreshed")
 event = "TRADE_SKILL_CLOSE"
 frame.scripts.OnEvent()
 assert(cooldownTradeCloses == 1, "pending profession craft was not closed")

@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.7 adds an optional current-character profession cooldown panel.
+A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.8 adds optional item IDs beneath item tooltips.
 
 ## Features
 
@@ -32,9 +32,11 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.7 ad
 - Optional movable panel for Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.
 - Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use.
 - Stores cooldown observations and panel position per realm and character.
-- Ten seconds after login, announces ready saved cooldowns for your other characters; the current character is excluded.
+- Refreshes profession cooldown observations while Tailoring or Alchemy remains open, including after manual crafts.
+- Ten seconds after login, announces ready saved cooldowns for your other characters; Mooncloth, Arcanite, and Salt Shaker reminders can each be switched on or off.
 - Includes a small panel lock and an option to hide the panel during combat and while inside battlegrounds, raids, or dungeons.
 - Corrects Salt Shaker cooldowns across the client's uptime wrap instead of showing roughly 50 days.
+- Optionally shows `Item ID: <number>` beneath item tooltips from bags, equipment, loot, vendors, quests, professions, and item links.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
@@ -60,10 +62,14 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Automatically open trainer services: off.
 - Show profession cooldown panel: off.
 - Hide cooldown panel in combat and instances: off.
+- Other-character Mooncloth reminder: on.
+- Other-character Arcanite reminder: on.
+- Other-character Salt Shaker reminder: on.
+- Show item IDs in item tooltips: off.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.7.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.7/ShirsLazyTrix-v0.0.7.zip).
+1. Download [`ShirsLazyTrix-v0.0.8.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.8/ShirsLazyTrix-v0.0.8.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.

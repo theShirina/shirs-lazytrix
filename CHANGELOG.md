@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.8
+
+- Added a default-off setting that shows the item ID beneath item tooltips.
+- Covers bags, equipped items, loot, vendors, quest items, profession items and reagents, and item links.
+- Avoids adding a second line when the same item-ID line already exists or Informant's item-ID option is active.
+- Added separate on/off settings for other-character Mooncloth, Arcanite, and Salt Shaker ready reminders.
+- Profession cooldown status now refreshes after a craft while the profession window remains open.
+
 ## 0.0.7
 
 - Added a default-off movable panel for the current character's Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.

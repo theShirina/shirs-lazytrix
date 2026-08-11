@@ -144,7 +144,7 @@ ShirsLazyTrix.SaveCooldownPanelPosition = function(point, relativePoint, x, y)
   savedCooldownPosition = { point, relativePoint, x, y }
 end
 ShirsLazyTrix.ClickProfessionCooldown = function(key) table.insert(cooldownClicks, key) end
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, minimapAngle = 220 }
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -153,7 +153,7 @@ local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 local cooldownPanel = named.ShirsLazyTrixCooldownPanel
 if not settings or not minimap or not cooldownPanel then error("UI frames were not constructed", 2) end
-if settings.width ~= 340 or settings.height ~= 600 then error("minimal settings geometry mismatch", 2) end
+if settings.width ~= 340 or settings.height ~= 710 then error("minimal settings geometry mismatch", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
 if minimap.width ~= 32 or minimap.height ~= 32 then error("minimap button geometry mismatch", 2) end
@@ -203,6 +203,10 @@ local trainAll = named.ShirsLazyTrixTrainAll
 local autoOpenTrainers = named.ShirsLazyTrixAutoOpenTrainers
 local showCooldownPanel = named.ShirsLazyTrixShowCooldownPanel
 local hideCooldownInCombat = named.ShirsLazyTrixHideCooldownPanelInCombat
+local notifyOtherMooncloth = named.ShirsLazyTrixNotifyOtherMooncloth
+local notifyOtherArcanite = named.ShirsLazyTrixNotifyOtherArcanite
+local notifyOtherSalt = named.ShirsLazyTrixNotifyOtherSalt
+local showItemIDs = named.ShirsLazyTrixShowItemIDs
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
 if not autoRepairAll then error("automatic repair checkbox missing", 2) end
@@ -213,7 +217,9 @@ if not trainAll then error("Train All checkbox missing", 2) end
 if not autoOpenTrainers then error("automatic trainer gossip checkbox missing", 2) end
 if not showCooldownPanel then error("profession cooldown panel checkbox missing", 2) end
 if not hideCooldownInCombat then error("cooldown combat-hide checkbox missing", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if not notifyOtherMooncloth or not notifyOtherArcanite or not notifyOtherSalt then error("individual other-character reminder checkboxes missing", 2) end
+if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -297,6 +303,22 @@ hideCooldownInCombat.checked = 1
 this = hideCooldownInCombat
 hideCooldownInCombat.scripts.OnClick()
 if ShirsLazyTrixDB.hideCooldownPanelInCombat ~= true then error("combat-hide checkbox did not save true", 2) end
+notifyOtherMooncloth.checked = nil
+this = notifyOtherMooncloth
+notifyOtherMooncloth.scripts.OnClick()
+if ShirsLazyTrixDB.notifyOtherMooncloth ~= false or ShirsLazyTrixDB.notifyOtherArcanite ~= true or ShirsLazyTrixDB.notifyOtherSalt ~= true then error("Mooncloth reminder checkbox did not save independently", 2) end
+notifyOtherArcanite.checked = nil
+this = notifyOtherArcanite
+notifyOtherArcanite.scripts.OnClick()
+if ShirsLazyTrixDB.notifyOtherArcanite ~= false or ShirsLazyTrixDB.notifyOtherSalt ~= true then error("Arcanite reminder checkbox did not save independently", 2) end
+notifyOtherSalt.checked = nil
+this = notifyOtherSalt
+notifyOtherSalt.scripts.OnClick()
+if ShirsLazyTrixDB.notifyOtherSalt ~= false then error("Salt Shaker reminder checkbox did not save independently", 2) end
+showItemIDs.checked = 1
+this = showItemIDs
+showItemIDs.scripts.OnClick()
+if ShirsLazyTrixDB.showItemIDs ~= true then error("item-ID tooltip checkbox did not save true", 2) end
 ShirsLazyTrix.SetCooldownPanelCombatState(true)
 if cooldownPanel:IsVisible() then error("cooldown panel stayed visible in combat", 2) end
 ShirsLazyTrix.SetCooldownPanelCombatState(false)

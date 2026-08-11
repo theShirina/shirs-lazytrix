@@ -62,6 +62,12 @@ Stock `GossipFrame.lua` passes text/type pairs from `GetGossipOptions()` to the 
 
 The LazyTrix redesign uses stock Blizzard border/highlight assets, original UI Lua, and an original 64×64 TGA icon. The gray-only merchant queue adapts first-party MIT-licensed behavior from Shir's Inventory as recorded above. No third-party code, branding, layout, or artwork is copied. The settings panel keeps the released pickup and turn-in switches, adds one optional Shift-required automation mode for both actions, and explains the modifier behavior. The standard 32×32 launcher saves its angle after drag.
 
+## v0.0.8 item-ID tooltip precedent
+
+Informant 3.9.0.1003 at repository commit `35cbf9f6d1693cf0edfdb1fd4fa097abae1aa37c` declares Interface `11200`. Its `Tooltip.lua` hooks the stock bag, equipment, loot, vendor, quest, profession, and hyperlink tooltip paths, while `Informant.lua` extracts the first numeric field from an `item:` link and can show it as an item-ID line. The files are GPL-2.0-or-later and the repository has no root licence response, so LazyTrix uses Informant only as behavior and exact-client API evidence.
+
+LazyTrix uses original Lua 5.0.3 code and stock tooltip methods, including `ItemRefTooltip` for clicked chat links. Its account-wide setting defaults off. It extracts only positive bounded item IDs from complete raw or colored item-link fields, preserves each original tooltip method's arguments and return values, and adds one muted `Item ID: number` line. Missing APIs, malformed links, non-item links, and invalid IDs add nothing. It avoids an exact duplicate line and yields to Informant only when Informant and its item-ID filter are both active.
+
 ## v0.0.2 Shift-required automation mode
 
 The existing exact-client `IsShiftKeyDown()` evidence also supports a modifier-triggered automation policy. The released default remains unchanged: Shift suppresses every automatic quest action. When the new account-wide option is enabled, Shift instead permits active and available quest selection, pickup, completion, and zero/one-choice reward submission. The pickup and turn-in master switches still apply. No third-party policy or code is copied.

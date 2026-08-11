@@ -2,11 +2,12 @@
 ## Title: Shir's LazyTrix
 ## Notes: Quest, vendor, world, and trainer tools for Microbot.
 ## Author: Shirina
-## Version: 0.0.7
+## Version: 0.0.8
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua
 ShirsLazyTrix_Cooldowns.lua
+ShirsLazyTrix_Tooltips.lua
 ShirsLazyTrix_Merchant.lua
 ShirsLazyTrix_Controller.lua
 ShirsLazyTrix_Trainer.lua

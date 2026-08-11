@@ -20,7 +20,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.7.zip"
+    return output / "ShirsLazyTrix-v0.0.8.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:
@@ -48,6 +48,10 @@ with tempfile.TemporaryDirectory() as temporary:
         assert "ShirsLazyTrix/ShirsLazyTrix_Cooldowns.lua" in names, "profession cooldown module missing from release archive"
         assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Cooldowns.lua") == (ROOT / "ShirsLazyTrix_Cooldowns.lua").read_bytes().replace(b"\r\n", b"\n"), (
             "packaged profession cooldown module differs from source"
+        )
+        assert "ShirsLazyTrix/ShirsLazyTrix_Tooltips.lua" in names, "item-ID tooltip module missing from release archive"
+        assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Tooltips.lua") == (ROOT / "ShirsLazyTrix_Tooltips.lua").read_bytes().replace(b"\r\n", b"\n"), (
+            "packaged item-ID tooltip module differs from source"
         )
         assert "ShirsLazyTrix/ShirsLazyTrix_World.lua" in names, "world automation module missing from release archive"
         assert archive.read("ShirsLazyTrix/ShirsLazyTrix_World.lua") == (ROOT / "ShirsLazyTrix_World.lua").read_bytes().replace(b"\r\n", b"\n"), (

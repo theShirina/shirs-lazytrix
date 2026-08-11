@@ -33,7 +33,7 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(340)', "minimal settings width")
-assertContains('frame:SetHeight(600)', "minimal settings height")
+assertContains('frame:SetHeight(710)', "minimal settings height")
 assertContains('UI-Tooltip-Background', "addon-family dark panel background")
 assertContains('UI-Tooltip-Border', "addon-family thin panel border")
 assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
@@ -64,6 +64,12 @@ assertContains('"Enable Train All", "trainAll"', "Train All checkbox")
 assertContains('"Automatically open trainer services", "autoOpenTrainers"', "automatic trainer gossip checkbox")
 assertContains('"Show movable profession cooldown panel", "showCooldownPanel"', "profession cooldown panel checkbox")
 assertContains('"Hide cooldown panel in combat and instances", "hideCooldownPanelInCombat"', "cooldown combat-and-instance-hide checkbox")
+assertContains('"OTHER-CHARACTER READY REMINDERS"', "other-character reminder heading")
+assertContains('"Mooncloth", "notifyOtherMooncloth"', "Mooncloth reminder checkbox")
+assertContains('"Arcanite", "notifyOtherArcanite"', "Arcanite reminder checkbox")
+assertContains('"Salt Shaker", "notifyOtherSalt"', "Salt Shaker reminder checkbox")
+assertContains('"TOOLTIPS"', "tooltip section heading")
+assertContains('"Show item IDs in item tooltips", "showItemIDs"', "item-ID tooltip checkbox")
 assertContains('"PROFESSION COOLDOWNS"', "profession cooldown section heading")
 assertContains('CreateFrame("Frame", "ShirsLazyTrixCooldownPanel", UIParent)', "movable cooldown panel")
 assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownMooncloth"', "clickable Mooncloth row")
@@ -80,8 +86,8 @@ assertContains("Sells gray-quality items only. Vendor options run independently.
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 13 then
-  error("UI must define exactly twelve checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 17 then
+  error("UI must define exactly sixteen checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")

@@ -12,6 +12,10 @@ local DEFAULTS = {
   showCooldownPanel = false,
   cooldownPanelLocked = false,
   hideCooldownPanelInCombat = false,
+  notifyOtherMooncloth = true,
+  notifyOtherArcanite = true,
+  notifyOtherSalt = true,
+  showItemIDs = false,
   minimapAngle = 220,
 }
 
@@ -180,6 +184,18 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.hideCooldownPanelInCombat) ~= "boolean" then
     ShirsLazyTrixDB.hideCooldownPanelInCombat = DEFAULTS.hideCooldownPanelInCombat
+  end
+  if type(ShirsLazyTrixDB.notifyOtherMooncloth) ~= "boolean" then
+    ShirsLazyTrixDB.notifyOtherMooncloth = DEFAULTS.notifyOtherMooncloth
+  end
+  if type(ShirsLazyTrixDB.notifyOtherArcanite) ~= "boolean" then
+    ShirsLazyTrixDB.notifyOtherArcanite = DEFAULTS.notifyOtherArcanite
+  end
+  if type(ShirsLazyTrixDB.notifyOtherSalt) ~= "boolean" then
+    ShirsLazyTrixDB.notifyOtherSalt = DEFAULTS.notifyOtherSalt
+  end
+  if type(ShirsLazyTrixDB.showItemIDs) ~= "boolean" then
+    ShirsLazyTrixDB.showItemIDs = DEFAULTS.showItemIDs
   end
   if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
     ShirsLazyTrixDB.cooldownsByCharacter = {}

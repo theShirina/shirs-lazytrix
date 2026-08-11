@@ -88,6 +88,10 @@ assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "automatic trainer gossip d
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "profession cooldown panel default")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "cooldown panel lock default")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "cooldown combat-hide default")
+assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, true, "other-character Mooncloth reminder default")
+assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "other-character Arcanite reminder default")
+assertEqual(ShirsLazyTrixDB.notifyOtherSalt, true, "other-character Salt Shaker reminder default")
+assertEqual(ShirsLazyTrixDB.showItemIDs, false, "item-ID tooltip default")
 if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("character cooldown table default missing", 2) end
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
 
@@ -97,6 +101,10 @@ ShirsLazyTrixDB = {
   cooldownPanelPosition = { point = "TOPLEFT", relativePoint = "TOPLEFT", x = 5, y = -7 },
   cooldownPanelLocked = true,
   hideCooldownPanelInCombat = true,
+  notifyOtherMooncloth = false,
+  notifyOtherArcanite = true,
+  notifyOtherSalt = false,
+  showItemIDs = true,
 }
 ShirsLazyTrix.EnsureDatabase()
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, true, "profession cooldown panel choice is preserved")
@@ -104,6 +112,10 @@ assertEqual(ShirsLazyTrixDB.cooldownsByCharacter["Realm\031Character"].mooncloth
 assertEqual(ShirsLazyTrixDB.cooldownPanelPosition.x, 5, "cooldown panel position is preserved")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, true, "cooldown panel lock is preserved")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, true, "cooldown combat-hide choice is preserved")
+assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, false, "Mooncloth reminder choice is preserved")
+assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "Arcanite reminder choice is preserved")
+assertEqual(ShirsLazyTrixDB.notifyOtherSalt, false, "Salt Shaker reminder choice is preserved")
+assertEqual(ShirsLazyTrixDB.showItemIDs, true, "item-ID tooltip choice is preserved")
 
 ShirsLazyTrixDB = { enhanceTrainers = true }
 ShirsLazyTrix.EnsureDatabase()
@@ -134,6 +146,10 @@ ShirsLazyTrixDB = {
   showCooldownPanel = "invalid",
   cooldownPanelLocked = "invalid",
   hideCooldownPanelInCombat = "invalid",
+  notifyOtherMooncloth = "invalid",
+  notifyOtherArcanite = "invalid",
+  notifyOtherSalt = "invalid",
+  showItemIDs = "invalid",
   cooldownsByCharacter = "invalid",
   cooldownPanelPosition = "invalid",
   minimapAngle = "invalid",
@@ -153,6 +169,10 @@ assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "invalid automatic trainer 
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "invalid profession cooldown panel setting repairs")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "invalid cooldown panel lock repairs")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "invalid cooldown combat-hide setting repairs")
+assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, true, "invalid Mooncloth reminder setting repairs")
+assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "invalid Arcanite reminder setting repairs")
+assertEqual(ShirsLazyTrixDB.notifyOtherSalt, true, "invalid Salt Shaker reminder setting repairs")
+assertEqual(ShirsLazyTrixDB.showItemIDs, false, "invalid item-ID tooltip setting repairs")
 if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("invalid character cooldown table was not repaired", 2) end
 assertEqual(ShirsLazyTrixDB.cooldownPanelPosition, nil, "invalid cooldown panel position is removed")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LUA_FILES = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Cooldowns.lua",
+    "ShirsLazyTrix_Tooltips.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Trainer.lua",
@@ -21,6 +22,7 @@ LUA_FILES = [
 TESTS = [
     "tests/test_engine.lua",
     "tests/test_cooldowns.lua",
+    "tests/test_tooltips.lua",
     "tests/test_controller.lua",
     "tests/test_trainer.lua",
     "tests/test_world.lua",
@@ -47,6 +49,7 @@ PUBLIC_FILES = {
     "README.txt",
     "ShirsLazyTrix.lua",
     "ShirsLazyTrix_Cooldowns.lua",
+    "ShirsLazyTrix_Tooltips.lua",
     "ShirsLazyTrix.toc",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Engine.lua",
@@ -60,6 +63,7 @@ PUBLIC_FILES = {
     "tests/test_build_release.py",
     "tests/test_controller.lua",
     "tests/test_cooldowns.lua",
+    "tests/test_tooltips.lua",
     "tests/test_trainer.lua",
     "tests/test_world.lua",
     "tests/test_stealth.lua",
@@ -111,7 +115,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.7\s*$", toc, re.MULTILINE), "TOC version must be 0.0.7"
+    assert re.search(r"^## Version:\s*0\.0\.8\s*$", toc, re.MULTILINE), "TOC version must be 0.0.8"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -139,6 +143,29 @@ def validate_source() -> None:
 
     engine = (ROOT / "ShirsLazyTrix_Engine.lua").read_text(encoding="utf-8")
     assert "repeatable" not in engine.lower(), "engine must not classify quest recurrence"
+
+    tooltips = (ROOT / "ShirsLazyTrix_Tooltips.lua").read_text(encoding="utf-8")
+    for token in (
+        'string.find(link, "^item:(%d+):%-?%d+:%-?%d+:%-?%d+$")',
+        'string.find(link, "^|Hitem:(%d+):%-?%d+:%-?%d+:%-?%d+|h%[.*%]|h$")',
+        'string.find(link, "^|c%x%x%x%x%x%x%x%x|Hitem:(%d+):%-?%d+:%-?%d+:%-?%d+|h%[.*%]|h|r$")',
+        'tooltip:AddLine(text, ITEM_ID_RED, ITEM_ID_GREEN, ITEM_ID_BLUE)',
+        'installTooltipHooks(GameTooltip)',
+        'installTooltipHooks(ItemRefTooltip)',
+        'installMethod(tooltip, "SetHyperlink"',
+        'installMethod(tooltip, "SetBagItem"',
+        'installMethod(tooltip, "SetInventoryItem"',
+        'installMethod(tooltip, "SetLootItem"',
+        'installMethod(tooltip, "SetMerchantItem"',
+        'installMethod(tooltip, "SetQuestItem"',
+        'installMethod(tooltip, "SetQuestLogItem"',
+        'installMethod(tooltip, "SetTradeSkillItem"',
+        'installMethod(tooltip, "SetCraftItem"',
+        'packReturns(original(self, unpack(arguments)))',
+        'return unpack(results)',
+    ):
+        assert token in tooltips, f"item-ID tooltip feature is missing exact-client behavior: {token}"
+    assert "hooksecurefunc" not in tooltips, "item-ID tooltips must not use the later secure-hook API"
 
     trainer = (ROOT / "ShirsLazyTrix_Trainer.lua").read_text(encoding="utf-8")
     for token in (

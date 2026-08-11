@@ -5,14 +5,14 @@ local function createText(parent, text, size)
   return label
 end
 
-local function createCheckbox(parent, name, labelText, key, y)
+local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
   local check = CreateFrame("CheckButton", name, parent, "UICheckButtonTemplate")
   check:SetWidth(24)
   check:SetHeight(24)
-  check:SetPoint("TOPLEFT", parent, "TOPLEFT", 24, y)
+  check:SetPoint("TOPLEFT", parent, "TOPLEFT", x or 24, y)
   local label = getglobal(name .. "Text")
   label:SetText(labelText)
-  label:SetWidth(275)
+  label:SetWidth(labelWidth or 275)
   label:SetJustifyH("LEFT")
   label:SetTextColor(0.9, 0.92, 0.95)
   check:SetScript("OnClick", function()
@@ -42,6 +42,10 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixAutoOpenTrainers:SetChecked(ShirsLazyTrixDB.autoOpenTrainers and 1 or nil)
   ShirsLazyTrixShowCooldownPanel:SetChecked(ShirsLazyTrixDB.showCooldownPanel and 1 or nil)
   ShirsLazyTrixHideCooldownPanelInCombat:SetChecked(ShirsLazyTrixDB.hideCooldownPanelInCombat and 1 or nil)
+  ShirsLazyTrixNotifyOtherMooncloth:SetChecked(ShirsLazyTrixDB.notifyOtherMooncloth and 1 or nil)
+  ShirsLazyTrixNotifyOtherArcanite:SetChecked(ShirsLazyTrixDB.notifyOtherArcanite and 1 or nil)
+  ShirsLazyTrixNotifyOtherSalt:SetChecked(ShirsLazyTrixDB.notifyOtherSalt and 1 or nil)
+  ShirsLazyTrixShowItemIDs:SetChecked(ShirsLazyTrixDB.showItemIDs and 1 or nil)
 end
 
 local cooldownPanelInCombat = false
@@ -226,7 +230,7 @@ local function createSettingsFrame()
 
   local frame = CreateFrame("Frame", "ShirsLazyTrixSettingsFrame", UIParent)
   frame:SetWidth(340)
-  frame:SetHeight(600)
+  frame:SetHeight(710)
   frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
@@ -320,6 +324,27 @@ local function createSettingsFrame()
 
   createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable profession cooldown panel", "showCooldownPanel", -529)
   createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide cooldown panel in combat and instances", "hideCooldownPanelInCombat", -559)
+
+  local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -592)
+  reminderLabel:SetTextColor(0.62, 0.7, 0.8)
+
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -607, 24, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -607, 119, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt Shaker", "notifyOtherSalt", -607, 209, 84)
+
+  local tooltipDivider = frame:CreateTexture(nil, "ARTWORK")
+  tooltipDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
+  tooltipDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
+  tooltipDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -642)
+  tooltipDivider:SetWidth(300)
+  tooltipDivider:SetHeight(1)
+
+  local tooltipSection = createText(frame, "TOOLTIPS", 11)
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -656)
+  tooltipSection:SetTextColor(1, 0.82, 0)
+
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in item tooltips", "showItemIDs", -671)
 
   frame:SetScript("OnShow", ShirsLazyTrix.RefreshSettings)
   frame:Hide()

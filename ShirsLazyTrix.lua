@@ -39,6 +39,7 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.EnsureDatabase()
     ShirsLazyTrix.CreateUI()
     ShirsLazyTrix.InitializeCooldowns()
+    ShirsLazyTrix.InstallItemIDTooltipHooks()
     scheduleReadyCooldownLoginNotice()
   elseif event == "PLAYER_ENTERING_WORLD" then
     enteredWorld = true
@@ -49,7 +50,9 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.RefreshCooldownPanelVisibility()
   elseif event == "BAG_UPDATE" or event == "BAG_UPDATE_COOLDOWN" then
     ShirsLazyTrix.RefreshCooldownObservations()
-  elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_UPDATE" then
+  elseif event == "TRADE_SKILL_SHOW" then
+    ShirsLazyTrix.HandleTradeSkillShown()
+  elseif event == "TRADE_SKILL_UPDATE" then
     ShirsLazyTrix.HandleTradeSkillCooldownEvent()
   elseif event == "TRADE_SKILL_CLOSE" then
     ShirsLazyTrix.HandleTradeSkillClosed()

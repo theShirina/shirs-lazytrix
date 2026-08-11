@@ -66,7 +66,7 @@ MailFrame = { IsShown = function() return unsafeWindows.mail end }
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, message) table.insert(chat, message) end }
 
 ShirsLazyTrix = {}
-ShirsLazyTrixDB = { showCooldownPanel = true, cooldownsByCharacter = {} }
+ShirsLazyTrixDB = { showCooldownPanel = true, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, cooldownsByCharacter = {} }
 
 dofile(root .. "/ShirsLazyTrix_Cooldowns.lua")
 
@@ -93,6 +93,26 @@ local state = ShirsLazyTrix.GetCurrentCooldowns()
 assertEqual(state.mooncloth.known, true, "Mooncloth learned")
 assertEqual(state.mooncloth.readyAt, now + 172800, "Mooncloth ready time")
 assertEqual(state.arcanite, nil, "unseen Arcanite must remain unknown")
+
+-- While the profession window stays open, polling must catch a cooldown that starts
+-- after the final TRADE_SKILL_UPDATE event (including crafts started outside LazyTrix).
+tradeRows[1].cooldown = 0
+ShirsLazyTrix.HandleTradeSkillShown(now)
+assertEqual(state.mooncloth.readyAt, now, "open profession starts from ready state")
+tradeRows[1].cooldown = 172800
+ShirsLazyTrix.HandleCooldownOnUpdate(0.49)
+assertEqual(state.mooncloth.readyAt, now, "profession polling waits for its interval")
+ShirsLazyTrix.HandleCooldownOnUpdate(0.01)
+assertEqual(state.mooncloth.readyAt, now + 172800, "open profession polling observes newly started cooldown")
+ShirsLazyTrix.HandleTradeSkillClosed()
+tradeRows[1].cooldown = 100
+ShirsLazyTrix.HandleCooldownOnUpdate(1)
+assertEqual(state.mooncloth.readyAt, now + 172800, "closed profession window is not polled")
+ShirsLazyTrix.HandleTradeSkillCooldownEvent(now)
+tradeRows[1].cooldown = 200
+ShirsLazyTrix.HandleCooldownOnUpdate(1)
+assertEqual(state.mooncloth.readyAt, now + 100, "late update after close does not restart profession polling")
+state.mooncloth.readyAt = now + 172800
 
 profession = "Alchemy"
 tradeRows = {
@@ -386,6 +406,25 @@ assertEqual(table.getn(chat), chatBeforeReadyNotice + 3, "one chat notice per re
 assertEqual(chat[chatBeforeReadyNotice + 1], "|cff73cfffLazyTrix:|r OtherCharacter: Mooncloth is ready.", "same-realm ready notice")
 assertEqual(chat[chatBeforeReadyNotice + 2], "|cff73cfffLazyTrix:|r OtherCharacter: Salt Shaker is ready.", "same-realm Salt Shaker notice")
 assertEqual(chat[chatBeforeReadyNotice + 3], "|cff73cfffLazyTrix:|r RemoteCharacter (Other Realm): Transmute: Arcanite is ready.", "cross-realm ready notice")
+
+ShirsLazyTrixDB.notifyOtherMooncloth = false
+ShirsLazyTrixDB.notifyOtherArcanite = false
+ShirsLazyTrixDB.notifyOtherSalt = false
+chatBeforeReadyNotice = table.getn(chat)
+assertEqual(ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now), 0, "all other-character reminders can be disabled")
+assertEqual(table.getn(chat), chatBeforeReadyNotice, "disabled reminders add no chat messages")
+
+ShirsLazyTrixDB.notifyOtherMooncloth = true
+assertEqual(ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now), 1, "Mooncloth reminder can be enabled alone")
+assertEqual(chat[table.getn(chat)], "|cff73cfffLazyTrix:|r OtherCharacter: Mooncloth is ready.", "Mooncloth-only reminder")
+ShirsLazyTrixDB.notifyOtherMooncloth = false
+ShirsLazyTrixDB.notifyOtherArcanite = true
+assertEqual(ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now), 1, "Arcanite reminder can be enabled alone")
+assertEqual(chat[table.getn(chat)], "|cff73cfffLazyTrix:|r RemoteCharacter (Other Realm): Transmute: Arcanite is ready.", "Arcanite-only reminder")
+ShirsLazyTrixDB.notifyOtherArcanite = false
+ShirsLazyTrixDB.notifyOtherSalt = true
+assertEqual(ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now), 1, "Salt Shaker reminder can be enabled alone")
+assertEqual(chat[table.getn(chat)], "|cff73cfffLazyTrix:|r OtherCharacter: Salt Shaker is ready.", "Salt-only reminder")
 
 -- Position validation accepts sane values and rejects malformed saved data.
 local point, relativePoint, x, y = ShirsLazyTrix.NormalizeCooldownPanelPosition("TOPLEFT", "TOPLEFT", 42, -77)
