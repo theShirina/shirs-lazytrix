@@ -1,6 +1,6 @@
 Shir's LazyTrix 0.0.8
 
-Microbot WoW 1.12.1 only.
+WoW 1.12 only.
 
 INSTALL
 Copy the ShirsLazyTrix folder into Interface\AddOns, then restart WoW if this is a new addon.

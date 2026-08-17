@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.8 adds optional item IDs beneath item tooltips.
+A small quality-of-life addon for WoW 1.12 client. Version 0.0.8 adds optional item IDs beneath item tooltips.
 
 ## Features
 
@@ -76,4 +76,4 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Compatibility
 
-Built and checked for Microbot WoW 1.12.1, Interface `11200`, and Lua 5.0.3. Other Vanilla clients are not claimed as supported.
+Built and checked for WoW 1.12, Interface `11200`, and Lua 5.0.3. Other compatible WoW 1.12 clients may work but are not tested here.

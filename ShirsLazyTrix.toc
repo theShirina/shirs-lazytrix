@@ -1,6 +1,6 @@
 ## Interface: 11200
 ## Title: Shir's LazyTrix
-## Notes: Quest, vendor, world, and trainer tools for Microbot.
+## Notes: Quest, vendor, world, and trainer tools for WoW.
 ## Author: Shirina
 ## Version: 0.0.8
 ## SavedVariables: ShirsLazyTrixDB

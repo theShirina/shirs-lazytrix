@@ -24,7 +24,7 @@ local unsafeWindows = {
 function time() return now end
 function GetTime() return uptime end
 function UnitName(unit) if unit == "player" then return characterName end end
-function GetCVar(name) if name == "realmName" then return "Microbot Vanilla" end end
+function GetCVar(name) if name == "realmName" then return "WoW Vanilla" end end
 function GetNumTradeSkills() return table.getn(tradeRows) end
 function GetTradeSkillLine() return profession end
 function GetTradeSkillInfo(index)
@@ -77,7 +77,7 @@ local function assertEqual(actual, expected, message)
 end
 
 local key = ShirsLazyTrix.CooldownCharacterKey()
-assertEqual(key, "Microbot Vanilla\031Shirina", "character key")
+assertEqual(key, "WoW Vanilla\031Shirina", "character key")
 
 assertEqual(ShirsLazyTrix.FormatCooldownStatus(nil, now), "Not known", "unknown status")
 assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now - 1 }, now), "Ready", "ready status")
@@ -386,7 +386,7 @@ state = ShirsLazyTrix.GetCurrentCooldowns()
 assertEqual(type(state.mooncloth), "table", "original character state remains available")
 
 -- Login notifications include ready cooldowns for other saved characters only.
-ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031OtherCharacter"] = {
+ShirsLazyTrixDB.cooldownsByCharacter["WoW Vanilla\031OtherCharacter"] = {
   mooncloth = { known = true, readyAt = now - 1 },
   arcanite = { known = true, readyAt = now + 100 },
   salt = { known = true, readyAt = now },
@@ -394,7 +394,7 @@ ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031OtherCharacter"] = {
 ShirsLazyTrixDB.cooldownsByCharacter["Other Realm\031RemoteCharacter"] = {
   arcanite = { known = true, readyAt = now - 10 },
 }
-ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031BrokenCharacter"] = "malformed"
+ShirsLazyTrixDB.cooldownsByCharacter["WoW Vanilla\031BrokenCharacter"] = "malformed"
 ShirsLazyTrixDB.cooldownsByCharacter["   "] = { mooncloth = { known = true, readyAt = now } }
 ShirsLazyTrixDB.cooldownsByCharacter["NoDelimiter"] = { mooncloth = { known = true, readyAt = now } }
 ShirsLazyTrixDB.cooldownsByCharacter["\031BlankRealm"] = { mooncloth = { known = true, readyAt = now } }

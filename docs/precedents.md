@@ -4,7 +4,7 @@
 
 LazyPig 6.0.4 declares Interface `11200` and handles `QUEST_GREETING`, `GOSSIP_SHOW`, `QUEST_PROGRESS`, and `QUEST_COMPLETE`. It selects active or available quests through stock Vanilla functions and proves `IsShiftKeyDown()` is available in the exact client. It calls `CompleteQuest()` without checking `IsQuestCompletable()`.
 
-Microbot's effective FrameXML parses `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` as title/level pairs. Those gossip lists do not expose completion state. Exact-client pfQuest code reads the sixth `GetQuestLogTitle()` value as completion state, but the quest log exposes no NPC identity. LazyTrix therefore does not use title-only quest-log matches to clear NPC-scoped safety state.
+WoW's effective FrameXML parses `GetGossipActiveQuests()` and `GetGossipAvailableQuests()` as title/level pairs. Those gossip lists do not expose completion state. Exact-client pfQuest code reads the sixth `GetQuestLogTitle()` value as completion state, but the quest log exposes no NPC identity. LazyTrix therefore does not use title-only quest-log matches to clear NPC-scoped safety state.
 
 ## Later-client references
 
@@ -12,7 +12,7 @@ Leatrix Plus 1.13.43 and QuestHaste 0.1 in the local addon archive both declare 
 
 ## v0.0.1 quest choice
 
-Shir's LazyTrix uses only APIs present in Microbot's 1.12 client. It provides two account-wide switches for pickup and turn-in. Holding physical Shift suppresses every automatic quest action until Shift is released.
+Shir's LazyTrix uses only APIs present in WoW's 1.12 client. It provides two account-wide switches for pickup and turn-in. Holding physical Shift suppresses every automatic quest action until Shift is released.
 
 ## v0.0.2 merchant source and scope
 
@@ -22,7 +22,7 @@ LazyTrix adapts only that queue and settlement behavior. Its candidate list admi
 
 ## v0.0.3 automatic repair precedent
 
-Microbot's stock Interface `11200` `MerchantFrame.lua` shows repair controls only when `CanMerchantRepair()` succeeds and reads `GetRepairAllCost()` to decide whether the repair-all action is available. The currently installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) uses `CanMerchantRepair()`, `GetRepairAllCost()`, `GetMoney()`, and `RepairAllItems()` on this exact client. No licence file was found in that installed LazyPig folder, so it is study-only and no source is copied.
+WoW's stock Interface `11200` `MerchantFrame.lua` shows repair controls only when `CanMerchantRepair()` succeeds and reads `GetRepairAllCost()` to decide whether the repair-all action is available. The currently installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) uses `CanMerchantRepair()`, `GetRepairAllCost()`, `GetMoney()`, and `RepairAllItems()` on this exact client. No licence file was found in that installed LazyPig folder, so it is study-only and no source is copied.
 
 LazyTrix uses an original, narrow implementation. Its account-wide setting defaults off. On `MERCHANT_SHOW`, it first confirms that the vendor repairs gear, reads the full repair cost, checks available money, and calls `RepairAllItems()` at most once. Zero-cost, unavailable, and insufficient-funds paths do not submit a repair. Repair and gray sale settings remain independent.
 
@@ -32,7 +32,7 @@ LazyTrix uses `IsQuestCompletable()` for its first incomplete-turn-in guard. Som
 
 ## v0.0.4 open-world resurrection precedent
 
-Microbot's `WoW.exe` exposes `IsInInstance`, `AcceptResurrect`, and `CancelPlayerBuff`; it does not expose the later `GetInstanceInfo`. The installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) registers `RESURRECT_REQUEST`, calls `AcceptResurrect()`, and hides the three exact-client resurrection popups. LazyPig accepts requests inside known instances, which is the opposite of LazyTrix's v0.0.4 policy. No licence file was found in the installed LazyPig folder, so it remains study-only.
+WoW's `WoW.exe` exposes `IsInInstance`, `AcceptResurrect`, and `CancelPlayerBuff`; it does not expose the later `GetInstanceInfo`. The installed LazyPig 6.0.4 (`LazyPig.lua` SHA-256 `9839c173fba8be72914925cb6081fe8fccf6372e40becb392bf68a1134b408df`) registers `RESURRECT_REQUEST`, calls `AcceptResurrect()`, and hides the three exact-client resurrection popups. LazyPig accepts requests inside known instances, which is the opposite of LazyTrix's v0.0.4 policy. No licence file was found in the installed LazyPig folder, so it remains study-only.
 
 Vanilla API references document `IsInInstance()` as returning `1` inside an instance and `nil` outside. Some compatible clients expose boolean values and a second type value. LazyTrix therefore accepts only the explicit outside forms `nil`, `false`, or `0`, with a missing type or `"none"`. It rejects every inside, contradictory, unknown, or missing-API state. The original handler calls `AcceptResurrect()` at most once on `RESURRECT_REQUEST`, hides the pending popup only after acceptance, and never calls `RepopMe()`.
 
@@ -40,11 +40,11 @@ Vanilla API references document `IsInInstance()` as returning `1` inside an inst
 
 The user supplied a SuperMacro snippet that listens for `CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS`, matches the exact English messages for Stealth, Lesser Invisibility, and Invisibility, then calls `CancelBuff("Fire Shield")`. The installed SuperMacro 3.14a declares Interface `11200`. Its `SM_Slash.lua` (SHA-256 `421fc8dddd835a129e55c225359a2929501947624d4f12828cb7ed256c21cb57`) resolves buff names through a hidden tooltip and calls `CancelPlayerBuff(index)`. No licence file was found in the installed folder or referenced archive, so its source remains study-only.
 
-The exact Microbot executable exposes `CancelPlayerBuff`, `GetPlayerBuff`, and `GetPlayerBuffTexture`. Stock `BuffFrame.lua` and installed exact-client pfUI enumerate helpful buffs with `GetPlayerBuff`, inspect tooltip text, and cancel the returned index. Exact `Spell.dbc` data distinguishes Oil's `Fire Shield` / `Fire Shield IV` Immolation icon (`Spell_Fire_Immolation`) from a warlock imp's same-named Fire Armor icon (`Spell_Fire_FireArmor`). LazyTrix uses an original private tooltip scanner and a descending `31..0` slot loop. Exact `Oil of Immolation` and `Immolation Aura` names are unambiguous; `Fire Shield` and `Fire Shield IV` also require the Immolation texture. The default-off feature does not call SuperMacro's global `CancelBuff` and does not send chat output.
+The exact WoW executable exposes `CancelPlayerBuff`, `GetPlayerBuff`, and `GetPlayerBuffTexture`. Stock `BuffFrame.lua` and installed exact-client pfUI enumerate helpful buffs with `GetPlayerBuff`, inspect tooltip text, and cancel the returned index. Exact `Spell.dbc` data distinguishes Oil's `Fire Shield` / `Fire Shield IV` Immolation icon (`Spell_Fire_Immolation`) from a warlock imp's same-named Fire Armor icon (`Spell_Fire_FireArmor`). LazyTrix uses an original private tooltip scanner and a descending `31..0` slot loop. Exact `Oil of Immolation` and `Immolation Aura` names are unambiguous; `Fire Shield` and `Fire Shield IV` also require the Immolation texture. The default-off feature does not call SuperMacro's global `CancelBuff` and does not send chat output.
 
 ## v0.0.6 expanded trainer precedent
 
-Microbot's stock Interface `11200` `ClassTrainerFrame.lua` shows 10 profession rows or 11 class rows. It enumerates services through `GetNumTrainerServices()` and `GetTrainerServiceInfo()`, reads money and profession-point costs through `GetTrainerServiceCost()`, and submits one selected service through `BuyTrainerService()`. Its profession and class mode functions reset the row count and scroll-frame heights on each update.
+WoW's stock Interface `11200` `ClassTrainerFrame.lua` shows 10 profession rows or 11 class rows. It enumerates services through `GetNumTrainerServices()` and `GetTrainerServiceInfo()`, reads money and profession-point costs through `GetTrainerServiceCost()`, and submits one selected service through `BuyTrainerService()`. Its profession and class mode functions reset the row count and scroll-frame heights on each update.
 
 The installed Leatrix Plus 1.13.43 trainer layout declares Interface `11303` and uses later APIs and later-client artwork, so it is behavior evidence only. Its two-column geometry breaks the installed pfUI skin and is not reused. The installed SuperMacro 3.14a contains an exact-client bulk trainer loop but has no located licence and is also study-only. LazyTrix uses original Lua 5.0.3 code: it keeps the stock 384-pixel frame width, grows the list downward to 18 stock trainer-row templates, keeps the detail pane beneath the list, and wraps the two stock mode functions without `hooksecurefunc`. Train All accepts only exact `available` services with bounded copper values and zero profession-point costs. It checks the full plan, paces each submission, rescans the live list, and tolerates intermediate unchanged updates. The same service is retried only when its cost has not left the player's money, with two retries and a three-second timeout. Closure or unclear state stops the queue. No Leatrix or SuperMacro source or artwork is copied.
 
