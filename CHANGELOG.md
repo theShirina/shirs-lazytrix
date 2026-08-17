@@ -1,4 +1,5 @@
-# Changelog
+# Shir's LazyTrix change log
+
 
 ## 0.0.8
 
