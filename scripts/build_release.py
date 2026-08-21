@@ -13,6 +13,8 @@ RUNTIME = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Cooldowns.lua",
     "ShirsLazyTrix_Tooltips.lua",
+    "ShirsLazyTrix_Loot.lua",
+    "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Trainer.lua",

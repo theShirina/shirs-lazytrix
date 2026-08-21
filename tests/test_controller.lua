@@ -92,6 +92,9 @@ assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, true, "other-character Moonclo
 assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "other-character Arcanite reminder default")
 assertEqual(ShirsLazyTrixDB.notifyOtherSalt, true, "other-character Salt Shaker reminder default")
 assertEqual(ShirsLazyTrixDB.showItemIDs, false, "item-ID tooltip default")
+assertEqual(ShirsLazyTrixDB.lootRows, 4, "stock loot row default")
+assertEqual(ShirsLazyTrixDB.consolidateMinimapButtons, false, "minimap collector default")
+assertEqual(ShirsLazyTrixDB.minimapButtonSize, 24, "collected minimap button size default")
 if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("character cooldown table default missing", 2) end
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "minimap angle default")
 
@@ -105,6 +108,9 @@ ShirsLazyTrixDB = {
   notifyOtherArcanite = true,
   notifyOtherSalt = false,
   showItemIDs = true,
+  lootRows = 9,
+  consolidateMinimapButtons = true,
+  minimapButtonSize = 28,
 }
 ShirsLazyTrix.EnsureDatabase()
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, true, "profession cooldown panel choice is preserved")
@@ -116,6 +122,9 @@ assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, false, "Mooncloth reminder cho
 assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "Arcanite reminder choice is preserved")
 assertEqual(ShirsLazyTrixDB.notifyOtherSalt, false, "Salt Shaker reminder choice is preserved")
 assertEqual(ShirsLazyTrixDB.showItemIDs, true, "item-ID tooltip choice is preserved")
+assertEqual(ShirsLazyTrixDB.lootRows, 9, "stock loot row choice is preserved")
+assertEqual(ShirsLazyTrixDB.consolidateMinimapButtons, true, "minimap collector choice is preserved")
+assertEqual(ShirsLazyTrixDB.minimapButtonSize, 28, "collected minimap button size choice is preserved")
 
 ShirsLazyTrixDB = { enhanceTrainers = true }
 ShirsLazyTrix.EnsureDatabase()
@@ -152,7 +161,10 @@ ShirsLazyTrixDB = {
   showItemIDs = "invalid",
   cooldownsByCharacter = "invalid",
   cooldownPanelPosition = "invalid",
-  minimapAngle = "invalid",
+  lootRows = 0 / 0,
+  consolidateMinimapButtons = "invalid",
+  minimapButtonSize = 0 / 0,
+  minimapAngle = 0 / 0,
 }
 ShirsLazyTrix.EnsureDatabase()
 assertEqual(ShirsLazyTrixDB.turnIn, false, "old normal turn-in setting migrates")
@@ -175,6 +187,9 @@ assertEqual(ShirsLazyTrixDB.notifyOtherSalt, true, "invalid Salt Shaker reminder
 assertEqual(ShirsLazyTrixDB.showItemIDs, false, "invalid item-ID tooltip setting repairs")
 if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then error("invalid character cooldown table was not repaired", 2) end
 assertEqual(ShirsLazyTrixDB.cooldownPanelPosition, nil, "invalid cooldown panel position is removed")
+assertEqual(ShirsLazyTrixDB.lootRows, 4, "invalid NaN loot rows repair")
+assertEqual(ShirsLazyTrixDB.consolidateMinimapButtons, false, "invalid minimap collector repairs")
+assertEqual(ShirsLazyTrixDB.minimapButtonSize, 24, "invalid collected minimap button size repairs")
 assertEqual(ShirsLazyTrixDB.turnInOnShift, nil, "temporary turn-in-only Shift key is removed")
 assertEqual(ShirsLazyTrixDB.minimapAngle, 220, "invalid minimap angle repairs")
 assertEqual(ShirsLazyTrixDB.turnInNormal, nil, "old normal turn-in key removed")

@@ -1,6 +1,6 @@
-Shir's LazyTrix 0.0.8
+Shir's LazyTrix 0.0.9
 
-Microbot WoW 1.12.1 only.
+WoW 1.12 client.
 
 INSTALL
 Copy the ShirsLazyTrix folder into Interface\AddOns, then restart WoW if this is a new addon.
@@ -27,6 +27,9 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Other-character Arcanite ready reminder
 - Other-character Salt Shaker ready reminder
 - Show item IDs in item tooltips
+- Collect addon minimap buttons under the LazyTrix button
+- Choose an 18-32 pixel size for collected minimap buttons
+- Choose 4-12 stock Blizzard loot rows
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -53,7 +56,10 @@ TRAINERS
 "Automatically open trainer services" is off by default. When enabled, LazyTrix selects the trainer-type gossip entry without relying on class-specific wording. Hold Shift while speaking to the trainer to keep the gossip menu open for talent resets and other choices.
 
 PROFESSION COOLDOWNS
-"Show profession cooldown panel" is off by default. When enabled, the movable panel shows this character's Mooncloth, Transmute: Arcanite, and Salt Shaker state. Open Tailoring or Alchemy once on each character so LazyTrix can save the live recipe cooldown. While that profession window stays open, LazyTrix refreshes its observations twice per second so a completed manual or panel-triggered craft updates without closing the window. Ten seconds after login, LazyTrix announces ready saved cooldowns for your other characters, but not the character you logged into. Mooncloth, Arcanite, and Salt Shaker reminders each have their own switch and default on. These switches affect login reminders only; they do not remove saved cooldowns or panel rows. Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use; the game still checks reagents, location, skill, and bag space. Use the small lock button to keep the panel in place. The separate hide option hides it during combat and while inside battlegrounds, raids, or dungeons, then restores it afterward.
+"Show profession cooldown panel" is off by default. When enabled, the movable panel shows this character's Mooncloth, Transmute: Arcanite, and Salt Shaker state. Hover a row to see the live status for every saved character on the account. Open Tailoring or Alchemy once on each character so LazyTrix can save the live recipe cooldown. While that profession window stays open, LazyTrix refreshes its observations twice per second so a completed manual or panel-triggered craft updates without closing the window. Ten seconds after login, LazyTrix announces ready saved cooldowns for your other characters, but not the character you logged into. Mooncloth, Arcanite, and Salt Shaker reminders each have their own switch and default on. These switches affect login reminders only; they do not remove saved cooldowns or panel rows. Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use; the game still checks reagents, location, skill, and bag space. Use the small lock button to keep the panel in place. The separate hide option hides it during combat and while inside battlegrounds, raids, or dungeons, then restores it afterward.
+
+LOOT AND MINIMAP
+Loot rows default to four and can be set from four to twelve. The stock header, portrait, close button, text, and item rows stay at full scale. LazyTrix repeats a clean stock body strip for each added row and moves one stock bottom strip to the new edge. It leaves pfUI-owned loot unchanged. The minimap-button collector is off by default. Collected buttons default to 24 pixels and can be set from 18 to 32 pixels. When enabled, left-click the LazyTrix button to open the collected addon buttons and right-click it to open settings. LazyTrix restores collected buttons to their original parent, position, size, scale, textures, frame layer, and frame level when the option is disabled.
 
 ITEM TOOLTIPS
 "Show item IDs in item tooltips" is off by default. When enabled, LazyTrix adds an "Item ID: number" line beneath item tooltips from bags, equipment, loot, vendors, quests, profession windows, and item links. If Informant's own item-ID option is active, LazyTrix leaves that line to Informant.

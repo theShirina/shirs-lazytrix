@@ -20,7 +20,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.8.zip"
+    return output / "ShirsLazyTrix-v0.0.9.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:
@@ -49,6 +49,12 @@ with tempfile.TemporaryDirectory() as temporary:
         assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Cooldowns.lua") == (ROOT / "ShirsLazyTrix_Cooldowns.lua").read_bytes().replace(b"\r\n", b"\n"), (
             "packaged profession cooldown module differs from source"
         )
+        for module in ("ShirsLazyTrix_Loot.lua", "ShirsLazyTrix_MinimapButtons.lua"):
+            member = f"ShirsLazyTrix/{module}"
+            assert member in names, f"{module} missing from release archive"
+            assert archive.read(member) == (ROOT / module).read_bytes().replace(b"\r\n", b"\n"), (
+                f"packaged {module} differs from source"
+            )
         assert "ShirsLazyTrix/ShirsLazyTrix_Tooltips.lua" in names, "item-ID tooltip module missing from release archive"
         assert archive.read("ShirsLazyTrix/ShirsLazyTrix_Tooltips.lua") == (ROOT / "ShirsLazyTrix_Tooltips.lua").read_bytes().replace(b"\r\n", b"\n"), (
             "packaged item-ID tooltip module differs from source"

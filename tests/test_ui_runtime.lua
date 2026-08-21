@@ -62,6 +62,10 @@ local function makeFrame(kind, name, parent, template)
   function frame:GetNormalTexture() return self.normalTexture end
   function frame:SetChecked(value) self.checked = value end
   function frame:GetChecked() return self.checked end
+  function frame:SetMinMaxValues(low, high) self.minimum = low self.maximum = high end
+  function frame:SetValueStep(value) self.valueStep = value end
+  function frame:SetValue(value) self.value = value end
+  function frame:GetValue() return self.value end
   function frame:StartMoving() self.moving = true end
   function frame:StopMovingOrSizing() self.moving = false end
   function frame:Show() self.shown = true; if self.scripts.OnShow then self.scripts.OnShow() end end
@@ -89,6 +93,12 @@ local function makeFrame(kind, name, parent, template)
     local label = makeRegion("FontString")
     named[name .. "Text"] = label
     _G[name .. "Text"] = label
+  elseif template == "OptionsSliderTemplate" and name then
+    for _, suffix in ipairs({ "Low", "High", "Text" }) do
+      local label = makeRegion("FontString")
+      named[name .. suffix] = label
+      _G[name .. suffix] = label
+    end
   end
   return frame
 end
@@ -139,12 +149,28 @@ ShirsLazyTrix.FormatCooldownStatus = function(entry)
   if entry.readyAt == 1 then return "Ready" end
   return "1d 2h"
 end
+local accountCooldownTick = 0
+ShirsLazyTrix.GetCooldownCharacterStatuses = function(key)
+  if key ~= "mooncloth" then return {} end
+  return {
+    { owner = "Alfa", status = accountCooldownTick == 0 and "1m 5s" or "1m 4s" },
+    { owner = "Beta", status = "Ready" },
+  }
+end
 ShirsLazyTrix.GetCooldownPanelPosition = function() return "TOPLEFT", "TOPLEFT", 40, -60 end
 ShirsLazyTrix.SaveCooldownPanelPosition = function(point, relativePoint, x, y)
   savedCooldownPosition = { point, relativePoint, x, y }
 end
 ShirsLazyTrix.ClickProfessionCooldown = function(key) table.insert(cooldownClicks, key) end
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, minimapAngle = 220 }
+local lootRefreshes, collectorRefreshes, trayToggles, collectorInitializations, buttonSizeRefreshes = 0, 0, 0, 0, 0
+ShirsLazyTrix.NormalizeLootRows = function(value) return math.max(4, math.min(12, math.floor((tonumber(value) or 4) + 0.5))) end
+ShirsLazyTrix.ApplyLootRows = function(value) ShirsLazyTrixDB.lootRows = ShirsLazyTrix.NormalizeLootRows(value) lootRefreshes = lootRefreshes + 1 return true end
+ShirsLazyTrix.NormalizeMinimapButtonSize = function(value) return math.max(18, math.min(32, math.floor((tonumber(value) or 24) + 0.5))) end
+ShirsLazyTrix.ApplyMinimapButtonSize = function(value) ShirsLazyTrixDB.minimapButtonSize = ShirsLazyTrix.NormalizeMinimapButtonSize(value) buttonSizeRefreshes = buttonSizeRefreshes + 1 return true end
+ShirsLazyTrix.RefreshMinimapButtonCollector = function() collectorRefreshes = collectorRefreshes + 1 return true end
+ShirsLazyTrix.ToggleMinimapButtonTray = function() trayToggles = trayToggles + 1 return true end
+ShirsLazyTrix.InitializeMinimapButtonCollector = function(button) collectorInitializations = collectorInitializations + 1 return button end
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, lootRows = 4, consolidateMinimapButtons = false, minimapButtonSize = 24, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -153,7 +179,8 @@ local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 local cooldownPanel = named.ShirsLazyTrixCooldownPanel
 if not settings or not minimap or not cooldownPanel then error("UI frames were not constructed", 2) end
-if settings.width ~= 340 or settings.height ~= 710 then error("minimal settings geometry mismatch", 2) end
+if settings.width ~= 620 or settings.height ~= 510 then error("compact two-column settings geometry mismatch", 2) end
+if settings.point[5] ~= 0 then error("settings panel must use a viewport-safe center anchor", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
 if minimap.width ~= 32 or minimap.height ~= 32 then error("minimap button geometry mismatch", 2) end
@@ -164,6 +191,7 @@ if icon.layer ~= "ARTWORK" or icon.width ~= 20 or icon.height ~= 20 or icon.text
 if border.width ~= 52 or border.height ~= 52 or border.texture[1] ~= "Interface\\Minimap\\MiniMap-TrackingBorder" then error("minimap border mismatch", 2) end
 if not minimap.highlightTexture then error("minimap highlight missing", 2) end
 if not minimap.scripts.OnDragStart or not minimap.scripts.OnDragStop then error("minimap drag handlers missing", 2) end
+if collectorInitializations ~= 1 then error("minimap collector was not initialized with the launcher", 2) end
 if cooldownPanel.width ~= 250 or cooldownPanel.height ~= 112 then error("cooldown panel geometry mismatch", 2) end
 if cooldownPanel:IsVisible() then error("disabled cooldown panel should start hidden", 2) end
 if not cooldownPanel.movable or not cooldownPanel.clamped or not cooldownPanel.scripts.OnDragStart or not cooldownPanel.scripts.OnDragStop then
@@ -207,6 +235,9 @@ local notifyOtherMooncloth = named.ShirsLazyTrixNotifyOtherMooncloth
 local notifyOtherArcanite = named.ShirsLazyTrixNotifyOtherArcanite
 local notifyOtherSalt = named.ShirsLazyTrixNotifyOtherSalt
 local showItemIDs = named.ShirsLazyTrixShowItemIDs
+local consolidateMinimapButtons = named.ShirsLazyTrixConsolidateMinimapButtons
+local lootRowsSlider = named.ShirsLazyTrixLootRowsSlider
+local minimapButtonSizeSlider = named.ShirsLazyTrixMinimapButtonSizeSlider
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
 if not autoRepairAll then error("automatic repair checkbox missing", 2) end
@@ -219,6 +250,14 @@ if not showCooldownPanel then error("profession cooldown panel checkbox missing"
 if not hideCooldownInCombat then error("cooldown combat-hide checkbox missing", 2) end
 if not notifyOtherMooncloth or not notifyOtherArcanite or not notifyOtherSalt then error("individual other-character reminder checkboxes missing", 2) end
 if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
+if not consolidateMinimapButtons then error("minimap collector checkbox missing", 2) end
+if not lootRowsSlider or lootRowsSlider.minimum ~= 4 or lootRowsSlider.maximum ~= 12 or lootRowsSlider.valueStep ~= 1 then error("stock loot row slider missing", 2) end
+if not minimapButtonSizeSlider or minimapButtonSizeSlider.minimum ~= 18 or minimapButtonSizeSlider.maximum ~= 32 or minimapButtonSizeSlider.valueStep ~= 1 then error("collected minimap button size slider missing", 2) end
+if turnIn.point[4] ~= 24 or autoAcceptOpenWorldRes.point[4] ~= 24 or autoSellGray.point[4] ~= 24 then error("left settings column anchors mismatch", 2) end
+if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showItemIDs.point[4] ~= 326 then error("right settings column anchors mismatch", 2) end
+if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
+if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
+if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
 if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
@@ -273,6 +312,17 @@ if moonclothRow.status.text ~= "Ready" or arcaniteRow.status.text ~= "1d 2h" or 
   error("cooldown row status text mismatch", 2)
 end
 this = moonclothRow
+moonclothRow.scripts.OnEnter()
+if GameTooltip.lines[5] ~= "Alfa: 1m 5s" or GameTooltip.lines[6] ~= "Beta: Ready" then
+  error("account-wide cooldown hover lines missing", 2)
+end
+accountCooldownTick = 1
+ShirsLazyTrix.RefreshCooldownPanel()
+if GameTooltip.lines[5] ~= "Alfa: 1m 4s" then
+  error("account-wide cooldown hover did not refresh live", 2)
+end
+moonclothRow.scripts.OnLeave()
+this = moonclothRow
 moonclothRow.scripts.OnClick()
 if table.getn(cooldownClicks) ~= 1 or cooldownClicks[1] ~= "mooncloth" then error("Mooncloth row did not request one craft", 2) end
 
@@ -319,6 +369,27 @@ showItemIDs.checked = 1
 this = showItemIDs
 showItemIDs.scripts.OnClick()
 if ShirsLazyTrixDB.showItemIDs ~= true then error("item-ID tooltip checkbox did not save true", 2) end
+lootRowsSlider.value = 9
+this = lootRowsSlider
+lootRowsSlider.scripts.OnValueChanged()
+if ShirsLazyTrixDB.lootRows ~= 9 or lootRefreshes ~= 1 then error("stock loot slider did not apply nine rows", 2) end
+minimapButtonSizeSlider.value = 20
+this = minimapButtonSizeSlider
+minimapButtonSizeSlider.scripts.OnValueChanged()
+if ShirsLazyTrixDB.minimapButtonSize ~= 20 or buttonSizeRefreshes ~= 1 then error("minimap button size slider did not apply twenty pixels", 2) end
+consolidateMinimapButtons.checked = 1
+this = consolidateMinimapButtons
+consolidateMinimapButtons.scripts.OnClick()
+if ShirsLazyTrixDB.consolidateMinimapButtons ~= true or collectorRefreshes ~= 1 then error("minimap collector checkbox did not apply", 2) end
+settings:Hide()
+arg1 = "LeftButton"
+this = minimap
+minimap.scripts.OnClick()
+if trayToggles ~= 1 or settings:IsVisible() then error("enabled minimap collector left click did not open the tray", 2) end
+arg1 = "RightButton"
+minimap.scripts.OnClick()
+if not settings:IsVisible() then error("minimap right click did not open LazyTrix settings", 2) end
+arg1 = nil
 ShirsLazyTrix.SetCooldownPanelCombatState(true)
 if cooldownPanel:IsVisible() then error("cooldown panel stayed visible in combat", 2) end
 ShirsLazyTrix.SetCooldownPanelCombatState(false)

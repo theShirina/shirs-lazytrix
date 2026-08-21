@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.9
+
+- Reworked settings into a compact two-column layout with shorter labels and grouped controls.
+- Cooldown-row hover now shows live remaining times for every saved character on the account.
+- Added an adjustable four-to-twelve-row stock Blizzard loot frame, with four rows as the default.
+- Added rows now repeat the stock body artwork and move the stock bottom edge while the header and item controls remain at full scale.
+- Added an optional minimap-button collector using the existing LazyTrix launcher.
+- Added an 18–32 px collected-button size control and normalized each button's state textures to its selected frame size.
+- When collection is enabled, left-click opens the addon-button tray and right-click opens LazyTrix settings.
+- Leaves pfUI-owned loot and active third-party minimap-button collectors untouched.
+
 ## 0.0.8
 
 - Added a default-off setting that shows the item ID beneath item tooltips.

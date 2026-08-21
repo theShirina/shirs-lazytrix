@@ -352,6 +352,38 @@ function ShirsLazyTrix.FormatCooldownStatus(entry, now)
   return remaining .. "s"
 end
 
+function ShirsLazyTrix.GetCooldownCharacterStatuses(cooldownKey, now)
+  local rows = {}
+  if type(cooldownKey) ~= "string" or not DEFINITIONS[cooldownKey] or
+     type(ShirsLazyTrixDB) ~= "table" or type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
+    return rows
+  end
+
+  local currentRealm = ""
+  if type(GetCVar) == "function" then currentRealm = GetCVar("realmName") or "" end
+  local savedKey, state
+  for savedKey, state in pairs(ShirsLazyTrixDB.cooldownsByCharacter) do
+    local realm, character = parseSavedCharacterKey(savedKey)
+    if realm and character and type(state) == "table" then
+      local owner = character
+      if realm ~= currentRealm then owner = owner .. " (" .. realm .. ")" end
+      table.insert(rows, {
+        owner = owner,
+        realm = realm,
+        character = character,
+        status = ShirsLazyTrix.FormatCooldownStatus(state[cooldownKey], now),
+      })
+    end
+  end
+  table.sort(rows, function(left, right)
+    if left.realm == currentRealm and right.realm ~= currentRealm then return true end
+    if left.realm ~= currentRealm and right.realm == currentRealm then return false end
+    if left.realm ~= right.realm then return left.realm < right.realm end
+    return left.character < right.character
+  end)
+  return rows
+end
+
 function ShirsLazyTrix.NormalizeCooldownPanelPosition(point, relativePoint, x, y)
   if not VALID_POINTS[point] or not VALID_POINTS[relativePoint] or
      not numberInRange(x, -10000, 10000) or

@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.8 adds optional item IDs beneath item tooltips.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.9 adds account-wide cooldown hover details, adjustable stock loot rows, and an optional minimap-button collector.
 
 ## Features
 
@@ -30,6 +30,7 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.8 ad
 - Optionally selects the client-typed trainer gossip entry without matching class-specific text.
 - Holding Shift always leaves trainer gossip open for talent resets and other choices.
 - Optional movable panel for Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.
+- Hovering a cooldown row lists the live remaining time for every saved character on the account.
 - Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use.
 - Stores cooldown observations and panel position per realm and character.
 - Refreshes profession cooldown observations while Tailoring or Alchemy remains open, including after manual crafts.
@@ -41,6 +42,8 @@ A small quality-of-life addon for Microbot's WoW 1.12.1 client. Version 0.0.8 ad
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
 - Standard 32×32 movable minimap button with an original high-contrast LazyTrix icon.
+- Optional minimap-button collector with an adjustable 18–32 px button size: left-click opens the collected addon buttons and right-click opens LazyTrix settings.
+- Adjustable four-to-twelve-row stock Blizzard loot frame with fixed-size top controls and repeated stock body art; pfUI-owned loot remains untouched.
 
 ## Shift behavior
 
@@ -66,14 +69,17 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Other-character Arcanite reminder: on.
 - Other-character Salt Shaker reminder: on.
 - Show item IDs in item tooltips: off.
+- Stock loot rows: 4.
+- Collect addon minimap buttons: off.
+- Collected minimap button size: 24 px.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.8.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.8/ShirsLazyTrix-v0.0.8.zip).
+1. Download [`ShirsLazyTrix-v0.0.9.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.9/ShirsLazyTrix-v0.0.9.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
-4. Click the LazyTrix **L** icon on the minimap to open settings, or drag it to a new position.
+4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.
 
 ## Compatibility
 
-Built and checked for Microbot WoW 1.12.1, Interface `11200`, and Lua 5.0.3. Other Vanilla clients are not claimed as supported.
+Built and checked for a WoW 1.12 client, Interface `11200`, and Lua 5.0.3. Other clients have not been tested.

@@ -85,6 +85,22 @@ assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now + 9
 assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now + 3700 }, now), "1h 1m", "hour/minute status")
 assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now + 59 }, now), "59s", "seconds status")
 
+ShirsLazyTrixDB.cooldownsByCharacter = {
+  ["Microbot Vanilla\031Alfa"] = { mooncloth = { known = true, readyAt = now + 65 } },
+  ["Microbot Vanilla\031Beta"] = { mooncloth = { known = true, readyAt = now } },
+  ["Other Realm\031Gamma"] = {},
+  malformed = { mooncloth = { known = true, readyAt = now } },
+}
+local accountRows = ShirsLazyTrix.GetCooldownCharacterStatuses("mooncloth", now)
+assertEqual(table.getn(accountRows), 3, "account-wide cooldown hover row count")
+assertEqual(accountRows[1].owner, "Alfa", "same-realm cooldown owner")
+assertEqual(accountRows[1].status, "1m 5s", "same-realm live cooldown status")
+assertEqual(accountRows[2].owner, "Beta", "second same-realm cooldown owner")
+assertEqual(accountRows[2].status, "Ready", "ready account cooldown status")
+assertEqual(accountRows[3].owner, "Gamma (Other Realm)", "other-realm cooldown owner")
+assertEqual(accountRows[3].status, "Not known", "unknown account cooldown status")
+ShirsLazyTrixDB.cooldownsByCharacter = {}
+
 tradeRows = {
   { name = "Mooncloth", kind = "optimal", available = 1, link = "|cffffffff|Hitem:14342:0:0:0|h[Mooncloth]|h|r", cooldown = 172800 },
 }

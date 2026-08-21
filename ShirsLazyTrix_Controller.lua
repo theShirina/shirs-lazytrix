@@ -16,6 +16,9 @@ local DEFAULTS = {
   notifyOtherArcanite = true,
   notifyOtherSalt = true,
   showItemIDs = false,
+  lootRows = 4,
+  consolidateMinimapButtons = false,
+  minimapButtonSize = 24,
   minimapAngle = 220,
 }
 
@@ -197,13 +200,43 @@ function ShirsLazyTrix.EnsureDatabase()
   if type(ShirsLazyTrixDB.showItemIDs) ~= "boolean" then
     ShirsLazyTrixDB.showItemIDs = DEFAULTS.showItemIDs
   end
+  if ShirsLazyTrix.NormalizeLootRows then
+    ShirsLazyTrixDB.lootRows = ShirsLazyTrix.NormalizeLootRows(ShirsLazyTrixDB.lootRows)
+  else
+    local lootRows = tonumber(ShirsLazyTrixDB.lootRows) or DEFAULTS.lootRows
+    local lootRowsText = string.lower(tostring(lootRows))
+    if string.find(lootRowsText, "nan", 1, true) or string.find(lootRowsText, "inf", 1, true) or
+       string.find(lootRowsText, "#", 1, true) then lootRows = DEFAULTS.lootRows end
+    lootRows = math.floor(lootRows + 0.5)
+    if lootRows < 4 then lootRows = 4 end
+    if lootRows > 12 then lootRows = 12 end
+    ShirsLazyTrixDB.lootRows = lootRows
+  end
+  if type(ShirsLazyTrixDB.consolidateMinimapButtons) ~= "boolean" then
+    ShirsLazyTrixDB.consolidateMinimapButtons = DEFAULTS.consolidateMinimapButtons
+  end
+  if ShirsLazyTrix.NormalizeMinimapButtonSize then
+    ShirsLazyTrixDB.minimapButtonSize = ShirsLazyTrix.NormalizeMinimapButtonSize(ShirsLazyTrixDB.minimapButtonSize)
+  else
+    local size = tonumber(ShirsLazyTrixDB.minimapButtonSize) or DEFAULTS.minimapButtonSize
+    local sizeText = string.lower(tostring(size))
+    if string.find(sizeText, "nan", 1, true) or string.find(sizeText, "inf", 1, true) or
+       string.find(sizeText, "#", 1, true) then size = DEFAULTS.minimapButtonSize end
+    size = math.floor(size + 0.5)
+    if size < 18 then size = 18 end
+    if size > 32 then size = 32 end
+    ShirsLazyTrixDB.minimapButtonSize = size
+  end
   if type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
     ShirsLazyTrixDB.cooldownsByCharacter = {}
   end
   if ShirsLazyTrixDB.cooldownPanelPosition ~= nil and type(ShirsLazyTrixDB.cooldownPanelPosition) ~= "table" then
     ShirsLazyTrixDB.cooldownPanelPosition = nil
   end
+  local minimapAngleText = string.lower(tostring(ShirsLazyTrixDB.minimapAngle))
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or
+     string.find(minimapAngleText, "nan", 1, true) or string.find(minimapAngleText, "inf", 1, true) or
+     string.find(minimapAngleText, "#", 1, true) or
      ShirsLazyTrixDB.minimapAngle < 0 or ShirsLazyTrixDB.minimapAngle >= 360 then
     ShirsLazyTrixDB.minimapAngle = DEFAULTS.minimapAngle
   end

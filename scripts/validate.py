@@ -12,6 +12,8 @@ LUA_FILES = [
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Cooldowns.lua",
     "ShirsLazyTrix_Tooltips.lua",
+    "ShirsLazyTrix_Loot.lua",
+    "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Trainer.lua",
@@ -22,6 +24,8 @@ LUA_FILES = [
 TESTS = [
     "tests/test_engine.lua",
     "tests/test_cooldowns.lua",
+    "tests/test_loot.lua",
+    "tests/test_minimap_buttons.lua",
     "tests/test_tooltips.lua",
     "tests/test_controller.lua",
     "tests/test_trainer.lua",
@@ -50,6 +54,8 @@ PUBLIC_FILES = {
     "ShirsLazyTrix.lua",
     "ShirsLazyTrix_Cooldowns.lua",
     "ShirsLazyTrix_Tooltips.lua",
+    "ShirsLazyTrix_Loot.lua",
+    "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix.toc",
     "ShirsLazyTrix_Controller.lua",
     "ShirsLazyTrix_Engine.lua",
@@ -63,6 +69,8 @@ PUBLIC_FILES = {
     "tests/test_build_release.py",
     "tests/test_controller.lua",
     "tests/test_cooldowns.lua",
+    "tests/test_loot.lua",
+    "tests/test_minimap_buttons.lua",
     "tests/test_tooltips.lua",
     "tests/test_trainer.lua",
     "tests/test_world.lua",
@@ -115,7 +123,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.8\s*$", toc, re.MULTILINE), "TOC version must be 0.0.8"
+    assert re.search(r"^## Version:\s*0\.0\.9\s*$", toc, re.MULTILINE), "TOC version must be 0.0.9"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -332,15 +340,15 @@ def validate_source() -> None:
     assert "turnInOnShift" not in ui, "retired turn-in-only Shift key remains in UI"
     assert "repeatable" not in ui.lower(), "UI must not expose recurrence controls"
     assert "junk" not in ui.lower(), "UI must not expose junk marking or a junk button"
-    assert "When enabled, Shift triggers both pickup and turn-in." in ui, "UI must explain unified Shift behavior"
-    assert "Sells gray-quality items only." in ui, "UI must state the gray-only merchant boundary"
-    assert "Automatically repair all gear at repair vendors" in ui, "UI must expose explicit automatic repair wording"
-    assert "Automatically accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
-    assert "Remove immolation effects on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
+    assert "Shift can trigger both pickup and turn-in." in ui, "UI must explain unified Shift behavior"
+    assert "Gray-only selling." in ui, "UI must state the gray-only merchant boundary"
+    assert "Repair all gear" in ui, "UI must expose explicit automatic repair wording"
+    assert "Accept open-world resurrection requests" in ui, "UI must expose the open-world resurrection boundary"
+    assert "Remove immolation on stealth or invisibility" in ui, "UI must expose stealth immolation cleanup"
     assert "Expand trainer windows" in ui, "UI must expose trainer expansion"
     assert "Enable Train All" in ui, "UI must expose Train All independently"
     assert "Automatically open trainer services" in ui, "UI must expose automatic trainer gossip"
-    assert "Show movable profession cooldown panel" in ui, "UI must expose the profession cooldown panel"
+    assert "Show movable cooldown panel" in ui, "UI must expose the profession cooldown panel"
 
     cooldowns = (ROOT / "ShirsLazyTrix_Cooldowns.lua").read_text(encoding="utf-8")
     for token in (

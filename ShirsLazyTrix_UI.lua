@@ -5,6 +5,8 @@ local function createText(parent, text, size)
   return label
 end
 
+local refreshingSettings = false
+
 local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
   local check = CreateFrame("CheckButton", name, parent, "UICheckButtonTemplate")
   check:SetWidth(24)
@@ -30,6 +32,7 @@ end
 
 function ShirsLazyTrix.RefreshSettings()
   if not ShirsLazyTrixSettingsFrame then return end
+  refreshingSettings = true
   ShirsLazyTrixTurnIn:SetChecked(ShirsLazyTrixDB.turnIn and 1 or nil)
   ShirsLazyTrixPickUp:SetChecked(ShirsLazyTrixDB.pickUp and 1 or nil)
   ShirsLazyTrixShiftAutomation:SetChecked(ShirsLazyTrixDB.automationOnShift and 1 or nil)
@@ -46,9 +49,39 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixNotifyOtherArcanite:SetChecked(ShirsLazyTrixDB.notifyOtherArcanite and 1 or nil)
   ShirsLazyTrixNotifyOtherSalt:SetChecked(ShirsLazyTrixDB.notifyOtherSalt and 1 or nil)
   ShirsLazyTrixShowItemIDs:SetChecked(ShirsLazyTrixDB.showItemIDs and 1 or nil)
+  ShirsLazyTrixConsolidateMinimapButtons:SetChecked(ShirsLazyTrixDB.consolidateMinimapButtons and 1 or nil)
+  local lootRows = ShirsLazyTrix.NormalizeLootRows(ShirsLazyTrixDB.lootRows)
+  ShirsLazyTrixLootRowsSlider:SetValue(lootRows)
+  ShirsLazyTrixLootRowsSliderText:SetText("Loot rows: " .. lootRows)
+  local buttonSize = ShirsLazyTrix.NormalizeMinimapButtonSize(ShirsLazyTrixDB.minimapButtonSize)
+  ShirsLazyTrixMinimapButtonSizeSlider:SetValue(buttonSize)
+  ShirsLazyTrixMinimapButtonSizeSliderText:SetText("Button size: " .. buttonSize)
+  refreshingSettings = false
 end
 
 local cooldownPanelInCombat = false
+local activeCooldownTooltipRow = nil
+
+function ShirsLazyTrix.RefreshCooldownRowTooltip(row)
+  if not row or not row.cooldownKey or not GameTooltip then return false end
+  GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+  GameTooltip:SetText(row.cooldownLabel or row.cooldownKey)
+  GameTooltip:AddLine("Click to attempt exactly one craft when ready.", 1, 1, 1)
+  if row.cooldownKey == "salt" then
+    GameTooltip:AddLine("The Salt Shaker must be in your bags.", 0.7, 0.8, 0.9)
+  else
+    GameTooltip:AddLine("LazyTrix opens and rechecks the profession first.", 0.7, 0.8, 0.9)
+  end
+  GameTooltip:AddLine("Account cooldowns", 1, 0.82, 0)
+  local rows = ShirsLazyTrix.GetCooldownCharacterStatuses and
+    ShirsLazyTrix.GetCooldownCharacterStatuses(row.cooldownKey) or {}
+  local index
+  for index = 1, table.getn(rows) do
+    GameTooltip:AddLine(rows[index].owner .. ": " .. rows[index].status, 0.85, 0.9, 0.96)
+  end
+  GameTooltip:Show()
+  return true
+end
 
 local function configureCooldownRow(button, key, labelText, y)
   button:SetWidth(222)
@@ -70,23 +103,20 @@ local function configureCooldownRow(button, key, labelText, y)
   status:SetTextColor(0.58, 0.64, 0.72)
   button.status = status
   button.cooldownKey = key
+  button.cooldownLabel = labelText
 
   button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
   button:SetScript("OnClick", function()
     ShirsLazyTrix.ClickProfessionCooldown(key)
   end)
   button:SetScript("OnEnter", function()
-    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
-    GameTooltip:SetText(labelText)
-    GameTooltip:AddLine("Click to attempt exactly one craft when ready.", 1, 1, 1)
-    if key == "salt" then
-      GameTooltip:AddLine("The Salt Shaker must be in your bags.", 0.7, 0.8, 0.9)
-    else
-      GameTooltip:AddLine("LazyTrix opens and rechecks the profession first.", 0.7, 0.8, 0.9)
-    end
-    GameTooltip:Show()
+    activeCooldownTooltipRow = this
+    ShirsLazyTrix.RefreshCooldownRowTooltip(this)
   end)
-  button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  button:SetScript("OnLeave", function()
+    activeCooldownTooltipRow = nil
+    GameTooltip:Hide()
+  end)
 end
 
 local function createCooldownPanel()
@@ -202,6 +232,9 @@ function ShirsLazyTrix.RefreshCooldownPanel()
       row.status:SetTextColor(1, 0.82, 0)
     end
   end
+  if activeCooldownTooltipRow then
+    ShirsLazyTrix.RefreshCooldownRowTooltip(activeCooldownTooltipRow)
+  end
 end
 
 function ShirsLazyTrix.RefreshCooldownPanelVisibility()
@@ -229,9 +262,9 @@ local function createSettingsFrame()
   if ShirsLazyTrixSettingsFrame then return ShirsLazyTrixSettingsFrame end
 
   local frame = CreateFrame("Frame", "ShirsLazyTrixSettingsFrame", UIParent)
-  frame:SetWidth(340)
-  frame:SetHeight(710)
-  frame:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
+  frame:SetWidth(620)
+  frame:SetHeight(510)
+  frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
   frame:SetFrameStrata("DIALOG")
   frame:SetToplevel(true)
   frame:SetClampedToScreen(true)
@@ -266,85 +299,132 @@ local function createSettingsFrame()
   divider:SetTexture("Interface\\Buttons\\WHITE8X8")
   divider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
   divider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -60)
-  divider:SetWidth(300)
+  divider:SetWidth(580)
   divider:SetHeight(1)
 
-  local section = createText(frame, "AUTOMATION", 11)
+  local verticalDivider = frame:CreateTexture(nil, "ARTWORK")
+  verticalDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
+  verticalDivider:SetVertexColor(0.3, 0.6, 0.9, 0.18)
+  verticalDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 310, -70)
+  verticalDivider:SetWidth(1)
+  verticalDivider:SetHeight(410)
+
+  local section = createText(frame, "QUESTING", 11)
   section:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -76)
   section:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixTurnIn", "Turn in completed quests", "turnIn", -91)
-  createCheckbox(frame, "ShirsLazyTrixPickUp", "Pick up quests", "pickUp", -121)
-  createCheckbox(frame, "ShirsLazyTrixShiftAutomation", "Only automate while Shift is held", "automationOnShift", -151)
+  createCheckbox(frame, "ShirsLazyTrixTurnIn", "Turn in completed quests", "turnIn", -91, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixPickUp", "Pick up quests", "pickUp", -119, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixShiftAutomation", "Only automate while Shift is held", "automationOnShift", -147, 24, 260)
 
-  local note = createText(frame, "When enabled, Shift triggers both pickup and turn-in.", 11)
-  note:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -184)
-  note:SetWidth(290)
-  note:SetHeight(28)
+  local note = createText(frame, "Shift can trigger both pickup and turn-in.", 11)
+  note:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -178)
+  note:SetWidth(270)
+  note:SetHeight(24)
   note:SetJustifyH("LEFT")
   note:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixAutoAcceptOpenWorldRes", "Automatically accept open-world resurrection requests", "autoAcceptOpenWorldRes", -214)
-  createCheckbox(frame, "ShirsLazyTrixAutoRemoveImmolationOnStealth", "Remove immolation effects on stealth or invisibility", "autoRemoveImmolationOnStealth", -244)
-  createCheckbox(frame, "ShirsLazyTrixExpandTrainers", "Expand trainer windows", "expandTrainers", -274)
-  createCheckbox(frame, "ShirsLazyTrixTrainAll", "Enable Train All", "trainAll", -304)
-  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", -334)
+  local worldSection = createText(frame, "WORLD", 11)
+  worldSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -220)
+  worldSection:SetTextColor(1, 0.82, 0)
+  createCheckbox(frame, "ShirsLazyTrixAutoAcceptOpenWorldRes", "Accept open-world resurrection requests", "autoAcceptOpenWorldRes", -235, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoRemoveImmolationOnStealth", "Remove immolation on stealth or invisibility", "autoRemoveImmolationOnStealth", -263, 24, 260)
 
-  local merchantDivider = frame:CreateTexture(nil, "ARTWORK")
-  merchantDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
-  merchantDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
-  merchantDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -370)
-  merchantDivider:SetWidth(300)
-  merchantDivider:SetHeight(1)
+  local trainerSection = createText(frame, "TRAINERS", 11)
+  trainerSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -76)
+  trainerSection:SetTextColor(1, 0.82, 0)
+  createCheckbox(frame, "ShirsLazyTrixExpandTrainers", "Expand trainer windows", "expandTrainers", -91, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixTrainAll", "Enable Train All", "trainAll", -119, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", -147, 326, 260)
 
   local merchantSection = createText(frame, "MERCHANT", 11)
-  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -384)
+  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -306)
   merchantSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Automatically sell gray items at vendors", "autoSellGray", -399)
-  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Automatically repair all gear at repair vendors", "autoRepairAll", -429)
+  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Sell gray items", "autoSellGray", -321, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Repair all gear", "autoRepairAll", -349, 24, 260)
 
-  local merchantNote = createText(frame, "Sells gray-quality items only. Vendor options run independently.", 11)
-  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -463)
-  merchantNote:SetWidth(290)
+  local merchantNote = createText(frame, "Gray-only selling. Vendor actions stay independent.", 11)
+  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -380)
+  merchantNote:SetWidth(270)
   merchantNote:SetHeight(24)
   merchantNote:SetJustifyH("LEFT")
   merchantNote:SetTextColor(0.62, 0.7, 0.8)
 
-  local cooldownDivider = frame:CreateTexture(nil, "ARTWORK")
-  cooldownDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
-  cooldownDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
-  cooldownDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -500)
-  cooldownDivider:SetWidth(300)
-  cooldownDivider:SetHeight(1)
-
   local cooldownSection = createText(frame, "PROFESSION COOLDOWNS", 11)
-  cooldownSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -514)
+  cooldownSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -190)
   cooldownSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable profession cooldown panel", "showCooldownPanel", -529)
-  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide cooldown panel in combat and instances", "hideCooldownPanelInCombat", -559)
+  createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", -205, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -233, 326, 260)
 
   local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
-  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -592)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -264)
   reminderLabel:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -607, 24, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -607, 119, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt Shaker", "notifyOtherSalt", -607, 209, 84)
-
-  local tooltipDivider = frame:CreateTexture(nil, "ARTWORK")
-  tooltipDivider:SetTexture("Interface\\Buttons\\WHITE8X8")
-  tooltipDivider:SetVertexColor(0.3, 0.6, 0.9, 0.22)
-  tooltipDivider:SetPoint("TOPLEFT", frame, "TOPLEFT", 20, -642)
-  tooltipDivider:SetWidth(300)
-  tooltipDivider:SetHeight(1)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -279, 326, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -279, 416, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -279, 500, 65)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
-  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -656)
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -321)
   tooltipSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in item tooltips", "showItemIDs", -671)
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -336, 326, 260)
+
+  local interfaceSection = createText(frame, "LOOT & MINIMAP", 11)
+  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -379)
+  interfaceSection:SetTextColor(1, 0.82, 0)
+
+  createCheckbox(
+    frame,
+    "ShirsLazyTrixConsolidateMinimapButtons",
+    "Collect addon minimap buttons",
+    "consolidateMinimapButtons",
+    -394,
+    326,
+    260
+  )
+  ShirsLazyTrixConsolidateMinimapButtons:SetScript("OnClick", function()
+    ShirsLazyTrixDB.consolidateMinimapButtons = this:GetChecked() and true or false
+    if ShirsLazyTrix.RefreshMinimapButtonCollector and
+       not ShirsLazyTrix.RefreshMinimapButtonCollector() and this:GetChecked() then
+      this:SetChecked(nil)
+      if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.AddMessage then
+        DEFAULT_CHAT_FRAME:AddMessage(
+          "|cff73cfffLazyTrix:|r Disable the active minimap-button collector before enabling this option."
+        )
+      end
+    end
+  end)
+
+  local lootSlider = CreateFrame("Slider", "ShirsLazyTrixLootRowsSlider", frame, "OptionsSliderTemplate")
+  lootSlider:SetWidth(110)
+  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -455)
+  lootSlider:SetMinMaxValues(4, 12)
+  lootSlider:SetValueStep(1)
+  getglobal("ShirsLazyTrixLootRowsSliderLow"):SetText("4")
+  getglobal("ShirsLazyTrixLootRowsSliderHigh"):SetText("12")
+  lootSlider:SetScript("OnValueChanged", function()
+    if refreshingSettings then return end
+    local rows = ShirsLazyTrix.NormalizeLootRows(this:GetValue())
+    if ShirsLazyTrix.ApplyLootRows then ShirsLazyTrix.ApplyLootRows(rows) end
+    ShirsLazyTrixLootRowsSliderText:SetText("Loot rows: " .. rows)
+  end)
+
+  local buttonSizeSlider = CreateFrame("Slider", "ShirsLazyTrixMinimapButtonSizeSlider", frame, "OptionsSliderTemplate")
+  buttonSizeSlider:SetWidth(110)
+  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -455)
+  buttonSizeSlider:SetMinMaxValues(18, 32)
+  buttonSizeSlider:SetValueStep(1)
+  getglobal("ShirsLazyTrixMinimapButtonSizeSliderLow"):SetText("18")
+  getglobal("ShirsLazyTrixMinimapButtonSizeSliderHigh"):SetText("32")
+  buttonSizeSlider:SetScript("OnValueChanged", function()
+    if refreshingSettings then return end
+    local size = ShirsLazyTrix.NormalizeMinimapButtonSize(this:GetValue())
+    if ShirsLazyTrix.ApplyMinimapButtonSize then ShirsLazyTrix.ApplyMinimapButtonSize(size) end
+    ShirsLazyTrixMinimapButtonSizeSliderText:SetText("Button size: " .. size)
+  end)
 
   frame:SetScript("OnShow", ShirsLazyTrix.RefreshSettings)
   frame:Hide()
@@ -395,7 +475,7 @@ local function createMinimapButton()
   button:SetHeight(32)
   button:SetFrameStrata("MEDIUM")
   button:SetFrameLevel(Minimap:GetFrameLevel() + 8)
-  button:RegisterForClicks("LeftButtonUp")
+  button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
   button:RegisterForDrag("LeftButton")
 
   local icon = button:CreateTexture(nil, "ARTWORK")
@@ -411,11 +491,24 @@ local function createMinimapButton()
   border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
 
   button:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
-  button:SetScript("OnClick", function() ShirsLazyTrix.ToggleSettings() end)
+  button:SetScript("OnClick", function()
+    if arg1 == "RightButton" then
+      ShirsLazyTrix.ToggleSettings()
+    elseif ShirsLazyTrixDB.consolidateMinimapButtons and ShirsLazyTrix.ToggleMinimapButtonTray then
+      ShirsLazyTrix.ToggleMinimapButtonTray()
+    else
+      ShirsLazyTrix.ToggleSettings()
+    end
+  end)
   button:SetScript("OnEnter", function()
     GameTooltip:SetOwner(this, "ANCHOR_LEFT")
     GameTooltip:SetText("Shir's LazyTrix")
-    GameTooltip:AddLine("Left click: Open settings", 1, 1, 1)
+    if ShirsLazyTrixDB.consolidateMinimapButtons then
+      GameTooltip:AddLine("Left click: Open addon buttons", 1, 1, 1)
+      GameTooltip:AddLine("Right click: Open settings", 0.7, 0.8, 0.9)
+    else
+      GameTooltip:AddLine("Left click: Open settings", 1, 1, 1)
+    end
     GameTooltip:AddLine("Shift: Manual bypass or automation trigger", 0.7, 0.8, 0.9)
     GameTooltip:AddLine("Drag: Move this button", 0.7, 0.7, 0.7)
     GameTooltip:Show()
@@ -436,7 +529,11 @@ end
 function ShirsLazyTrix.CreateUI()
   if ShirsLazyTrix.EnsureDatabase then ShirsLazyTrix.EnsureDatabase() end
   createSettingsFrame()
-  createMinimapButton()
+  local minimapButton = createMinimapButton()
+  if ShirsLazyTrix.InitializeMinimapButtonCollector then
+    ShirsLazyTrix.InitializeMinimapButtonCollector(minimapButton)
+  end
+  if ShirsLazyTrix.RefreshLootRows then ShirsLazyTrix.RefreshLootRows() end
   createCooldownPanel()
   ShirsLazyTrix.RefreshCooldownPanelVisibility()
 end
