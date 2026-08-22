@@ -16,6 +16,7 @@ local DEFAULTS = {
   notifyOtherArcanite = true,
   notifyOtherSalt = true,
   showItemIDs = false,
+  expandLootRows = true,
   lootRows = 4,
   consolidateMinimapButtons = false,
   minimapButtonSize = 24,
@@ -199,6 +200,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.showItemIDs) ~= "boolean" then
     ShirsLazyTrixDB.showItemIDs = DEFAULTS.showItemIDs
+  end
+  if type(ShirsLazyTrixDB.expandLootRows) ~= "boolean" then
+    ShirsLazyTrixDB.expandLootRows = DEFAULTS.expandLootRows
   end
   if ShirsLazyTrix.NormalizeLootRows then
     ShirsLazyTrixDB.lootRows = ShirsLazyTrix.NormalizeLootRows(ShirsLazyTrixDB.lootRows)

@@ -53,13 +53,25 @@ function ShirsLazyTrix.GetLootRows()
   return ShirsLazyTrix.NormalizeLootRows(ShirsLazyTrixDB.lootRows)
 end
 
+function ShirsLazyTrix.IsLootRowsExpansionEnabled()
+  return type(ShirsLazyTrixDB) ~= "table" or ShirsLazyTrixDB.expandLootRows ~= false
+end
+
 local function ensureLootButton(index)
   local name = "LootButton" .. index
   local button = type(getglobal) == "function" and getglobal(name) or nil
-  if button then return button end
+  if button then
+    if not button.SetSlot and type(button.SetID) == "function" then
+      button.SetSlot = button.SetID
+    end
+    return button
+  end
   if type(CreateFrame) ~= "function" or not LootFrame then return nil end
   button = CreateFrame("Button", name, LootFrame, "LootButtonTemplate")
   if not button then return nil end
+  if type(button.SetID) == "function" then
+    button.SetSlot = button.SetID
+  end
   button:SetID(index)
   extraLootButtons[index] = button
   return button
@@ -175,6 +187,7 @@ function ShirsLazyTrix.ApplyLootRows(value)
   local rows = ShirsLazyTrix.NormalizeLootRows(value)
   if type(ShirsLazyTrixDB) ~= "table" then ShirsLazyTrixDB = {} end
   ShirsLazyTrixDB.lootRows = rows
+  if not ShirsLazyTrix.IsLootRowsExpansionEnabled() then rows = STOCK_LOOT_ROWS end
   if pfUIOwnsLoot() or not LootFrame then return false end
   if not positionLootButtons(rows) then return false end
   LOOTFRAME_NUMBUTTONS = rows

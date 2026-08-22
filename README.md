@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.9 adds account-wide cooldown hover details, adjustable stock loot rows, and an optional minimap-button collector.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.10 adds a loot-UI compatibility switch and fixes expanded loot rows during multi-loot updates.
 
 ## Features
 
@@ -43,7 +43,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.9 adds account-w
 - Minimal dark navy settings panel with the shared blue and gold addon style.
 - Standard 32×32 movable minimap button with an original high-contrast LazyTrix icon.
 - Optional minimap-button collector with an adjustable 18–32 px button size: left-click opens the collected addon buttons and right-click opens LazyTrix settings.
-- Adjustable four-to-twelve-row stock Blizzard loot frame with fixed-size top controls and repeated stock body art; pfUI-owned loot remains untouched.
+- Adjustable four-to-twelve-row stock Blizzard loot frame with fixed-size top controls and repeated stock body art; expansion can be disabled for another loot UI, and pfUI-owned loot remains untouched.
 
 ## Shift behavior
 
@@ -69,13 +69,14 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Other-character Arcanite reminder: on.
 - Other-character Salt Shaker reminder: on.
 - Show item IDs in item tooltips: off.
+- Expand Blizzard loot rows: on.
 - Stock loot rows: 4.
 - Collect addon minimap buttons: off.
 - Collected minimap button size: 24 px.
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.9.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.9/ShirsLazyTrix-v0.0.9.zip).
+1. Download [`ShirsLazyTrix-v0.0.10.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.10/ShirsLazyTrix-v0.0.10.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

@@ -74,6 +74,7 @@ assertContains('"Salt", "notifyOtherSalt"', "Salt Shaker reminder checkbox")
 assertContains('"TOOLTIPS"', "tooltip section heading")
 assertContains('"Show item IDs in tooltips", "showItemIDs"', "item-ID tooltip checkbox")
 assertContains('"Collect addon minimap buttons"', "minimap collector checkbox")
+assertContains('"Expand Blizzard loot rows", "expandLootRows"', "loot expansion checkbox")
 assertContains('"ShirsLazyTrixLootRowsSlider"', "stock loot row slider")
 assertContains('"ShirsLazyTrixMinimapButtonSizeSlider"', "collected minimap button size slider")
 assertContains('"PROFESSION COOLDOWNS"', "profession cooldown section heading")
@@ -92,8 +93,8 @@ assertContains("Gray-only selling. Vendor actions stay independent.", "merchant 
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 18 then
-  error("UI must define exactly seventeen checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 19 then
+  error("UI must define exactly eighteen checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")

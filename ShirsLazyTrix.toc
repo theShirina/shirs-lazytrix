@@ -2,7 +2,7 @@
 ## Title: Shir's LazyTrix
 ## Notes: Quest, vendor, world, trainer, cooldown, loot, and minimap tools for WoW 1.12.
 ## Author: Shirina
-## Version: 0.0.9
+## Version: 0.0.10
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua

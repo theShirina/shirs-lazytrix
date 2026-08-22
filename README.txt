@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.9
+Shir's LazyTrix 0.0.10
 
 WoW 1.12 client.
 
@@ -30,6 +30,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Collect addon minimap buttons under the LazyTrix button
 - Choose an 18-32 pixel size for collected minimap buttons
 - Choose 4-12 stock Blizzard loot rows
+- Disable the extra Blizzard loot rows when another loot UI is active
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 

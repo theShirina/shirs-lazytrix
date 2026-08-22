@@ -92,6 +92,7 @@ assertEqual(ShirsLazyTrixDB.notifyOtherMooncloth, true, "other-character Moonclo
 assertEqual(ShirsLazyTrixDB.notifyOtherArcanite, true, "other-character Arcanite reminder default")
 assertEqual(ShirsLazyTrixDB.notifyOtherSalt, true, "other-character Salt Shaker reminder default")
 assertEqual(ShirsLazyTrixDB.showItemIDs, false, "item-ID tooltip default")
+assertEqual(ShirsLazyTrixDB.expandLootRows, true, "expanded loot rows default")
 assertEqual(ShirsLazyTrixDB.lootRows, 4, "stock loot row default")
 assertEqual(ShirsLazyTrixDB.consolidateMinimapButtons, false, "minimap collector default")
 assertEqual(ShirsLazyTrixDB.minimapButtonSize, 24, "collected minimap button size default")

@@ -105,6 +105,7 @@ for index = 5, 8 do
   assertEqual(button.kind, "Button", "extra loot button frame type")
   assertEqual(button.template, "LootButtonTemplate", "extra loot button template")
   assertEqual(button.id, index, "extra loot button id")
+  if type(button.SetSlot) ~= "function" then error("extra loot button missing SetSlot " .. index, 2) end
   assertEqual(button.point[1], "TOP", "extra loot button anchor")
   assertEqual(button.point[2], named["LootButton" .. (index - 1)], "extra loot button chain")
   assertEqual(button.point[3], "BOTTOM", "extra loot button relative anchor")
@@ -126,9 +127,17 @@ assertClose(LootFrame.scale, 1, "twelve-row loot keeps stock header scale")
 assertEqual(LootFrame.shirsLazyTrixBodyStrips[8].point[5], -526, "eighth body strip position")
 assertEqual(LootFrame.shirsLazyTrixBottomStrip.point[5], -567, "bottom strip reaches twelve-row bottom")
 
+ShirsLazyTrixDB.expandLootRows = false
+assertEqual(ShirsLazyTrix.ApplyLootRows(10), true, "disabled loot expansion keeps stock frame")
+assertEqual(LOOTFRAME_NUMBUTTONS, 4, "disabled loot expansion uses stock row count")
+assertEqual(LootFrame.height, 256, "disabled loot expansion restores stock height")
+ShirsLazyTrixDB.expandLootRows = true
+assertEqual(ShirsLazyTrix.ApplyLootRows(10), true, "re-enabled loot expansion")
+assertEqual(LOOTFRAME_NUMBUTTONS, 10, "re-enabled loot expansion restores row count")
+
 pfUI = { loot = {} }
 assertEqual(ShirsLazyTrix.ApplyLootRows(10), false, "pfUI-owned loot must not be changed")
-assertEqual(LOOTFRAME_NUMBUTTONS, 12, "pfUI guard preserves stock row count")
+assertEqual(LOOTFRAME_NUMBUTTONS, 10, "pfUI guard preserves stock row count")
 assertEqual(ShirsLazyTrixDB.lootRows, 10, "pfUI guard still saves the chosen stock row count")
 
 print("stock-loot-row-expansion: PASS")

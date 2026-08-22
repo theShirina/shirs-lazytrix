@@ -25,6 +25,8 @@ local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
       ShirsLazyTrix.RefreshCooldownPanelVisibility()
     elseif name == "ShirsLazyTrixHideCooldownPanelInCombat" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
       ShirsLazyTrix.RefreshCooldownPanelVisibility()
+    elseif name == "ShirsLazyTrixExpandLootRows" and ShirsLazyTrix.RefreshLootRows then
+      ShirsLazyTrix.RefreshLootRows()
     end
   end)
   return check
@@ -49,6 +51,7 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixNotifyOtherArcanite:SetChecked(ShirsLazyTrixDB.notifyOtherArcanite and 1 or nil)
   ShirsLazyTrixNotifyOtherSalt:SetChecked(ShirsLazyTrixDB.notifyOtherSalt and 1 or nil)
   ShirsLazyTrixShowItemIDs:SetChecked(ShirsLazyTrixDB.showItemIDs and 1 or nil)
+  ShirsLazyTrixExpandLootRows:SetChecked(ShirsLazyTrixDB.expandLootRows and 1 or nil)
   ShirsLazyTrixConsolidateMinimapButtons:SetChecked(ShirsLazyTrixDB.consolidateMinimapButtons and 1 or nil)
   local lootRows = ShirsLazyTrix.NormalizeLootRows(ShirsLazyTrixDB.lootRows)
   ShirsLazyTrixLootRowsSlider:SetValue(lootRows)
@@ -376,6 +379,7 @@ local function createSettingsFrame()
   interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -379)
   interfaceSection:SetTextColor(1, 0.82, 0)
 
+  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -407, 326, 260)
   createCheckbox(
     frame,
     "ShirsLazyTrixConsolidateMinimapButtons",

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.10
+
+### Added
+
+- Added an option to disable the extra Blizzard loot rows when another loot UI is active.
+
+### Fixed
+
+- Fixed an error in multi-loot and raid-group updates when expanded rows lacked the stock `SetSlot` method.
+
 ## 0.0.9
 
 - Reworked settings into a compact two-column layout with shorter labels and grouped controls.
