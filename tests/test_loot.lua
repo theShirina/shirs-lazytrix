@@ -19,8 +19,11 @@ local function region(kind, texture, text)
   return value
 end
 
-local function frame(name)
+local function frame(name, positionId)
   local value = { name = name, shown = true }
+  if positionId then
+    value.positionId = positionId
+  end
   function value:SetID(id) self.id = id end
   function value:SetPoint(...) self.point = arg end
   function value:ClearAllPoints() self.point = nil end
@@ -28,6 +31,10 @@ local function frame(name)
   function value:GetHeight() return self.height end
   function value:SetScale(scale) self.scale = scale end
   function value:GetScale() return self.scale end
+  function value:RegisterForClicks(...) self.clicks = arg end
+  function value:EnableMouse(enabled) self.mouseEnabled = enabled end
+  function value:SetFrameLevel(level) self.frameLevel = level end
+  function value:GetFrameLevel() return self.frameLevel or 0 end
   function value:GetRegions() return unpack(self.regions or {}) end
   function value:CreateTexture(textureName, layer)
     local texture = region("Texture")
@@ -48,7 +55,7 @@ local stockPanel = region("Texture", "Interface\\LootFrame\\UI-LootPanel")
 local itemsLabel = region("FontString", nil, "Items")
 LootFrame.regions = { stockPanel, itemsLabel }
 ITEMS = "Items"
-for index = 1, 4 do named["LootButton" .. index] = frame("LootButton" .. index) end
+for index = 1, 4 do named["LootButton" .. index] = frame("LootButton" .. index, index) end
 function getglobal(name) return named[name] end
 function CreateFrame(kind, name, parent, template)
   local value = frame(name)
@@ -102,14 +109,26 @@ assertEqual(ShirsLazyTrixDB.lootRows, 8, "stock loot row setting saved")
 for index = 5, 8 do
   local button = named["LootButton" .. index]
   if not button then error("missing extra stock loot button " .. index, 2) end
-  assertEqual(button.kind, "Button", "extra loot button frame type")
+  assertEqual(button.kind, "LootButton", "extra loot button widget type")
   assertEqual(button.template, "LootButtonTemplate", "extra loot button template")
   assertEqual(button.id, index, "extra loot button id")
+  assertEqual(button.name, "LootButton" .. index,
+    "extra loot button keeps its global name for the master-loot dropdown anchor")
+  -- Runtime-created frames carry no XML positional id; stock hover math reads
+  -- this:GetID(), which comes from SetID and is asserted above as button.id.
   if type(button.SetSlot) ~= "function" then error("extra loot button missing SetSlot " .. index, 2) end
   assertEqual(button.point[1], "TOP", "extra loot button anchor")
   assertEqual(button.point[2], named["LootButton" .. (index - 1)], "extra loot button chain")
   assertEqual(button.point[3], "BOTTOM", "extra loot button relative anchor")
   assertEqual(button.point[5], -4, "extra loot button gap")
+  if type(button.RegisterForClicks) ~= "function" then
+    error("extra loot button missing RegisterForClicks " .. index, 2)
+  end
+  assertEqual(table.getn(button.clicks or {}), 2, "extra loot button click registration count")
+  assertEqual(button.clicks[1], "LeftButtonUp", "extra loot button left-click registration")
+  assertEqual(button.clicks[2], "RightButtonUp", "extra loot button right-click registration")
+  assertEqual(button.mouseEnabled, true, "extra loot button mouse enabled")
+  assertEqual(button.frameLevel, (LootFrame.frameLevel or 0) + 4, "extra loot button frame level above parent")
 end
 assertEqual(updateCalls, 1, "visible loot frame refresh after expansion")
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.11
+
+### Fixed
+
+- Extra Blizzard loot rows now use the stock loot button type, so rows beyond four can be clicked, hovered, and used again.
+
 ## 0.0.10
 
 ### Added

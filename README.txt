@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.10
+Shir's LazyTrix 0.0.11
 
 WoW 1.12 client.
 

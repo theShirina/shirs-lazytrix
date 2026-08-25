@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.10 adds a loot-UI compatibility switch and fixes expanded loot rows during multi-loot updates.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.11 fixes clicking items on expanded loot rows.
 
 ## Features
 
@@ -76,7 +76,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.10.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.10/ShirsLazyTrix-v0.0.10.zip).
+1. Download [`ShirsLazyTrix-v0.0.11.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.11/ShirsLazyTrix-v0.0.11.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

@@ -67,12 +67,31 @@ local function ensureLootButton(index)
     return button
   end
   if type(CreateFrame) ~= "function" or not LootFrame then return nil end
-  button = CreateFrame("Button", name, LootFrame, "LootButtonTemplate")
+  -- Stock rows are native LootButton widgets; ordinary Buttons never receive
+  -- native loot pickup, so extra rows must be created as LootButton too.
+  button = nil
+  local ok, created = pcall(CreateFrame, "LootButton", name, LootFrame, "LootButtonTemplate")
+  if ok then button = created end
+  if not button then
+    ok, created = pcall(CreateFrame, "Button", name, LootFrame, "LootButtonTemplate")
+    if ok then button = created end
+  end
   if not button then return nil end
   if type(button.SetID) == "function" then
+    button:SetID(index)
+  end
+  if not button.SetSlot and type(button.SetID) == "function" then
     button.SetSlot = button.SetID
   end
-  button:SetID(index)
+  if type(button.RegisterForClicks) == "function" then
+    button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+  end
+  if type(button.EnableMouse) == "function" then
+    button:EnableMouse(true)
+  end
+  if type(button.SetFrameLevel) == "function" and type(LootFrame.GetFrameLevel) == "function" then
+    button:SetFrameLevel(LootFrame:GetFrameLevel() + 4)
+  end
   extraLootButtons[index] = button
   return button
 end
