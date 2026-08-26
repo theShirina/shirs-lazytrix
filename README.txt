@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.11
+Shir's LazyTrix 0.0.12
 
 WoW 1.12 client.
 
@@ -31,6 +31,9 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Choose an 18-32 pixel size for collected minimap buttons
 - Choose 4-12 stock Blizzard loot rows
 - Disable the extra Blizzard loot rows when another loot UI is active
+- Invite from whispers
+- Invite from guild chat
+- Set one or more comma-separated invite phrases
 
 Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
 
@@ -64,3 +67,6 @@ Loot rows default to four and can be set from four to twelve. The stock header, 
 
 ITEM TOOLTIPS
 "Show item IDs in item tooltips" is off by default. When enabled, LazyTrix adds an "Item ID: number" line beneath item tooltips from bags, equipment, loot, vendors, quests, profession windows, and item links. If Informant's own item-ID option is active, LazyTrix leaves that line to Informant.
+
+INVITES
+Whisper and guild-chat invites are separate and off by default. Enter one or more comma-separated phrases, such as "invite, need group". The field saves as you type. Matching ignores letter case and spaces around each phrase. A matching message invites its sender and briefly blocks repeat requests from the same player.

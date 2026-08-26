@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.0.12
+
+### Added
+
+- Added separate settings for party invites from whispers and guild chat.
+- Added a text field for one or more comma-separated invite phrases.
+
+### Fixed
+
+- Invite phrases now save as they are typed, so every comma-separated phrase is available immediately.
+- Party invites now use the WoW 1.12 `InviteByName` function.
+- The short repeat-invite cooldown now remains correct when the client uptime timer wraps.
+
 ## 0.0.11
 
 ### Fixed

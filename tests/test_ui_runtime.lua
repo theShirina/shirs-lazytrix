@@ -51,6 +51,17 @@ local function makeFrame(kind, name, parent, template)
   function frame:RegisterForClicks(...) self.clickButtons = arg end
   function frame:SetScript(key, value) self.scripts[key] = value end
   function frame:GetScript(key) return self.scripts[key] end
+  function frame:SetText(value)
+    self.text = value
+    if self.scripts.OnTextChanged then
+      this = self
+      self.scripts.OnTextChanged()
+    end
+  end
+  function frame:GetText() return self.text or "" end
+  function frame:ClearFocus() self.focused = false end
+  function frame:SetAutoFocus(value) self.autoFocus = value end
+  function frame:SetMaxLetters(value) self.maxLetters = value end
   function frame:SetBackdrop(value) self.backdrop = value end
   function frame:SetBackdropColor(...) self.backdropColor = arg end
   function frame:SetBackdropBorderColor(...) self.backdropBorderColor = arg end
@@ -179,7 +190,7 @@ local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 local cooldownPanel = named.ShirsLazyTrixCooldownPanel
 if not settings or not minimap or not cooldownPanel then error("UI frames were not constructed", 2) end
-if settings.width ~= 620 or settings.height ~= 510 then error("compact two-column settings geometry mismatch", 2) end
+if settings.width ~= 620 or settings.height ~= 600 then error("compact two-column settings geometry mismatch", 2) end
 if settings.point[5] ~= 0 then error("settings panel must use a viewport-safe center anchor", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
 if settings.backdropColor[1] ~= 0.025 or settings.backdropBorderColor[3] ~= 0.9 then error("settings palette mismatch", 2) end
@@ -238,6 +249,7 @@ local showItemIDs = named.ShirsLazyTrixShowItemIDs
 local consolidateMinimapButtons = named.ShirsLazyTrixConsolidateMinimapButtons
 local lootRowsSlider = named.ShirsLazyTrixLootRowsSlider
 local minimapButtonSizeSlider = named.ShirsLazyTrixMinimapButtonSizeSlider
+local invitePhrases = named.ShirsLazyTrixInvitePhrases
 if not shiftAutomation then error("Shift-required automation checkbox missing", 2) end
 if not autoSellGray then error("automatic gray sale checkbox missing", 2) end
 if not autoRepairAll then error("automatic repair checkbox missing", 2) end
@@ -253,6 +265,10 @@ if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
 if not consolidateMinimapButtons then error("minimap collector checkbox missing", 2) end
 if not lootRowsSlider or lootRowsSlider.minimum ~= 4 or lootRowsSlider.maximum ~= 12 or lootRowsSlider.valueStep ~= 1 then error("stock loot row slider missing", 2) end
 if not minimapButtonSizeSlider or minimapButtonSizeSlider.minimum ~= 18 or minimapButtonSizeSlider.maximum ~= 32 or minimapButtonSizeSlider.valueStep ~= 1 then error("collected minimap button size slider missing", 2) end
+if not invitePhrases or not invitePhrases.scripts.OnTextChanged then error("invite phrase live-save handler missing", 2) end
+this = invitePhrases
+invitePhrases:SetText("invite, need group")
+if ShirsLazyTrixDB.invitePhrases ~= "invite, need group" then error("comma-separated invite phrases were not saved while typing", 2) end
 if turnIn.point[4] ~= 24 or autoAcceptOpenWorldRes.point[4] ~= 24 or autoSellGray.point[4] ~= 24 then error("left settings column anchors mismatch", 2) end
 if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showItemIDs.point[4] ~= 326 then error("right settings column anchors mismatch", 2) end
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end

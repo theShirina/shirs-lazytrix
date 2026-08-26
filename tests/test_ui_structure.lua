@@ -33,7 +33,7 @@ local function count(text)
 end
 
 assertContains('frame:SetWidth(620)', "two-column settings width")
-assertContains('frame:SetHeight(510)', "compact settings height")
+assertContains('frame:SetHeight(600)', "compact settings height")
 assertContains('UI-Tooltip-Background', "addon-family dark panel background")
 assertContains('UI-Tooltip-Border', "addon-family thin panel border")
 assertContains('frame:SetBackdropColor(0.025, 0.035, 0.055, 0.98)', "dark navy panel color")
@@ -42,7 +42,7 @@ assertContains('title:SetTextColor(0.45, 0.82, 1)', "blue addon title")
 assertContains('"QUESTING"', "questing section heading")
 assertContains('"WORLD"', "world section heading")
 assertContains('"TRAINERS"', "trainer section heading")
-assertContains('verticalDivider:SetHeight(410)', "two-column divider height")
+assertContains('verticalDivider:SetHeight(510)', "two-column divider height")
 assertContains('section:SetTextColor(1, 0.82, 0)', "gold section heading")
 assertContains('button:SetWidth(32)', "standard minimap button width")
 assertContains('button:SetHeight(32)', "standard minimap button height")
@@ -62,6 +62,11 @@ assertContains('"Only automate while Shift is held", "automationOnShift"', "Shif
 assertContains("Shift can trigger both pickup and turn-in.", "Shift behavior note")
 assertContains('"Accept open-world resurrection requests", "autoAcceptOpenWorldRes"', "open-world resurrection checkbox")
 assertContains('"Remove immolation on stealth or invisibility", "autoRemoveImmolationOnStealth"', "stealth immolation cleanup checkbox")
+assertContains('"Invite from whispers", "inviteFromWhispers"', "whisper invite checkbox")
+assertContains('"Invite from guild chat", "inviteFromGuild"', "guild invite checkbox")
+assertContains('"ShirsLazyTrixInvitePhrases"', "invite phrase input")
+assertContains('Comma-separated phrases.', "invite phrase help")
+assertContains('invitePhrases:SetScript("OnTextChanged"', "invite phrase live-save handler")
 assertContains('"Expand trainer windows", "expandTrainers"', "expanded trainer checkbox")
 assertContains('"Enable Train All", "trainAll"', "Train All checkbox")
 assertContains('"Automatically open trainer services", "autoOpenTrainers"', "automatic trainer gossip checkbox")
@@ -93,8 +98,8 @@ assertContains("Gray-only selling. Vendor actions stay independent.", "merchant 
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 19 then
-  error("UI must define exactly eighteen checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 21 then
+  error("UI must define exactly twenty checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")

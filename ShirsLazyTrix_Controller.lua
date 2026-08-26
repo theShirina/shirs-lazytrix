@@ -21,6 +21,9 @@ local DEFAULTS = {
   consolidateMinimapButtons = false,
   minimapButtonSize = 24,
   minimapAngle = 220,
+  inviteFromWhispers = false,
+  inviteFromGuild = false,
+  invitePhrases = "invite",
 }
 
 local function npcName()
@@ -188,6 +191,15 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.hideCooldownPanelInCombat) ~= "boolean" then
     ShirsLazyTrixDB.hideCooldownPanelInCombat = DEFAULTS.hideCooldownPanelInCombat
+  end
+  if type(ShirsLazyTrixDB.inviteFromWhispers) ~= "boolean" then
+    ShirsLazyTrixDB.inviteFromWhispers = DEFAULTS.inviteFromWhispers
+  end
+  if type(ShirsLazyTrixDB.inviteFromGuild) ~= "boolean" then
+    ShirsLazyTrixDB.inviteFromGuild = DEFAULTS.inviteFromGuild
+  end
+  if type(ShirsLazyTrixDB.invitePhrases) ~= "string" then
+    ShirsLazyTrixDB.invitePhrases = DEFAULTS.invitePhrases
   end
   if type(ShirsLazyTrixDB.notifyOtherMooncloth) ~= "boolean" then
     ShirsLazyTrixDB.notifyOtherMooncloth = DEFAULTS.notifyOtherMooncloth

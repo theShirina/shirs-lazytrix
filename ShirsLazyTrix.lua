@@ -23,6 +23,8 @@ frame:RegisterEvent("MERCHANT_SHOW")
 frame:RegisterEvent("MERCHANT_CLOSED")
 frame:RegisterEvent("RESURRECT_REQUEST")
 frame:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
+frame:RegisterEvent("CHAT_MSG_WHISPER")
+frame:RegisterEvent("CHAT_MSG_GUILD")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("BAG_UPDATE")
 frame:RegisterEvent("BAG_UPDATE_COOLDOWN")
@@ -78,6 +80,10 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.TryAutoAcceptResurrection()
   elseif event == "CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS" then
     ShirsLazyTrix.HandleStealthBuffMessage(arg1)
+  elseif event == "CHAT_MSG_WHISPER" then
+    ShirsLazyTrix.HandleInviteChat(arg1, arg2, "WHISPER")
+  elseif event == "CHAT_MSG_GUILD" then
+    ShirsLazyTrix.HandleInviteChat(arg1, arg2, "GUILD")
   elseif event == "MERCHANT_SHOW" then
     ShirsLazyTrix.TryAutoRepairAll()
     ShirsLazyTrix.StartAutoGraySale()

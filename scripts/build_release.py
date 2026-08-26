@@ -17,6 +17,7 @@ RUNTIME = [
     "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_Invites.lua",
     "ShirsLazyTrix_Trainer.lua",
     "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",

@@ -53,6 +53,9 @@ ShirsLazyTrix = {
   HandleStealthBuffMessage = function(message)
     table.insert(merchantOrder, "stealth:" .. tostring(message))
   end,
+  HandleInviteChat = function(message, sender, channel)
+    table.insert(merchantOrder, "invite:" .. channel .. ":" .. tostring(sender) .. ":" .. tostring(message))
+  end,
   ToggleSettings = function() end,
   TryAutoRepairAll = function()
     table.insert(merchantOrder, "repair")
@@ -180,6 +183,20 @@ event = "CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS"
 arg1 = "You gain Stealth."
 frame.scripts.OnEvent()
 assert(merchantOrder[1] == "stealth:You gain Stealth.", "stealth buff message was not dispatched")
+merchantOrder = {}
+
+event = "CHAT_MSG_WHISPER"
+arg1 = "invite"
+arg2 = "Mage"
+frame.scripts.OnEvent()
+assert(merchantOrder[1] == "invite:WHISPER:Mage:invite", "whisper invite event was not dispatched")
+merchantOrder = {}
+
+event = "CHAT_MSG_GUILD"
+arg1 = "invite"
+arg2 = "Warrior"
+frame.scripts.OnEvent()
+assert(merchantOrder[1] == "invite:GUILD:Warrior:invite", "guild invite event was not dispatched")
 merchantOrder = {}
 
 event = "GOSSIP_SHOW"

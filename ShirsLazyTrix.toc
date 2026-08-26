@@ -1,8 +1,8 @@
 ## Interface: 11200
 ## Title: Shir's LazyTrix
-## Notes: Quest, vendor, world, trainer, cooldown, loot, and minimap tools for WoW 1.12.
+## Notes: Quest, vendor, world, invite, trainer, cooldown, loot, and minimap tools for WoW 1.12.
 ## Author: Shirina
-## Version: 0.0.11
+## Version: 0.0.12
 ## SavedVariables: ShirsLazyTrixDB
 
 ShirsLazyTrix_Engine.lua
@@ -12,6 +12,7 @@ ShirsLazyTrix_Loot.lua
 ShirsLazyTrix_MinimapButtons.lua
 ShirsLazyTrix_Merchant.lua
 ShirsLazyTrix_Controller.lua
+ShirsLazyTrix_Invites.lua
 ShirsLazyTrix_Trainer.lua
 ShirsLazyTrix_World.lua
 ShirsLazyTrix_UI.lua

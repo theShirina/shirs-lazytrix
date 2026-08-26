@@ -16,6 +16,7 @@ LUA_FILES = [
     "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_Invites.lua",
     "ShirsLazyTrix_Trainer.lua",
     "ShirsLazyTrix_World.lua",
     "ShirsLazyTrix_UI.lua",
@@ -37,6 +38,7 @@ TESTS = [
     "tests/test_ui_runtime.lua",
     "tests/test_event_structure.lua",
     "tests/test_event_runtime.lua",
+    "tests/test_invites.lua",
 ]
 PYTHON_TESTS = [
     "tests/test_build_release.py",
@@ -58,6 +60,7 @@ PUBLIC_FILES = {
     "ShirsLazyTrix_MinimapButtons.lua",
     "ShirsLazyTrix.toc",
     "ShirsLazyTrix_Controller.lua",
+    "ShirsLazyTrix_Invites.lua",
     "ShirsLazyTrix_Engine.lua",
     "ShirsLazyTrix_Merchant.lua",
     "ShirsLazyTrix_Trainer.lua",
@@ -78,6 +81,7 @@ PUBLIC_FILES = {
     "tests/test_engine.lua",
     "tests/test_event_runtime.lua",
     "tests/test_event_structure.lua",
+    "tests/test_invites.lua",
     "tests/test_merchant.lua",
     "tests/test_repair.lua",
     "tests/test_ui_structure.lua",
@@ -123,7 +127,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.11\s*$", toc, re.MULTILINE), "TOC version must be 0.0.11"
+    assert re.search(r"^## Version:\s*0\.0\.12\s*$", toc, re.MULTILINE), "TOC version must be 0.0.12"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -142,6 +146,10 @@ def validate_source() -> None:
     assert controller.count("confirmMissingTurnIns(npc, active)") == 3, "both quest dialogs must confirm success from the same NPC list"
     assert "lastQuestLogTitles" not in controller, "title-only quest-log success evidence is ambiguous"
     assert "GetQuestLogTitle" not in controller, "NPC-scoped guards must not clear from title-only quest-log data"
+
+    invites = (ROOT / "ShirsLazyTrix_Invites.lua").read_text(encoding="utf-8")
+    assert "InviteByName(sender)" in invites, "Vanilla 1.12 invites must use InviteByName"
+    assert "InviteUnit" not in invites, "later-client InviteUnit API must not return"
     confirmation_helper = controller.split("local function confirmMissingTurnIns", 1)[1].split(
         "local function turnInAttemptAvailable", 1
     )[0]
