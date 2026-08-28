@@ -8,11 +8,11 @@ end
 
 local function invitePhraseMatches(message)
   local configured = ShirsLazyTrixDB.invitePhrases or ""
-  local loweredMessage = string.lower(message or "")
+  local normalizedMessage = string.lower(trimInvitePhrase(message or ""))
   local phrase
   for phrase in string.gfind(configured, "([^,]+)") do
     phrase = string.lower(trimInvitePhrase(phrase))
-    if phrase ~= "" and string.find(loweredMessage, phrase, 1, true) then
+    if phrase ~= "" and normalizedMessage == phrase then
       return true
     end
   end

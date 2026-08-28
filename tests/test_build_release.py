@@ -20,7 +20,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.12.zip"
+    return output / "ShirsLazyTrix-v0.0.13.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:

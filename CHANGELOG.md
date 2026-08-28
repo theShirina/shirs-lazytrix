@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.13
+
+### Fixed
+
+- Invite triggers now require the complete incoming message to equal a configured phrase, so a short trigger such as `inv` no longer matches inside a sentence.
+
 ## 0.0.12
 
 ### Added

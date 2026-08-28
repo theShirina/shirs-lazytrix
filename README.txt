@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.12
+Shir's LazyTrix 0.0.13
 
 WoW 1.12 client.
 
@@ -69,4 +69,4 @@ ITEM TOOLTIPS
 "Show item IDs in item tooltips" is off by default. When enabled, LazyTrix adds an "Item ID: number" line beneath item tooltips from bags, equipment, loot, vendors, quests, profession windows, and item links. If Informant's own item-ID option is active, LazyTrix leaves that line to Informant.
 
 INVITES
-Whisper and guild-chat invites are separate and off by default. Enter one or more comma-separated phrases, such as "invite, need group". The field saves as you type. Matching ignores letter case and spaces around each phrase. A matching message invites its sender and briefly blocks repeat requests from the same player.
+Whisper and guild-chat invites are separate and off by default. Enter one or more comma-separated phrases, such as "invite, need group". The field saves as you type. Matching ignores letter case and spaces around each phrase, but the complete message must equal one configured phrase. A matching message invites its sender and briefly blocks repeat requests from the same player.

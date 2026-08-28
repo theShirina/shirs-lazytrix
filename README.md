@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.12 adds configurable party invites from whispers and guild chat.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.13 fixes invite matching so only complete configured phrases trigger.
 
 ## Features
 
@@ -45,7 +45,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.12 adds configur
 - Optional minimap-button collector with an adjustable 18–32 px button size: left-click opens the collected addon buttons and right-click opens LazyTrix settings.
 - Adjustable four-to-twelve-row stock Blizzard loot frame with fixed-size top controls and repeated stock body art; expansion can be disabled for another loot UI, and pfUI-owned loot remains untouched.
 - Optional automatic party invites from whisperers and guild chat.
-- Invite triggers accept multiple comma-separated phrases, save the text as you type, and use a short per-sender cooldown to prevent repeat invites.
+- Invite triggers accept multiple comma-separated phrases, save the text as you type, require the complete incoming message to equal one configured phrase, and use a short per-sender cooldown to prevent repeat invites.
 
 ## Shift behavior
 
@@ -81,7 +81,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.12.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.12/ShirsLazyTrix-v0.0.12.zip).
+1. Download [`ShirsLazyTrix-v0.0.13.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.13/ShirsLazyTrix-v0.0.13.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.
