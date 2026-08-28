@@ -18,6 +18,7 @@ frame:RegisterEvent("QUEST_GREETING")
 frame:RegisterEvent("QUEST_DETAIL")
 frame:RegisterEvent("QUEST_PROGRESS")
 frame:RegisterEvent("QUEST_COMPLETE")
+frame:RegisterEvent("QUEST_FINISHED")
 frame:RegisterEvent("QUEST_LOG_UPDATE")
 frame:RegisterEvent("MERCHANT_SHOW")
 frame:RegisterEvent("MERCHANT_CLOSED")
@@ -74,6 +75,8 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.HandleQuestProgress()
   elseif event == "QUEST_COMPLETE" then
     ShirsLazyTrix.HandleQuestComplete()
+  elseif event == "QUEST_FINISHED" then
+    ShirsLazyTrix.HandleQuestFinished()
   elseif event == "QUEST_LOG_UPDATE" then
     ShirsLazyTrix.HandleQuestLogUpdate()
   elseif event == "RESURRECT_REQUEST" then

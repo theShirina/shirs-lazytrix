@@ -307,6 +307,31 @@ resetCalls()
 ShirsLazyTrix.HandleQuestComplete()
 assertEqual(countCalls("GetQuestReward"), 0, "multiple rewards wait for player")
 
+-- Repeated dialog events must not repeat CompleteQuest or GetQuestReward.
+ShirsLazyTrix.incompleteSeen = {}
+ShirsLazyTrix.turnInAttempts = {}
+ShirsLazyTrix.pendingTurnInSuccess = {}
+ShirsLazyTrix.rewardFinished = {}
+npc = "Full Bag Quest Giver"
+title = "Item Reward With No Space"
+active = { { title = title, complete = true } }
+completable = true
+choices = 0
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+ShirsLazyTrix.HandleQuestProgress()
+ShirsLazyTrix.HandleQuestProgress()
+assertEqual(countCalls("CompleteQuest"), 1, "repeated progress events submit once")
+ShirsLazyTrix.HandleQuestComplete()
+ShirsLazyTrix.HandleQuestComplete()
+assertEqual(countCalls("GetQuestReward"), 1, "repeated complete events submit reward once")
+
+-- A completed repeatable quest may remain active and must be allowed again.
+ShirsLazyTrix.HandleQuestFinished()
+resetCalls()
+ShirsLazyTrix.HandleQuestGreeting()
+assertEqual(countCalls("SelectActiveQuest"), 1, "successful repeatable turn-in resets on same-NPC return")
+
 -- A custom quest can report completable while refusing the submitted reward.
 -- Allow two selections, block the third, and reset only after reward submission
 -- is followed by the title disappearing from the same NPC's active quest list.

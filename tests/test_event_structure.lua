@@ -14,6 +14,7 @@ local required = {
   'RegisterEvent("QUEST_DETAIL")',
   'RegisterEvent("QUEST_PROGRESS")',
   'RegisterEvent("QUEST_COMPLETE")',
+  'RegisterEvent("QUEST_FINISHED")',
   'RegisterEvent("QUEST_LOG_UPDATE")',
   'RegisterEvent("MERCHANT_SHOW")',
   'RegisterEvent("MERCHANT_CLOSED")',
@@ -61,9 +62,6 @@ for i = 1, table.getn(required) do
   end
 end
 
-if string.find(source, 'RegisterEvent("QUEST_FINISHED")', 1, true) then
-  error("QUEST_FINISHED must not clear incomplete turn-in observations", 2)
-end
 if string.find(source, "InstallRewardHook", 1, true) then
   error("repeatable reward hook must be removed", 2)
 end

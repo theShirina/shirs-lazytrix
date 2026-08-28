@@ -86,8 +86,18 @@ local function confirmMissingTurnIns(npc, active)
   local remove = {}
   local key
   for key in pairs(ShirsLazyTrix.pendingTurnInSuccess) do
-    if incompleteNpc(key) == npc and not present[incompleteTitle(key)] then
-      table.insert(remove, key)
+    if incompleteNpc(key) == npc then
+      if not present[incompleteTitle(key)] then
+        table.insert(remove, key)
+      elseif type(ShirsLazyTrix.rewardFinished) == "table" and ShirsLazyTrix.rewardFinished[key] then
+        -- A repeatable quest may remain active after a successful reward.
+        -- Reset only after reward-stage evidence and the same NPC shows it again.
+        ShirsLazyTrix.pendingTurnInSuccess[key] = nil
+        ShirsLazyTrix.rewardFinished[key] = nil
+        if type(ShirsLazyTrix.turnInAttempts) == "table" then
+          ShirsLazyTrix.turnInAttempts[key] = nil
+        end
+      end
     end
   end
 
@@ -300,6 +310,11 @@ function ShirsLazyTrix.HandleQuestGreeting()
 
   local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, dialogSettings(held))
   if action == "active" then
+    local key = incompleteKey(npc, active[index].title)
+    ShirsLazyTrix.progressSubmitted = ShirsLazyTrix.progressSubmitted or {}
+    ShirsLazyTrix.rewardSubmitted = ShirsLazyTrix.rewardSubmitted or {}
+    ShirsLazyTrix.progressSubmitted[key] = nil
+    ShirsLazyTrix.rewardSubmitted[key] = nil
     recordTurnInAttempt(npc, active[index].title)
     SelectActiveQuest(index)
   elseif action == "available" then
@@ -341,6 +356,11 @@ function ShirsLazyTrix.HandleGossipShow()
 
   local action, index = ShirsLazyTrix.ChooseGreetingAction(active, available, dialogSettings(held))
   if action == "active" then
+    local key = incompleteKey(npc, active[index].title)
+    ShirsLazyTrix.progressSubmitted = ShirsLazyTrix.progressSubmitted or {}
+    ShirsLazyTrix.rewardSubmitted = ShirsLazyTrix.rewardSubmitted or {}
+    ShirsLazyTrix.progressSubmitted[key] = nil
+    ShirsLazyTrix.rewardSubmitted[key] = nil
     recordTurnInAttempt(npc, active[index].title)
     SelectGossipActiveQuest(index)
   elseif action == "available" then
@@ -364,12 +384,15 @@ function ShirsLazyTrix.HandleQuestProgress()
   local completable = IsQuestCompletable()
   ShirsLazyTrix.incompleteSeen = ShirsLazyTrix.incompleteSeen or {}
   local key = incompleteKey(npcName(), title)
+  ShirsLazyTrix.progressSubmitted = ShirsLazyTrix.progressSubmitted or {}
+  if ShirsLazyTrix.progressSubmitted[key] then return end
   if not completable then
     ShirsLazyTrix.incompleteSeen[key] = true
     return
   end
   ShirsLazyTrix.incompleteSeen[key] = nil
   if ShirsLazyTrix.ShouldCompleteProgress(completable, ShirsLazyTrixDB) then
+    ShirsLazyTrix.progressSubmitted[key] = true
     ShirsLazyTrix.currentTurnInKey = key
     CompleteQuest()
   end
@@ -385,11 +408,26 @@ function ShirsLazyTrix.HandleQuestComplete()
   local count = GetNumQuestChoices()
   if count <= 1 then
     local key = ShirsLazyTrix.currentTurnInKey or incompleteKey(npcName(), GetTitleText())
+    ShirsLazyTrix.rewardSubmitted = ShirsLazyTrix.rewardSubmitted or {}
+    if ShirsLazyTrix.rewardSubmitted[key] then
+      ShirsLazyTrix.currentTurnInKey = nil
+      return
+    end
+    ShirsLazyTrix.rewardSubmitted[key] = true
     ShirsLazyTrix.pendingTurnInSuccess = ShirsLazyTrix.pendingTurnInSuccess or {}
     ShirsLazyTrix.pendingTurnInSuccess[key] = true
     GetQuestReward(count)
   end
   ShirsLazyTrix.currentTurnInKey = nil
+end
+
+function ShirsLazyTrix.HandleQuestFinished()
+  if type(ShirsLazyTrix.pendingTurnInSuccess) ~= "table" then return end
+  ShirsLazyTrix.rewardFinished = ShirsLazyTrix.rewardFinished or {}
+  local key
+  for key in pairs(ShirsLazyTrix.pendingTurnInSuccess) do
+    ShirsLazyTrix.rewardFinished[key] = true
+  end
 end
 
 function ShirsLazyTrix.HandleQuestLogUpdate()
