@@ -127,7 +127,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.13\s*$", toc, re.MULTILINE), "TOC version must be 0.0.13"
+    assert re.search(r"^## Version:\s*0\.0\.14\s*$", toc, re.MULTILINE), "TOC version must be 0.0.14"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]

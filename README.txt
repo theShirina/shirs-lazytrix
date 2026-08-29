@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.13
+Shir's LazyTrix 0.0.14
 
 WoW 1.12 client.
 
@@ -35,7 +35,7 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Invite from guild chat
 - Set one or more comma-separated invite phrases
 
-Turn-ins are checked before pickups. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without a confirmed completion, LazyTrix stops retrying it for the rest of the session. A successful reward attempt clears the count when that same NPC no longer lists the quest. Quests with several reward choices wait for you.
+Turn-ins are checked before pickups. Repeated quest progress and reward events are submitted only once per dialog. An item-gated or otherwise incomplete turn-in stays blocked instead of trusting a same-title quest-log entry. If the same NPC and quest is selected twice without reward-stage completion evidence, LazyTrix stops retrying it for the rest of the session. A successful reward for a quest that can be completed again clears the count when the same NPC shows the quest again. Quests with several reward choices wait for you.
 
 MANUAL OVERRIDE
 By default, hold Shift while using a quest giver to stop automatic selection, pickup, turn-in, and reward submission. Keep Shift held until you finish the manual step.

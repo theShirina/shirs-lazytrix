@@ -1,11 +1,13 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.13 fixes invite matching so only complete configured phrases trigger.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.14 improves quest turn-in safety for failed and recurring quests.
 
 ## Features
 
 - Prioritizes completed quest turn-ins before new quest pickup.
 - Checks `IsQuestCompletable()` before continuing a turn-in.
+- Prevents repeated progress and reward submissions for the same quest dialog.
+- Handles quests that can be completed again and remain listed after a successful reward.
 - Remembers failed item-gated turn-ins without trusting ambiguous quest-log title matches.
 - Stops selecting the same NPC and quest after two unconfirmed turn-in attempts.
 - Clears that fallback only when the same NPC's active quest list no longer contains the title after a reward attempt.
@@ -81,7 +83,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.13.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.13/ShirsLazyTrix-v0.0.13.zip).
+1. Download [`ShirsLazyTrix-v0.0.14.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.14/ShirsLazyTrix-v0.0.14.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

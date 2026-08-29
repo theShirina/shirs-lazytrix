@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.0.14
+
+### Fixed
+
+- Prevented repeated `CompleteQuest()` calls when the client sends the same progress event more than once.
+- Prevented repeated reward submissions when a failed quest reward leaves the dialog open, including inventory-full cases.
+- Quests that can be completed again now continue after a successful reward even when the same NPC keeps listing the quest.
+- Kept the two-attempt safety limit for turn-ins that do not show reward-stage completion evidence.
+
 ## 0.0.13
 
 ### Fixed

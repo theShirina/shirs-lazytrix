@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER = ROOT / "scripts" / "build_release.py"
+
+
+TOC = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
+VERSION = re.search(r"^## Version:\s*(\S+)\s*$", TOC, re.MULTILINE).group(1)
 
 
 def build(output: Path) -> Path:
@@ -20,7 +25,7 @@ def build(output: Path) -> Path:
         creationflags=flags,
         stdout=subprocess.DEVNULL,
     )
-    return output / "ShirsLazyTrix-v0.0.13.zip"
+    return output / f"ShirsLazyTrix-v{VERSION}.zip"
 
 
 with tempfile.TemporaryDirectory() as temporary:
