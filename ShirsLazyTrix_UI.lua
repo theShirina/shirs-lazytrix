@@ -635,18 +635,18 @@ local function createSettingsFrame()
   createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", -205, 326, 260)
   createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -233, 326, 260)
 
-  local raidSection = createText(frame, "RAID RESET INFO", 11)
-  raidSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
-  raidSection:SetTextColor(1, 0.82, 0)
-  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -307, 326, 260)
-
   local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
-  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
   reminderLabel:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -364, 326, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -364, 416, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -364, 500, 65)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -307, 326, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -307, 416, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -307, 500, 65)
+
+  local raidSection = createText(frame, "RAID RESET INFO", 11)
+  raidSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
+  raidSection:SetTextColor(1, 0.82, 0)
+  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -364, 326, 260)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
   tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -406)
