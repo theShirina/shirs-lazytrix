@@ -108,6 +108,25 @@ assertEqual(table.getn(raidState.instances), 2, "malformed raid row preserves pr
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response observation")
 assertEqual(table.getn(raidState.instances), 0, "empty raid response clears snapshot")
+local readyDisplayRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true)
+assertEqual(table.getn(readyDisplayRows), 7, "unsaved raid catalog row count")
+assertEqual(readyDisplayRows[1].name, "Molten Core", "first unsaved raid catalog row")
+assertEqual(readyDisplayRows[1].ready, true, "unsaved raid row is marked ready")
+raidRows = { { name = "The Ruins of Ahn'Qiraj", id = "AQ20", reset = 3600 } }
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "saved raid alias observation")
+local aliasDisplayRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true)
+assertEqual(table.getn(aliasDisplayRows), 7, "saved raid alias avoids duplicate ready row")
+local canonicalReadyRows = 0
+local aliasIndex
+for aliasIndex = 1, table.getn(aliasDisplayRows) do
+  if aliasDisplayRows[aliasIndex].name == "Ruins of Ahn'Qiraj" and aliasDisplayRows[aliasIndex].ready then
+    canonicalReadyRows = canonicalReadyRows + 1
+  end
+end
+assertEqual(canonicalReadyRows, 0, "saved raid alias suppresses canonical ready row")
+assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false)), 1, "ready toggle off keeps saved rows only")
+raidRows = {}
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response restores ready catalog state")
 ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031Alfa"] = {
   raidInfo = {
     known = true,

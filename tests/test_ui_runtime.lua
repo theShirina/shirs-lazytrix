@@ -166,6 +166,10 @@ local raidRows = {
   { name = "Molten Core", id = "A1", status = "1h 0m" },
   { name = "Onyxia's Lair", id = "B2", status = "Ready" },
 }
+local raidReadyRows = {
+  { name = "Zul'Gurub", id = "", ready = true, status = "Ready" },
+  { name = "Ahn'Qiraj", id = "", ready = true, status = "Ready" },
+}
 ShirsLazyTrix.GetRaidInfoPanelPosition = function() return "TOPRIGHT", "TOPRIGHT", -40, -120 end
 local savedRaidInfoPosition = nil
 ShirsLazyTrix.SaveRaidInfoPanelPosition = function(point, relativePoint, x, y)
@@ -174,6 +178,19 @@ end
 ShirsLazyTrix.RequestRaidInfo = function() raidInfoRequests = raidInfoRequests + 1 return true end
 ShirsLazyTrix.GetCurrentRaidInfo = function()
   return { known = true, instances = raidRows }
+end
+ShirsLazyTrix.GetRaidInfoDisplayEntries = function(includeReady)
+  local entries = {}
+  local index
+  for index = 1, table.getn(raidRows) do
+    table.insert(entries, raidRows[index])
+  end
+  if includeReady then
+    for index = 1, table.getn(raidReadyRows) do
+      table.insert(entries, raidReadyRows[index])
+    end
+  end
+  return entries
 end
 ShirsLazyTrix.FormatRaidInfoStatus = function(entry)
   return entry and entry.status or "Not known"
@@ -205,7 +222,7 @@ ShirsLazyTrix.ApplyMinimapButtonSize = function(value) ShirsLazyTrixDB.minimapBu
 ShirsLazyTrix.RefreshMinimapButtonCollector = function() collectorRefreshes = collectorRefreshes + 1 return true end
 ShirsLazyTrix.ToggleMinimapButtonTray = function() trayToggles = trayToggles + 1 return true end
 ShirsLazyTrix.InitializeMinimapButtonCollector = function(button) collectorInitializations = collectorInitializations + 1 return button end
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, lootRows = 4, consolidateMinimapButtons = false, minimapButtonSize = 24, minimapAngle = 220 }
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, showRaidInfoPanel = false, showRaidInfoReady = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, lootRows = 4, consolidateMinimapButtons = false, minimapButtonSize = 24, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -246,6 +263,11 @@ if not raidInfoPanel.movable or not raidInfoPanel.clamped or not raidInfoPanel.s
 end
 local raidInfoLock = named.ShirsLazyTrixRaidInfoLock
 if not raidInfoLock or not raidInfoLock.lockLabel or raidInfoLock.lockLabel.text ~= "U" then error("raid info panel lock missing", 2) end
+local readyToggle = named.ShirsLazyTrixRaidInfoReadyToggle
+if not readyToggle or not named.ShirsLazyTrixRaidInfoReadyToggleText then error("raid ready toggle missing", 2) end
+if named.ShirsLazyTrixRaidInfoReadyToggleText.text ~= "Show all" then error("raid ready toggle label mismatch", 2) end
+if readyToggle.point[1] ~= "TOPLEFT" or readyToggle.point[4] ~= 108 or readyToggle.point[5] ~= -7 then error("raid ready toggle header anchor mismatch", 2) end
+if readyToggle.checked ~= nil then error("raid ready toggle should start unchecked", 2) end
 
 minimap.scripts.OnDragStart()
 if not minimap.scripts.OnUpdate then error("drag did not start position updates", 2) end
@@ -306,10 +328,12 @@ this = invitePhrases
 invitePhrases:SetText("invite, need group")
 if ShirsLazyTrixDB.invitePhrases ~= "invite, need group" then error("comma-separated invite phrases were not saved while typing", 2) end
 if turnIn.point[4] ~= 24 or autoAcceptOpenWorldRes.point[4] ~= 24 or autoSellGray.point[4] ~= 24 then error("left settings column anchors mismatch", 2) end
+if turnIn.point[5] ~= -87 or autoAcceptOpenWorldRes.point[5] ~= -231 or autoSellGray.point[5] ~= -466 then error("settings content did not move up", 2) end
 if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showRaidInfoPanel.point[4] ~= 326 or showItemIDs.point[4] ~= 326 then error("right settings column anchors mismatch", 2) end
-if notifyOtherMooncloth.point[5] ~= -307 or notifyOtherArcanite.point[5] ~= -307 or notifyOtherSalt.point[5] ~= -307 then error("ready reminders must sit above raid reset info", 2) end
-if showRaidInfoPanel.point[5] ~= -364 then error("raid reset info must follow ready reminders", 2) end
+if notifyOtherMooncloth.point[5] ~= -273 or notifyOtherArcanite.point[5] ~= -273 or notifyOtherSalt.point[5] ~= -273 then error("ready reminder vertical position mismatch", 2) end
+if showRaidInfoPanel.point[5] ~= -330 then error("raid reset info vertical position mismatch", 2) end
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
+if lootRowsSlider.point[5] ~= -506 or minimapButtonSizeSlider.point[5] ~= -506 then error("lower settings controls did not move up", 2) end
 if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
 if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
 if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
@@ -413,6 +437,17 @@ if raidInfoPanel.moving then error("locked raid info panel started moving", 2) e
 this = raidInfoLock
 raidInfoLock.scripts.OnClick()
 if ShirsLazyTrixDB.raidInfoPanelLocked ~= false or raidInfoPanel.movable ~= true then error("raid info panel did not unlock", 2) end
+
+readyToggle.checked = 1
+this = readyToggle
+readyToggle.scripts.OnClick()
+if ShirsLazyTrixDB.showRaidInfoReady ~= true or not named.ShirsLazyTrixRaidInfoRow3:IsVisible() then error("ready raid toggle did not add unsaved rows", 2) end
+if named.ShirsLazyTrixRaidInfoRow3.label.text ~= "Zul'Gurub" or named.ShirsLazyTrixRaidInfoRow3.status.text ~= "Ready" or named.ShirsLazyTrixRaidInfoRow3.raidReady ~= true then error("unsaved raid row display mismatch", 2) end
+if raidInfoPanel.height ~= 131 then error("ready raid rows did not resize the panel", 2) end
+readyToggle.checked = nil
+this = readyToggle
+readyToggle.scripts.OnClick()
+if ShirsLazyTrixDB.showRaidInfoReady ~= false or raidInfoPanel.height ~= 85 or named.ShirsLazyTrixRaidInfoRow3:IsVisible() then error("ready raid toggle did not remove unsaved rows", 2) end
 
 local moonclothRow = named.ShirsLazyTrixCooldownMooncloth
 local arcaniteRow = named.ShirsLazyTrixCooldownArcanite

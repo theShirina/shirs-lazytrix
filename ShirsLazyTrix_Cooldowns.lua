@@ -131,6 +131,60 @@ local function raidIDText(value)
   return ""
 end
 
+local RAID_INFO_READY_CATALOG = {
+  { name = "Molten Core", aliases = { "Molten Core" } },
+  { name = "Onyxia's Lair", aliases = { "Onyxia's Lair", "Onyxia" } },
+  { name = "Blackwing Lair", aliases = { "Blackwing Lair" } },
+  { name = "Zul'Gurub", aliases = { "Zul'Gurub" } },
+  { name = "Ruins of Ahn'Qiraj", aliases = { "Ruins of Ahn'Qiraj", "The Ruins of Ahn'Qiraj", "AQ20" } },
+  { name = "Temple of Ahn'Qiraj", aliases = { "Temple of Ahn'Qiraj", "Ahn'Qiraj", "AQ40" } },
+  { name = "Naxxramas", aliases = { "Naxxramas" } },
+}
+
+local function raidCatalogMatches(savedName, catalogEntry)
+  local aliasIndex
+  for aliasIndex = 1, table.getn(catalogEntry.aliases) do
+    if sameText(savedName, catalogEntry.aliases[aliasIndex]) then return true end
+  end
+  return false
+end
+
+function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady)
+  local state = currentRaidInfoState()
+  local entries = {}
+  local saved = state.instances
+  local savedIndex
+  for savedIndex = 1, table.getn(saved) do
+    local entry = saved[savedIndex]
+    if type(entry) == "table" and cleanText(entry.name) ~= "" then
+      table.insert(entries, entry)
+    end
+  end
+  if includeReady and state.known == true then
+    local catalogIndex
+    for catalogIndex = 1, table.getn(RAID_INFO_READY_CATALOG) do
+      if table.getn(entries) >= MAX_SAVED_RAID_INSTANCES then break end
+      local catalogEntry = RAID_INFO_READY_CATALOG[catalogIndex]
+      local savedMatch = false
+      for savedIndex = 1, table.getn(saved) do
+        local savedEntry = saved[savedIndex]
+        if type(savedEntry) == "table" and raidCatalogMatches(savedEntry.name, catalogEntry) then
+          savedMatch = true
+          break
+        end
+      end
+      if not savedMatch then
+        table.insert(entries, { name = catalogEntry.name, id = "", ready = true })
+      end
+    end
+  end
+  return entries
+end
+
+function ShirsLazyTrix.GetRaidInfoReadyCatalog()
+  return RAID_INFO_READY_CATALOG
+end
+
 function ShirsLazyTrix.RequestRaidInfo()
   if type(RequestRaidInfo) ~= "function" then return false end
   local now = uptime()

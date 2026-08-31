@@ -11,6 +11,7 @@ local DEFAULTS = {
   autoOpenTrainers = false,
   showCooldownPanel = false,
   showRaidInfoPanel = false,
+  showRaidInfoReady = false,
   cooldownPanelLocked = false,
   raidInfoPanelLocked = false,
   hideCooldownPanelInCombat = false,
@@ -200,6 +201,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if type(ShirsLazyTrixDB.showRaidInfoPanel) ~= "boolean" then
     ShirsLazyTrixDB.showRaidInfoPanel = DEFAULTS.showRaidInfoPanel
+  end
+  if type(ShirsLazyTrixDB.showRaidInfoReady) ~= "boolean" then
+    ShirsLazyTrixDB.showRaidInfoReady = DEFAULTS.showRaidInfoReady
   end
   if type(ShirsLazyTrixDB.cooldownPanelLocked) ~= "boolean" then
     ShirsLazyTrixDB.cooldownPanelLocked = DEFAULTS.cooldownPanelLocked

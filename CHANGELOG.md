@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.16
+
+### Added
+
+- Added a Show all option to Raid Reset Info that lists standard raids without current lockouts as Ready.
+- Added a compact Raid Reset header toggle to switch between saved lockouts and the full raid list.
+
+### Changed
+
+- Tightened the settings spacing above Other-Character Ready Reminders.
+
 ## 0.0.15
 
 ### Added

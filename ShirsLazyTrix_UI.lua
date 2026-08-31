@@ -6,6 +6,16 @@ local function createText(parent, text, size)
 end
 
 local refreshingSettings = false
+local SETTINGS_CONTENT_RISE = 4
+local RAID_SETTINGS_CONTENT_RISE = 30
+
+local function settingsY(y)
+  return y + SETTINGS_CONTENT_RISE
+end
+
+local function raidSettingsY(y)
+  return settingsY(y) + RAID_SETTINGS_CONTENT_RISE
+end
 
 local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
   local check = CreateFrame("CheckButton", name, parent, "UICheckButtonTemplate")
@@ -289,7 +299,12 @@ function ShirsLazyTrix.RefreshRaidInfoRowTooltip(row)
   if row.raidID and row.raidID ~= "" then
     GameTooltip:AddLine("Instance ID: " .. row.raidID, 0.7, 0.8, 0.9)
   end
-  GameTooltip:AddLine("This character: " .. (row.statusText or "Not known"), 1, 1, 1)
+  if row.raidReady then
+    GameTooltip:AddLine("This character: Ready (not saved)", 0.35, 1, 0.45)
+    GameTooltip:AddLine("No current lockout was reported for this raid.", 0.7, 0.8, 0.9)
+  else
+    GameTooltip:AddLine("This character: " .. (row.statusText or "Not known"), 1, 1, 1)
+  end
   GameTooltip:AddLine("Other characters (last saved data)", 1, 0.82, 0)
   local rows = ShirsLazyTrix.GetRaidInfoCharacterStatuses and
     ShirsLazyTrix.GetRaidInfoCharacterStatuses(row.raidName) or {}
@@ -392,6 +407,28 @@ local function createRaidInfoPanel()
   end)
   lock:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
+  local readyToggle = CreateFrame("CheckButton", "ShirsLazyTrixRaidInfoReadyToggle", panel, "UICheckButtonTemplate")
+  readyToggle:SetWidth(20)
+  readyToggle:SetHeight(20)
+  readyToggle:SetPoint("TOPLEFT", panel, "TOPLEFT", 108, -7)
+  local readyLabel = getglobal("ShirsLazyTrixRaidInfoReadyToggleText")
+  readyLabel:SetText("Show all")
+  readyLabel:SetWidth(48)
+  readyLabel:SetJustifyH("LEFT")
+  readyLabel:SetTextColor(0.62, 0.7, 0.8)
+  readyToggle:SetScript("OnClick", function()
+    ShirsLazyTrixDB.showRaidInfoReady = this:GetChecked() and true or false
+    ShirsLazyTrix.RefreshRaidInfoPanel()
+  end)
+  readyToggle:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    GameTooltip:SetText("Show unsaved raids")
+    GameTooltip:AddLine("Adds raids without a current lockout as Ready.", 0.7, 0.8, 0.9)
+    GameTooltip:Show()
+  end)
+  readyToggle:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  panel.readyToggle = readyToggle
+
   panel.emptyLabel = createText(panel, "Waiting for raid information...", 11)
   panel.emptyLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -34)
   panel.emptyLabel:SetWidth(RAID_INFO_ROW_WIDTH)
@@ -439,15 +476,27 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
   if not ShirsLazyTrixRaidInfoPanel then return end
   local state = ShirsLazyTrix.GetCurrentRaidInfo and ShirsLazyTrix.GetCurrentRaidInfo() or {}
   local instances = type(state) == "table" and state.instances or nil
+  local displayEntries = instances
+  if ShirsLazyTrix.GetRaidInfoDisplayEntries then
+    displayEntries = ShirsLazyTrix.GetRaidInfoDisplayEntries(ShirsLazyTrixDB.showRaidInfoReady == true)
+  end
+  if ShirsLazyTrixRaidInfoPanel.readyToggle then
+    ShirsLazyTrixRaidInfoPanel.readyToggle:SetChecked(ShirsLazyTrixDB.showRaidInfoReady and 1 or nil)
+  end
   local visibleRows = 0
   local index
   for index = 1, RAID_INFO_ROW_COUNT do
     local row = ShirsLazyTrixRaidInfoPanel.raidRows[index]
-    local entry = type(instances) == "table" and instances[index] or nil
+    local entry = type(displayEntries) == "table" and displayEntries[index] or nil
     if type(entry) == "table" and entry.name and entry.name ~= "" then
       row.raidName = entry.name
       row.raidID = entry.id or ""
-      row.statusText = ShirsLazyTrix.FormatRaidInfoStatus(entry)
+      row.raidReady = entry.ready == true
+      if row.raidReady then
+        row.statusText = "Ready"
+      else
+        row.statusText = ShirsLazyTrix.FormatRaidInfoStatus(entry)
+      end
       row.label:SetText(entry.name)
       row.status:SetText(row.statusText)
       if row.statusText == "Ready" then
@@ -460,6 +509,7 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
     else
       row.raidName = nil
       row.raidID = nil
+      row.raidReady = nil
       row.statusText = nil
       row:Hide()
     end
@@ -558,35 +608,35 @@ local function createSettingsFrame()
   verticalDivider:SetHeight(510)
 
   local section = createText(frame, "QUESTING", 11)
-  section:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -76)
+  section:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, settingsY(-76))
   section:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixTurnIn", "Turn in completed quests", "turnIn", -91, 24, 260)
-  createCheckbox(frame, "ShirsLazyTrixPickUp", "Pick up quests", "pickUp", -119, 24, 260)
-  createCheckbox(frame, "ShirsLazyTrixShiftAutomation", "Only automate while Shift is held", "automationOnShift", -147, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixTurnIn", "Turn in completed quests", "turnIn", settingsY(-91), 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixPickUp", "Pick up quests", "pickUp", settingsY(-119), 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixShiftAutomation", "Only automate while Shift is held", "automationOnShift", settingsY(-147), 24, 260)
 
   local note = createText(frame, "Shift can trigger both pickup and turn-in.", 11)
-  note:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -178)
+  note:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, settingsY(-178))
   note:SetWidth(270)
   note:SetHeight(24)
   note:SetJustifyH("LEFT")
   note:SetTextColor(0.62, 0.7, 0.8)
 
   local worldSection = createText(frame, "WORLD", 11)
-  worldSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -220)
+  worldSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, settingsY(-220))
   worldSection:SetTextColor(1, 0.82, 0)
-  createCheckbox(frame, "ShirsLazyTrixAutoAcceptOpenWorldRes", "Accept open-world resurrection requests", "autoAcceptOpenWorldRes", -235, 24, 260)
-  createCheckbox(frame, "ShirsLazyTrixAutoRemoveImmolationOnStealth", "Remove immolation on stealth or invisibility", "autoRemoveImmolationOnStealth", -263, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoAcceptOpenWorldRes", "Accept open-world resurrection requests", "autoAcceptOpenWorldRes", settingsY(-235), 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoRemoveImmolationOnStealth", "Remove immolation on stealth or invisibility", "autoRemoveImmolationOnStealth", settingsY(-263), 24, 260)
 
   local inviteSection = createText(frame, "INVITES", 11)
-  inviteSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -306)
+  inviteSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, settingsY(-306))
   inviteSection:SetTextColor(1, 0.82, 0)
-  createCheckbox(frame, "ShirsLazyTrixInviteFromWhispers", "Invite from whispers", "inviteFromWhispers", -321, 24, 260)
-  createCheckbox(frame, "ShirsLazyTrixInviteFromGuild", "Invite from guild chat", "inviteFromGuild", -349, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixInviteFromWhispers", "Invite from whispers", "inviteFromWhispers", settingsY(-321), 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixInviteFromGuild", "Invite from guild chat", "inviteFromGuild", settingsY(-349), 24, 260)
   local invitePhrases = CreateFrame("EditBox", "ShirsLazyTrixInvitePhrases", frame, "InputBoxTemplate")
   invitePhrases:SetWidth(270)
   invitePhrases:SetHeight(24)
-  invitePhrases:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -379)
+  invitePhrases:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, settingsY(-379))
   if invitePhrases.SetAutoFocus then invitePhrases:SetAutoFocus(false) end
   if invitePhrases.SetMaxLetters then invitePhrases:SetMaxLetters(255) end
   invitePhrases:SetScript("OnTextChanged", function()
@@ -601,70 +651,70 @@ local function createSettingsFrame()
     ShirsLazyTrixDB.invitePhrases = this:GetText()
   end)
   local inviteNote = createText(frame, "Comma-separated phrases. A matching whisper or guild message triggers one invite.", 10)
-  inviteNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -410)
+  inviteNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, settingsY(-410))
   inviteNote:SetWidth(270)
   inviteNote:SetHeight(30)
   inviteNote:SetJustifyH("LEFT")
   inviteNote:SetTextColor(0.62, 0.7, 0.8)
 
   local trainerSection = createText(frame, "TRAINERS", 11)
-  trainerSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -76)
+  trainerSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, settingsY(-76))
   trainerSection:SetTextColor(1, 0.82, 0)
-  createCheckbox(frame, "ShirsLazyTrixExpandTrainers", "Expand trainer windows", "expandTrainers", -91, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixTrainAll", "Enable Train All", "trainAll", -119, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", -147, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixExpandTrainers", "Expand trainer windows", "expandTrainers", settingsY(-91), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixTrainAll", "Enable Train All", "trainAll", settingsY(-119), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoOpenTrainers", "Automatically open trainer services", "autoOpenTrainers", settingsY(-147), 326, 260)
 
   local merchantSection = createText(frame, "MERCHANT", 11)
-  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, -455)
+  merchantSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 24, settingsY(-455))
   merchantSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Sell gray items", "autoSellGray", -470, 24, 260)
-  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Repair all gear", "autoRepairAll", -498, 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoSellGray", "Sell gray items", "autoSellGray", settingsY(-470), 24, 260)
+  createCheckbox(frame, "ShirsLazyTrixAutoRepairAll", "Repair all gear", "autoRepairAll", settingsY(-498), 24, 260)
 
   local merchantNote = createText(frame, "Gray-only selling. Vendor actions stay independent.", 11)
-  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, -529)
+  merchantNote:SetPoint("TOPLEFT", frame, "TOPLEFT", 25, settingsY(-529))
   merchantNote:SetWidth(270)
   merchantNote:SetHeight(24)
   merchantNote:SetJustifyH("LEFT")
   merchantNote:SetTextColor(0.62, 0.7, 0.8)
 
   local cooldownSection = createText(frame, "PROFESSION COOLDOWNS", 11)
-  cooldownSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -190)
+  cooldownSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, settingsY(-190))
   cooldownSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", -205, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -233, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", settingsY(-205), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", settingsY(-233), 326, 260)
 
   local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
-  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-292))
   reminderLabel:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -307, 326, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -307, 416, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -307, 500, 65)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", raidSettingsY(-307), 326, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", raidSettingsY(-307), 416, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", raidSettingsY(-307), 500, 65)
 
   local raidSection = createText(frame, "RAID RESET INFO", 11)
-  raidSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
+  raidSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-349))
   raidSection:SetTextColor(1, 0.82, 0)
-  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -364, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", raidSettingsY(-364), 326, 260)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
-  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -406)
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-406))
   tooltipSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -421, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", raidSettingsY(-421), 326, 260)
 
   local interfaceSection = createText(frame, "LOOT & MINIMAP", 11)
-  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -464)
+  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-464))
   interfaceSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -492, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", raidSettingsY(-492), 326, 260)
   createCheckbox(
     frame,
     "ShirsLazyTrixConsolidateMinimapButtons",
     "Collect addon minimap buttons",
     "consolidateMinimapButtons",
-    -479,
+    raidSettingsY(-479),
     326,
     260
   )
@@ -683,7 +733,7 @@ local function createSettingsFrame()
 
   local lootSlider = CreateFrame("Slider", "ShirsLazyTrixLootRowsSlider", frame, "OptionsSliderTemplate")
   lootSlider:SetWidth(110)
-  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -540)
+  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, raidSettingsY(-540))
   lootSlider:SetMinMaxValues(4, 12)
   lootSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixLootRowsSliderLow"):SetText("4")
@@ -697,7 +747,7 @@ local function createSettingsFrame()
 
   local buttonSizeSlider = CreateFrame("Slider", "ShirsLazyTrixMinimapButtonSizeSlider", frame, "OptionsSliderTemplate")
   buttonSizeSlider:SetWidth(110)
-  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -540)
+  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, raidSettingsY(-540))
   buttonSizeSlider:SetMinMaxValues(18, 32)
   buttonSizeSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixMinimapButtonSizeSliderLow"):SetText("18")
