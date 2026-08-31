@@ -4,11 +4,8 @@
 
 ### Added
 
-- Added an optional Raid Info panel for the current character's saved raid instances, reset countdowns, and other-character hover data.
-
-### Changed
-
-- The Raid Info panel now grows or shrinks with the number of visible raid rows and uses a compact empty state.
+- Added an optional Raid Info panel showing the current character's saved raid lockouts and reset countdowns.
+- Added hover details for matching raid lockouts last saved by other characters.
 
 ## 0.0.14
 
