@@ -78,6 +78,8 @@ local activeCooldownTooltipRow = nil
 local activeRaidInfoTooltipRow = nil
 local RAID_INFO_ROW_COUNT = 10
 local RAID_INFO_ROW_SPACING = 23
+local RAID_INFO_PANEL_WIDTH = 250
+local RAID_INFO_ROW_WIDTH = 222
 local RAID_INFO_PANEL_MIN_HEIGHT = 62
 local RAID_INFO_PANEL_EMPTY_HEIGHT = 82
 
@@ -304,7 +306,7 @@ function ShirsLazyTrix.RefreshRaidInfoRowTooltip(row)
 end
 
 local function configureRaidInfoRow(button, panel, index)
-  button:SetWidth(272)
+  button:SetWidth(RAID_INFO_ROW_WIDTH)
   button:SetHeight(22)
   button:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -32 - ((index - 1) * RAID_INFO_ROW_SPACING))
 
@@ -338,7 +340,7 @@ local function createRaidInfoPanel()
   if ShirsLazyTrixRaidInfoPanel then return ShirsLazyTrixRaidInfoPanel end
 
   local panel = CreateFrame("Frame", "ShirsLazyTrixRaidInfoPanel", UIParent)
-  panel:SetWidth(300)
+  panel:SetWidth(RAID_INFO_PANEL_WIDTH)
   panel:SetHeight(RAID_INFO_PANEL_EMPTY_HEIGHT)
   panel:SetFrameStrata("DIALOG")
   panel:SetClampedToScreen(true)
@@ -392,7 +394,7 @@ local function createRaidInfoPanel()
 
   panel.emptyLabel = createText(panel, "Waiting for raid information...", 11)
   panel.emptyLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -34)
-  panel.emptyLabel:SetWidth(272)
+  panel.emptyLabel:SetWidth(RAID_INFO_ROW_WIDTH)
   panel.emptyLabel:SetHeight(36)
   panel.emptyLabel:SetJustifyH("LEFT")
   panel.emptyLabel:SetTextColor(0.62, 0.7, 0.8)
@@ -631,34 +633,38 @@ local function createSettingsFrame()
   cooldownSection:SetTextColor(1, 0.82, 0)
 
   createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", -205, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -233, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -261, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -233, 326, 260)
+
+  local raidSection = createText(frame, "RAID RESET INFO", 11)
+  raidSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
+  raidSection:SetTextColor(1, 0.82, 0)
+  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -307, 326, 260)
 
   local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
-  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
   reminderLabel:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -307, 326, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -307, 416, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -307, 500, 65)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -364, 326, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -364, 416, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -364, 500, 65)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
-  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -406)
   tooltipSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -364, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -421, 326, 260)
 
   local interfaceSection = createText(frame, "LOOT & MINIMAP", 11)
-  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -407)
+  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -464)
   interfaceSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -435, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -492, 326, 260)
   createCheckbox(
     frame,
     "ShirsLazyTrixConsolidateMinimapButtons",
     "Collect addon minimap buttons",
     "consolidateMinimapButtons",
-    -422,
+    -479,
     326,
     260
   )
@@ -677,7 +683,7 @@ local function createSettingsFrame()
 
   local lootSlider = CreateFrame("Slider", "ShirsLazyTrixLootRowsSlider", frame, "OptionsSliderTemplate")
   lootSlider:SetWidth(110)
-  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -483)
+  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -540)
   lootSlider:SetMinMaxValues(4, 12)
   lootSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixLootRowsSliderLow"):SetText("4")
@@ -691,7 +697,7 @@ local function createSettingsFrame()
 
   local buttonSizeSlider = CreateFrame("Slider", "ShirsLazyTrixMinimapButtonSizeSlider", frame, "OptionsSliderTemplate")
   buttonSizeSlider:SetWidth(110)
-  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -483)
+  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -540)
   buttonSizeSlider:SetMinMaxValues(18, 32)
   buttonSizeSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixMinimapButtonSizeSliderLow"):SetText("18")

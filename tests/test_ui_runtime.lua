@@ -237,7 +237,9 @@ local cooldownLock = named.ShirsLazyTrixCooldownLock
 if not cooldownLock then error("cooldown panel lock button missing", 2) end
 if not cooldownLock.lockLabel or cooldownLock.lockLabel.text ~= "U" then error("cooldown panel unlock label missing", 2) end
 if cooldownPanel.fontStrings[2].point[4] ~= -36 then error("cooldown drag text was not moved left for the lock button", 2) end
-if raidInfoPanel.width ~= 300 or raidInfoPanel.height ~= 82 then error("raid info panel empty-state geometry mismatch", 2) end
+if raidInfoPanel.width ~= 250 or raidInfoPanel.height ~= 82 then error("raid info panel empty-state geometry mismatch", 2) end
+if not raidInfoPanel.emptyLabel or raidInfoPanel.emptyLabel.width ~= 222 then error("raid info panel empty-state width mismatch", 2) end
+if not raidInfoPanel.raidRows[1] or raidInfoPanel.raidRows[1].width ~= 222 then error("raid info row width mismatch", 2) end
 if raidInfoPanel:IsVisible() then error("disabled raid info panel should start hidden", 2) end
 if not raidInfoPanel.movable or not raidInfoPanel.clamped or not raidInfoPanel.scripts.OnDragStart or not raidInfoPanel.scripts.OnDragStop then
   error("raid info panel drag contract missing", 2)
@@ -304,7 +306,8 @@ this = invitePhrases
 invitePhrases:SetText("invite, need group")
 if ShirsLazyTrixDB.invitePhrases ~= "invite, need group" then error("comma-separated invite phrases were not saved while typing", 2) end
 if turnIn.point[4] ~= 24 or autoAcceptOpenWorldRes.point[4] ~= 24 or autoSellGray.point[4] ~= 24 then error("left settings column anchors mismatch", 2) end
-if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showItemIDs.point[4] ~= 326 then error("right settings column anchors mismatch", 2) end
+if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showRaidInfoPanel.point[4] ~= 326 or showItemIDs.point[4] ~= 326 then error("right settings column anchors mismatch", 2) end
+if showRaidInfoPanel.point[5] ~= -307 then error("raid reset checkbox must have its own settings section", 2) end
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
 if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
 if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
