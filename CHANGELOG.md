@@ -4,7 +4,8 @@
 
 ### Added
 
-- Added an optional Raid Info panel showing the current character's saved raid lockouts and reset countdowns.
+- Added an optional Raid Info panel for the current character's saved raid lockouts and reset countdowns.
+- Added a separate setting plus saved position and lock state for the Raid Info panel.
 - Added hover details for matching raid lockouts last saved by other characters.
 
 ## 0.0.14
