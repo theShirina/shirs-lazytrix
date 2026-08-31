@@ -23,6 +23,13 @@ local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
       ShirsLazyTrix.RefreshTrainerFeature()
     elseif name == "ShirsLazyTrixShowCooldownPanel" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
       ShirsLazyTrix.RefreshCooldownPanelVisibility()
+    elseif name == "ShirsLazyTrixShowRaidInfoPanel" then
+      if this:GetChecked() and ShirsLazyTrix.RequestRaidInfo then
+        ShirsLazyTrix.RequestRaidInfo()
+      end
+      if ShirsLazyTrix.RefreshRaidInfoPanelVisibility then
+        ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
+      end
     elseif name == "ShirsLazyTrixHideCooldownPanelInCombat" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
       ShirsLazyTrix.RefreshCooldownPanelVisibility()
     elseif name == "ShirsLazyTrixExpandLootRows" and ShirsLazyTrix.RefreshLootRows then
@@ -46,6 +53,7 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixTrainAll:SetChecked(ShirsLazyTrixDB.trainAll and 1 or nil)
   ShirsLazyTrixAutoOpenTrainers:SetChecked(ShirsLazyTrixDB.autoOpenTrainers and 1 or nil)
   ShirsLazyTrixShowCooldownPanel:SetChecked(ShirsLazyTrixDB.showCooldownPanel and 1 or nil)
+  ShirsLazyTrixShowRaidInfoPanel:SetChecked(ShirsLazyTrixDB.showRaidInfoPanel and 1 or nil)
   ShirsLazyTrixHideCooldownPanelInCombat:SetChecked(ShirsLazyTrixDB.hideCooldownPanelInCombat and 1 or nil)
   ShirsLazyTrixInviteFromWhispers:SetChecked(ShirsLazyTrixDB.inviteFromWhispers and 1 or nil)
   ShirsLazyTrixInviteFromGuild:SetChecked(ShirsLazyTrixDB.inviteFromGuild and 1 or nil)
@@ -67,6 +75,11 @@ end
 
 local cooldownPanelInCombat = false
 local activeCooldownTooltipRow = nil
+local activeRaidInfoTooltipRow = nil
+local RAID_INFO_ROW_COUNT = 10
+local RAID_INFO_ROW_SPACING = 23
+local RAID_INFO_PANEL_MIN_HEIGHT = 62
+local RAID_INFO_PANEL_EMPTY_HEIGHT = 82
 
 function ShirsLazyTrix.RefreshCooldownRowTooltip(row)
   if not row or not row.cooldownKey or not GameTooltip then return false end
@@ -262,6 +275,233 @@ end
 function ShirsLazyTrix.SetCooldownPanelCombatState(active)
   cooldownPanelInCombat = active and true or false
   ShirsLazyTrix.RefreshCooldownPanelVisibility()
+  if ShirsLazyTrix.RefreshRaidInfoPanelVisibility then
+    ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
+  end
+end
+
+function ShirsLazyTrix.RefreshRaidInfoRowTooltip(row)
+  if not row or not row.raidName or not GameTooltip then return false end
+  GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
+  GameTooltip:SetText(row.raidName)
+  if row.raidID and row.raidID ~= "" then
+    GameTooltip:AddLine("Instance ID: " .. row.raidID, 0.7, 0.8, 0.9)
+  end
+  GameTooltip:AddLine("This character: " .. (row.statusText or "Not known"), 1, 1, 1)
+  GameTooltip:AddLine("Other characters (last saved data)", 1, 0.82, 0)
+  local rows = ShirsLazyTrix.GetRaidInfoCharacterStatuses and
+    ShirsLazyTrix.GetRaidInfoCharacterStatuses(row.raidName) or {}
+  if table.getn(rows) == 0 then
+    GameTooltip:AddLine("No saved data for this raid.", 0.7, 0.8, 0.9)
+  else
+    local index
+    for index = 1, table.getn(rows) do
+      GameTooltip:AddLine(rows[index].owner .. ": " .. rows[index].status, 0.85, 0.9, 0.96)
+    end
+  end
+  GameTooltip:Show()
+  return true
+end
+
+local function configureRaidInfoRow(button, panel, index)
+  button:SetWidth(272)
+  button:SetHeight(22)
+  button:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -32 - ((index - 1) * RAID_INFO_ROW_SPACING))
+
+  local background = button:CreateTexture(nil, "BACKGROUND")
+  background:SetAllPoints(button)
+  background:SetTexture("Interface\\Buttons\\WHITE8X8")
+  background:SetVertexColor(0.09, 0.14, 0.2, 0.9)
+
+  local label = createText(button, "", 11)
+  label:SetPoint("LEFT", button, "LEFT", 7, 0)
+  label:SetTextColor(0.85, 0.9, 0.96)
+  button.label = label
+
+  local status = createText(button, "Not known", 11)
+  status:SetPoint("RIGHT", button, "RIGHT", -7, 0)
+  status:SetTextColor(0.58, 0.64, 0.72)
+  button.status = status
+
+  button:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")
+  button:SetScript("OnEnter", function()
+    activeRaidInfoTooltipRow = this
+    ShirsLazyTrix.RefreshRaidInfoRowTooltip(this)
+  end)
+  button:SetScript("OnLeave", function()
+    activeRaidInfoTooltipRow = nil
+    GameTooltip:Hide()
+  end)
+end
+
+local function createRaidInfoPanel()
+  if ShirsLazyTrixRaidInfoPanel then return ShirsLazyTrixRaidInfoPanel end
+
+  local panel = CreateFrame("Frame", "ShirsLazyTrixRaidInfoPanel", UIParent)
+  panel:SetWidth(300)
+  panel:SetHeight(RAID_INFO_PANEL_EMPTY_HEIGHT)
+  panel:SetFrameStrata("DIALOG")
+  panel:SetClampedToScreen(true)
+  panel:SetMovable(true)
+  panel:EnableMouse(true)
+  panel:RegisterForDrag("LeftButton")
+  panel:SetBackdrop({
+    bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 16,
+    edgeSize = 10,
+    insets = { left = 3, right = 3, top = 3, bottom = 3 },
+  })
+  panel:SetBackdropColor(0.025, 0.035, 0.055, 0.96)
+  panel:SetBackdropBorderColor(0.3, 0.6, 0.9, 1)
+
+  local point, relativePoint, x, y = ShirsLazyTrix.GetRaidInfoPanelPosition()
+  panel:SetPoint(point, UIParent, relativePoint, x, y)
+
+  local title = createText(panel, "RAID RESET INFO", 11)
+  title:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -10)
+  title:SetTextColor(1, 0.82, 0)
+
+  local dragNote = createText(panel, "drag", 9)
+  dragNote:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -36, -11)
+  dragNote:SetTextColor(0.48, 0.56, 0.66)
+
+  local lock = CreateFrame("Button", "ShirsLazyTrixRaidInfoLock", panel)
+  lock:SetWidth(18)
+  lock:SetHeight(18)
+  lock:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -8, -7)
+  lock:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square")
+  lock.lockLabel = lock:CreateFontString(nil, "OVERLAY")
+  lock.lockLabel:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE")
+  lock.lockLabel:SetPoint("CENTER", lock, "CENTER", 0, 0)
+  lock:SetScript("OnClick", function()
+    ShirsLazyTrixDB.raidInfoPanelLocked = not ShirsLazyTrixDB.raidInfoPanelLocked
+    ShirsLazyTrix.RefreshRaidInfoPanelLock()
+  end)
+  lock:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(this, "ANCHOR_RIGHT")
+    if ShirsLazyTrixDB.raidInfoPanelLocked then
+      GameTooltip:SetText("Unlock raid reset panel")
+    else
+      GameTooltip:SetText("Lock raid reset panel")
+    end
+    GameTooltip:Show()
+  end)
+  lock:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+  panel.emptyLabel = createText(panel, "Waiting for raid information...", 11)
+  panel.emptyLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 14, -34)
+  panel.emptyLabel:SetWidth(272)
+  panel.emptyLabel:SetHeight(36)
+  panel.emptyLabel:SetJustifyH("LEFT")
+  panel.emptyLabel:SetTextColor(0.62, 0.7, 0.8)
+
+  panel.raidRows = {}
+  local index
+  for index = 1, RAID_INFO_ROW_COUNT do
+    local row = CreateFrame("Button", "ShirsLazyTrixRaidInfoRow" .. index, panel)
+    panel.raidRows[index] = row
+    configureRaidInfoRow(row, panel, index)
+    row:Hide()
+  end
+
+  panel:SetScript("OnDragStart", function()
+    if not ShirsLazyTrixDB.raidInfoPanelLocked then panel:StartMoving() end
+  end)
+  panel:SetScript("OnDragStop", function()
+    if ShirsLazyTrixDB.raidInfoPanelLocked then return end
+    panel:StopMovingOrSizing()
+    local savedPoint, _, savedRelativePoint, savedX, savedY = panel:GetPoint()
+    ShirsLazyTrix.SaveRaidInfoPanelPosition(savedPoint, savedRelativePoint, savedX, savedY)
+  end)
+  panel:Hide()
+  ShirsLazyTrix.RefreshRaidInfoPanelLock()
+  return panel
+end
+
+function ShirsLazyTrix.RefreshRaidInfoPanelLock()
+  if not ShirsLazyTrixRaidInfoPanel or not ShirsLazyTrixRaidInfoLock then return end
+  local locked = ShirsLazyTrixDB.raidInfoPanelLocked and true or false
+  ShirsLazyTrixRaidInfoPanel:SetMovable(not locked)
+  if locked then
+    ShirsLazyTrixRaidInfoLock.lockLabel:SetText("L")
+    ShirsLazyTrixRaidInfoLock.lockLabel:SetTextColor(1, 0.82, 0)
+  else
+    ShirsLazyTrixRaidInfoLock.lockLabel:SetText("U")
+    ShirsLazyTrixRaidInfoLock.lockLabel:SetTextColor(0.48, 0.72, 1)
+  end
+end
+
+function ShirsLazyTrix.RefreshRaidInfoPanel()
+  if not ShirsLazyTrixRaidInfoPanel then return end
+  local state = ShirsLazyTrix.GetCurrentRaidInfo and ShirsLazyTrix.GetCurrentRaidInfo() or {}
+  local instances = type(state) == "table" and state.instances or nil
+  local visibleRows = 0
+  local index
+  for index = 1, RAID_INFO_ROW_COUNT do
+    local row = ShirsLazyTrixRaidInfoPanel.raidRows[index]
+    local entry = type(instances) == "table" and instances[index] or nil
+    if type(entry) == "table" and entry.name and entry.name ~= "" then
+      row.raidName = entry.name
+      row.raidID = entry.id or ""
+      row.statusText = ShirsLazyTrix.FormatRaidInfoStatus(entry)
+      row.label:SetText(entry.name)
+      row.status:SetText(row.statusText)
+      if row.statusText == "Ready" then
+        row.status:SetTextColor(0.35, 1, 0.45)
+      else
+        row.status:SetTextColor(1, 0.82, 0)
+      end
+      row:Show()
+      visibleRows = visibleRows + 1
+    else
+      row.raidName = nil
+      row.raidID = nil
+      row.statusText = nil
+      row:Hide()
+    end
+  end
+  local panelHeight = RAID_INFO_PANEL_EMPTY_HEIGHT
+  if visibleRows > 0 then
+    panelHeight = RAID_INFO_PANEL_MIN_HEIGHT + ((visibleRows - 1) * RAID_INFO_ROW_SPACING)
+  end
+  ShirsLazyTrixRaidInfoPanel:SetHeight(panelHeight)
+  if state.known == true then
+    if visibleRows == 0 then
+      ShirsLazyTrixRaidInfoPanel.emptyLabel:SetText("No saved raid lockouts.")
+      ShirsLazyTrixRaidInfoPanel.emptyLabel:Show()
+    else
+      ShirsLazyTrixRaidInfoPanel.emptyLabel:Hide()
+    end
+  else
+    ShirsLazyTrixRaidInfoPanel.emptyLabel:SetText("Waiting for raid information...")
+    ShirsLazyTrixRaidInfoPanel.emptyLabel:Show()
+  end
+  if activeRaidInfoTooltipRow then
+    if activeRaidInfoTooltipRow.raidName then
+      ShirsLazyTrix.RefreshRaidInfoRowTooltip(activeRaidInfoTooltipRow)
+    else
+      activeRaidInfoTooltipRow = nil
+      GameTooltip:Hide()
+    end
+  end
+end
+
+function ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
+  local panel = createRaidInfoPanel()
+  local insideInstance = false
+  if ShirsLazyTrixDB.hideCooldownPanelInCombat and type(IsInInstance) == "function" then
+    local instanceState = IsInInstance()
+    insideInstance = instanceState == true or instanceState == 1
+  end
+  if ShirsLazyTrixDB.showRaidInfoPanel and
+     not (ShirsLazyTrixDB.hideCooldownPanelInCombat and (cooldownPanelInCombat or insideInstance)) then
+    ShirsLazyTrix.RefreshRaidInfoPanel()
+    panel:Show()
+  else
+    panel:Hide()
+  end
 end
 
 local function createSettingsFrame()
@@ -391,33 +631,34 @@ local function createSettingsFrame()
   cooldownSection:SetTextColor(1, 0.82, 0)
 
   createCheckbox(frame, "ShirsLazyTrixShowCooldownPanel", "Show movable cooldown panel", "showCooldownPanel", -205, 326, 260)
-  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -233, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", -233, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixHideCooldownPanelInCombat", "Hide in combat and instances", "hideCooldownPanelInCombat", -261, 326, 260)
 
   local reminderLabel = createText(frame, "OTHER-CHARACTER READY REMINDERS", 10)
-  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -264)
+  reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -292)
   reminderLabel:SetTextColor(0.62, 0.7, 0.8)
 
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -279, 326, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -279, 416, 70)
-  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -279, 500, 65)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherMooncloth", "Mooncloth", "notifyOtherMooncloth", -307, 326, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherArcanite", "Arcanite", "notifyOtherArcanite", -307, 416, 70)
+  createCheckbox(frame, "ShirsLazyTrixNotifyOtherSalt", "Salt", "notifyOtherSalt", -307, 500, 65)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
-  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -321)
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -349)
   tooltipSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -336, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", -364, 326, 260)
 
   local interfaceSection = createText(frame, "LOOT & MINIMAP", 11)
-  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -379)
+  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, -407)
   interfaceSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -407, 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", -435, 326, 260)
   createCheckbox(
     frame,
     "ShirsLazyTrixConsolidateMinimapButtons",
     "Collect addon minimap buttons",
     "consolidateMinimapButtons",
-    -394,
+    -422,
     326,
     260
   )
@@ -436,7 +677,7 @@ local function createSettingsFrame()
 
   local lootSlider = CreateFrame("Slider", "ShirsLazyTrixLootRowsSlider", frame, "OptionsSliderTemplate")
   lootSlider:SetWidth(110)
-  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -455)
+  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, -483)
   lootSlider:SetMinMaxValues(4, 12)
   lootSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixLootRowsSliderLow"):SetText("4")
@@ -450,7 +691,7 @@ local function createSettingsFrame()
 
   local buttonSizeSlider = CreateFrame("Slider", "ShirsLazyTrixMinimapButtonSizeSlider", frame, "OptionsSliderTemplate")
   buttonSizeSlider:SetWidth(110)
-  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -455)
+  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, -483)
   buttonSizeSlider:SetMinMaxValues(18, 32)
   buttonSizeSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixMinimapButtonSizeSliderLow"):SetText("18")
@@ -572,4 +813,6 @@ function ShirsLazyTrix.CreateUI()
   if ShirsLazyTrix.RefreshLootRows then ShirsLazyTrix.RefreshLootRows() end
   createCooldownPanel()
   ShirsLazyTrix.RefreshCooldownPanelVisibility()
+  createRaidInfoPanel()
+  ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
 end

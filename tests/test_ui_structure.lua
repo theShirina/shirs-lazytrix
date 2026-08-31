@@ -71,6 +71,7 @@ assertContains('"Expand trainer windows", "expandTrainers"', "expanded trainer c
 assertContains('"Enable Train All", "trainAll"', "Train All checkbox")
 assertContains('"Automatically open trainer services", "autoOpenTrainers"', "automatic trainer gossip checkbox")
 assertContains('"Show movable cooldown panel", "showCooldownPanel"', "profession cooldown panel checkbox")
+assertContains('"Show raid reset panel", "showRaidInfoPanel"', "raid reset panel checkbox")
 assertContains('"Hide in combat and instances", "hideCooldownPanelInCombat"', "cooldown combat-and-instance-hide checkbox")
 assertContains('"OTHER-CHARACTER READY REMINDERS"', "other-character reminder heading")
 assertContains('"Mooncloth", "notifyOtherMooncloth"', "Mooncloth reminder checkbox")
@@ -85,6 +86,16 @@ assertContains('"ShirsLazyTrixMinimapButtonSizeSlider"', "collected minimap butt
 assertContains('"PROFESSION COOLDOWNS"', "profession cooldown section heading")
 assertContains('CreateFrame("Frame", "ShirsLazyTrixCooldownPanel", UIParent)', "movable cooldown panel")
 assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownMooncloth"', "clickable Mooncloth row")
+assertContains('CreateFrame("Frame", "ShirsLazyTrixRaidInfoPanel", UIParent)', "movable raid info panel")
+assertContains('panel:SetHeight(RAID_INFO_PANEL_EMPTY_HEIGHT)', "compact empty raid panel height")
+assertContains('panelHeight = RAID_INFO_PANEL_MIN_HEIGHT + ((visibleRows - 1) * RAID_INFO_ROW_SPACING)', "row-count raid panel height")
+assertContains('ShirsLazyTrixRaidInfoPanel:SetHeight(panelHeight)', "dynamic raid panel resize")
+assertContains('CreateFrame("Button", "ShirsLazyTrixRaidInfoRow" .. index', "raid reset rows")
+assertContains('CreateFrame("Button", "ShirsLazyTrixRaidInfoLock"', "raid info panel lock button")
+assertContains('ShirsLazyTrix.GetRaidInfoCharacterStatuses', "other-character raid hover data")
+assertContains('ShirsLazyTrix.SaveRaidInfoPanelPosition', "saved raid info panel position")
+assertContains('dragNote:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -36, -11)', "raid panel drag note left offset")
+assertContains('"RAID RESET INFO"', "raid reset panel heading")
 assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownArcanite"', "clickable Arcanite row")
 assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownSalt"', "clickable Salt Shaker row")
 assertContains('CreateFrame("Button", "ShirsLazyTrixCooldownLock"', "cooldown panel lock button")
@@ -98,8 +109,8 @@ assertContains("Gray-only selling. Vendor actions stay independent.", "merchant 
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 21 then
-  error("UI must define exactly twenty checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 22 then
+  error("UI must define exactly twenty-one checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.15
+
+### Added
+
+- Added an optional Raid Info panel for the current character's saved raid instances, reset countdowns, and other-character hover data.
+
+### Changed
+
+- The Raid Info panel now grows or shrinks with the number of visible raid rows and uses a compact empty state.
+
 ## 0.0.14
 
 ### Fixed

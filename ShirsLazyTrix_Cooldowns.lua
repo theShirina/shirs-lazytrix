@@ -9,6 +9,8 @@ local MAX_UPTIME_SECONDS = 2147483647
 local MAX_WALL_TIME = 4102444800
 local MAX_READY_TIME = MAX_WALL_TIME + MAX_COOLDOWN_SECONDS
 local UPTIME_WRAP_SECONDS = (2 ^ 32) / 1000
+local MAX_SAVED_RAID_INSTANCES = 10
+local RAID_INFO_REQUEST_COOLDOWN = 2
 
 local DEFINITIONS = {
   mooncloth = {
@@ -51,6 +53,7 @@ local VALID_POINTS = {
 
 local pendingCraft = nil
 local pendingSaltUse = nil
+local raidInfoRequestAt = 0
 local refreshElapsed = 0
 local tradeSkillOpen = false
 local tradeSkillPollElapsed = 0
@@ -99,6 +102,102 @@ local function currentCharacterState()
     ShirsLazyTrixDB.cooldownsByCharacter[key] = {}
   end
   return ShirsLazyTrixDB.cooldownsByCharacter[key]
+end
+
+local function currentRaidInfoState()
+  local state = currentCharacterState()
+  if type(state.raidInfo) ~= "table" then state.raidInfo = {} end
+  if type(state.raidInfo.instances) ~= "table" then state.raidInfo.instances = {} end
+  return state.raidInfo
+end
+
+local function cleanText(value)
+  if type(value) ~= "string" then return "" end
+  return string.gsub(string.gsub(value, "^%s+", ""), "%s+$", "")
+end
+
+local function sameText(left, right)
+  local leftText = string.lower(cleanText(left))
+  local rightText = string.lower(cleanText(right))
+  return leftText ~= "" and leftText == rightText
+end
+
+local function raidIDText(value)
+  if value == nil then return "" end
+  if type(value) == "string" then return cleanText(value) end
+  if type(value) == "number" and numberInRange(value, 0, 2147483647) then
+    return tostring(value)
+  end
+  return ""
+end
+
+function ShirsLazyTrix.RequestRaidInfo()
+  if type(RequestRaidInfo) ~= "function" then return false end
+  local now = uptime()
+  if raidInfoRequestAt > 0 and now > 0 and now - raidInfoRequestAt < RAID_INFO_REQUEST_COOLDOWN then
+    return true
+  end
+  raidInfoRequestAt = now
+  RequestRaidInfo()
+  return true
+end
+
+function ShirsLazyTrix.UpdateRaidInfoObservations(now)
+  local observedAt = wallTime(now)
+  local state = currentRaidInfoState()
+  if type(GetNumSavedInstances) ~= "function" or type(GetSavedInstanceInfo) ~= "function" then
+    return false
+  end
+  local count = GetNumSavedInstances()
+  if not numberInRange(count, 0, MAX_SAVED_RAID_INSTANCES) or count ~= math.floor(count) then
+    return false
+  end
+  local instances = {}
+  local index
+  for index = 1, count do
+    local name, instanceID, reset = GetSavedInstanceInfo(index)
+    local cleanName = cleanText(name)
+    if cleanName == "" or not numberInRange(reset, 0, MAX_COOLDOWN_SECONDS) then
+      return false
+    end
+    instances[index] = {
+      name = cleanName,
+      id = raidIDText(instanceID),
+      readyAt = observedAt + reset,
+    }
+  end
+  state.known = true
+  state.observedAt = observedAt
+  state.instances = instances
+  return true
+end
+
+function ShirsLazyTrix.GetCurrentRaidInfo()
+  return currentRaidInfoState()
+end
+
+function ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
+  if type(entry) ~= "table" or not numberInRange(entry.readyAt, 0, MAX_READY_TIME) then
+    return "Not known"
+  end
+  return ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = entry.readyAt }, now)
+end
+
+function ShirsLazyTrix.HandleRaidInfoUpdate(now)
+  if type(ShirsLazyTrixDB) ~= "table" or ShirsLazyTrixDB.showRaidInfoPanel ~= true then return false end
+  local updated = ShirsLazyTrix.UpdateRaidInfoObservations(now)
+  if ShirsLazyTrix.RefreshRaidInfoPanel then ShirsLazyTrix.RefreshRaidInfoPanel() end
+  return updated
+end
+
+function ShirsLazyTrix.InitializeRaidInfo()
+  currentRaidInfoState()
+  if type(ShirsLazyTrixDB) == "table" and ShirsLazyTrixDB.showRaidInfoPanel == true then
+    ShirsLazyTrix.RequestRaidInfo()
+  end
+  if ShirsLazyTrix.RefreshRaidInfoPanelVisibility then
+    ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
+  end
 end
 
 local function setKnownState(key, readyAt, observedAt)
@@ -277,6 +376,46 @@ local function parseSavedCharacterKey(savedKey)
   return realm, character
 end
 
+function ShirsLazyTrix.GetRaidInfoCharacterStatuses(instanceName, now)
+  local rows = {}
+  if type(ShirsLazyTrixDB) ~= "table" or type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
+    return rows
+  end
+  local currentKey = ShirsLazyTrix.CooldownCharacterKey()
+  local currentRealm = ""
+  if type(GetCVar) == "function" then currentRealm = GetCVar("realmName") or "" end
+  local savedKey, state
+  for savedKey, state in pairs(ShirsLazyTrixDB.cooldownsByCharacter) do
+    local realm, character = parseSavedCharacterKey(savedKey)
+    if savedKey ~= currentKey and realm and character and type(state) == "table" and
+       type(state.raidInfo) == "table" and state.raidInfo.known == true and
+       type(state.raidInfo.instances) == "table" then
+      local index
+      for index = 1, table.getn(state.raidInfo.instances) do
+        local entry = state.raidInfo.instances[index]
+        if type(entry) == "table" and sameText(entry.name, instanceName) then
+          local owner = character
+          if realm ~= currentRealm then owner = owner .. " (" .. realm .. ")" end
+          table.insert(rows, {
+            owner = owner,
+            realm = realm,
+            character = character,
+            status = ShirsLazyTrix.FormatRaidInfoStatus(entry, now),
+          })
+          break
+        end
+      end
+    end
+  end
+  table.sort(rows, function(left, right)
+    if left.realm == currentRealm and right.realm ~= currentRealm then return true end
+    if left.realm ~= currentRealm and right.realm == currentRealm then return false end
+    if left.realm ~= right.realm then return left.realm < right.realm end
+    return left.character < right.character
+  end)
+  return rows
+end
+
 function ShirsLazyTrix.NotifyReadyCooldownsForOtherCharacters(now)
   if type(ShirsLazyTrixDB) ~= "table" or type(ShirsLazyTrixDB.cooldownsByCharacter) ~= "table" then
     return 0
@@ -409,6 +548,38 @@ end
 function ShirsLazyTrix.SaveCooldownPanelPosition(point, relativePoint, x, y)
   point, relativePoint, x, y = ShirsLazyTrix.NormalizeCooldownPanelPosition(point, relativePoint, x, y)
   ShirsLazyTrixDB.cooldownPanelPosition = {
+    point = point,
+    relativePoint = relativePoint,
+    x = x,
+    y = y,
+  }
+end
+
+function ShirsLazyTrix.NormalizeRaidInfoPanelPosition(point, relativePoint, x, y)
+  if not VALID_POINTS[point] or not VALID_POINTS[relativePoint] or
+     not numberInRange(x, -10000, 10000) or
+     not numberInRange(y, -10000, 10000) then
+    return "CENTER", "CENTER", 0, -160
+  end
+  return point, relativePoint, x, y
+end
+
+function ShirsLazyTrix.GetRaidInfoPanelPosition()
+  local position = type(ShirsLazyTrixDB) == "table" and ShirsLazyTrixDB.raidInfoPanelPosition or nil
+  if type(position) ~= "table" then
+    return "CENTER", "CENTER", 0, -160
+  end
+  return ShirsLazyTrix.NormalizeRaidInfoPanelPosition(
+    position.point,
+    position.relativePoint,
+    position.x,
+    position.y
+  )
+end
+
+function ShirsLazyTrix.SaveRaidInfoPanelPosition(point, relativePoint, x, y)
+  point, relativePoint, x, y = ShirsLazyTrix.NormalizeRaidInfoPanelPosition(point, relativePoint, x, y)
+  ShirsLazyTrixDB.raidInfoPanelPosition = {
     point = point,
     relativePoint = relativePoint,
     x = x,
@@ -582,6 +753,7 @@ function ShirsLazyTrix.HandleCooldownOnUpdate(elapsed)
   if refreshElapsed >= COOLDOWN_REFRESH_SECONDS then
     refreshElapsed = 0
     if ShirsLazyTrix.RefreshCooldownPanel then ShirsLazyTrix.RefreshCooldownPanel() end
+    if ShirsLazyTrix.RefreshRaidInfoPanel then ShirsLazyTrix.RefreshRaidInfoPanel() end
   end
 end
 

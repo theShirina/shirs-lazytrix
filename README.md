@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.14 improves quest turn-in safety for failed and recurring quests.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.15 adds an optional Raid Info panel with row-count-based sizing.
 
 ## Features
 
@@ -39,6 +39,9 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.14 improves ques
 - Ten seconds after login, announces ready saved cooldowns for your other characters; Mooncloth, Arcanite, and Salt Shaker reminders can each be switched on or off.
 - Includes a small panel lock and an option to hide the panel during combat and while inside battlegrounds, raids, or dungeons.
 - Corrects Salt Shaker cooldowns across the client's uptime wrap instead of showing roughly 50 days.
+- Optional movable Raid Info panel for this character's saved raid lockouts and reset times.
+- Hovering a raid row shows matching saved raid data for other characters, with last-observed status.
+- Resizes the Raid Info panel to the number of visible raid rows, including compact empty and waiting states.
 - Optionally shows `Item ID: <number>` beneath item tooltips from bags, equipment, loot, vendors, quests, professions, and item links.
 - Sells one revalidated gray stack per tick and waits for proceeds to settle.
 - Does not support marked junk or add a merchant button.
@@ -48,6 +51,10 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.14 improves ques
 - Adjustable four-to-twelve-row stock Blizzard loot frame with fixed-size top controls and repeated stock body art; expansion can be disabled for another loot UI, and pfUI-owned loot remains untouched.
 - Optional automatic party invites from whisperers and guild chat.
 - Invite triggers accept multiple comma-separated phrases, save the text as you type, require the complete incoming message to equal one configured phrase, and use a short per-sender cooldown to prevent repeat invites.
+
+## Raid Info
+
+The optional Raid Info panel is off by default. Enable it in LazyTrix settings to show this character's saved raid instances in the exact client API order, with a live reset countdown. The panel grows or shrinks with the number of visible entries and uses a compact empty state when there are no saved lockouts. Hover a raid row to see matching data last observed for other saved characters; those values are not live queries for the other characters.
 
 ## Shift behavior
 
@@ -68,7 +75,8 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 - Enable Train All: off.
 - Automatically open trainer services: off.
 - Show profession cooldown panel: off.
-- Hide cooldown panel in combat and instances: off.
+- Show Raid Info panel: off.
+- Hide cooldown panels in combat and instances: off.
 - Other-character Mooncloth reminder: on.
 - Other-character Arcanite reminder: on.
 - Other-character Salt Shaker reminder: on.
@@ -83,7 +91,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.14.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.14/ShirsLazyTrix-v0.0.14.zip).
+1. Download [`ShirsLazyTrix-v0.0.15.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.15/ShirsLazyTrix-v0.0.15.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

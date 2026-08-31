@@ -10,7 +10,9 @@ local DEFAULTS = {
   trainAll = false,
   autoOpenTrainers = false,
   showCooldownPanel = false,
+  showRaidInfoPanel = false,
   cooldownPanelLocked = false,
+  raidInfoPanelLocked = false,
   hideCooldownPanelInCombat = false,
   notifyOtherMooncloth = true,
   notifyOtherArcanite = true,
@@ -196,8 +198,14 @@ function ShirsLazyTrix.EnsureDatabase()
   if type(ShirsLazyTrixDB.showCooldownPanel) ~= "boolean" then
     ShirsLazyTrixDB.showCooldownPanel = DEFAULTS.showCooldownPanel
   end
+  if type(ShirsLazyTrixDB.showRaidInfoPanel) ~= "boolean" then
+    ShirsLazyTrixDB.showRaidInfoPanel = DEFAULTS.showRaidInfoPanel
+  end
   if type(ShirsLazyTrixDB.cooldownPanelLocked) ~= "boolean" then
     ShirsLazyTrixDB.cooldownPanelLocked = DEFAULTS.cooldownPanelLocked
+  end
+  if type(ShirsLazyTrixDB.raidInfoPanelLocked) ~= "boolean" then
+    ShirsLazyTrixDB.raidInfoPanelLocked = DEFAULTS.raidInfoPanelLocked
   end
   if type(ShirsLazyTrixDB.hideCooldownPanelInCombat) ~= "boolean" then
     ShirsLazyTrixDB.hideCooldownPanelInCombat = DEFAULTS.hideCooldownPanelInCombat
@@ -258,6 +266,9 @@ function ShirsLazyTrix.EnsureDatabase()
   end
   if ShirsLazyTrixDB.cooldownPanelPosition ~= nil and type(ShirsLazyTrixDB.cooldownPanelPosition) ~= "table" then
     ShirsLazyTrixDB.cooldownPanelPosition = nil
+  end
+  if ShirsLazyTrixDB.raidInfoPanelPosition ~= nil and type(ShirsLazyTrixDB.raidInfoPanelPosition) ~= "table" then
+    ShirsLazyTrixDB.raidInfoPanelPosition = nil
   end
   local minimapAngleText = string.lower(tostring(ShirsLazyTrixDB.minimapAngle))
   if type(ShirsLazyTrixDB.minimapAngle) ~= "number" or

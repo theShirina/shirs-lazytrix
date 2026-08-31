@@ -161,6 +161,30 @@ ShirsLazyTrix.FormatCooldownStatus = function(entry)
   return "1d 2h"
 end
 local accountCooldownTick = 0
+local raidInfoRequests = 0
+local raidRows = {
+  { name = "Molten Core", id = "A1", status = "1h 0m" },
+  { name = "Onyxia's Lair", id = "B2", status = "Ready" },
+}
+ShirsLazyTrix.GetRaidInfoPanelPosition = function() return "TOPRIGHT", "TOPRIGHT", -40, -120 end
+local savedRaidInfoPosition = nil
+ShirsLazyTrix.SaveRaidInfoPanelPosition = function(point, relativePoint, x, y)
+  savedRaidInfoPosition = { point, relativePoint, x, y }
+end
+ShirsLazyTrix.RequestRaidInfo = function() raidInfoRequests = raidInfoRequests + 1 return true end
+ShirsLazyTrix.GetCurrentRaidInfo = function()
+  return { known = true, instances = raidRows }
+end
+ShirsLazyTrix.FormatRaidInfoStatus = function(entry)
+  return entry and entry.status or "Not known"
+end
+ShirsLazyTrix.GetRaidInfoCharacterStatuses = function(name)
+  if name ~= "Molten Core" then return {} end
+  return {
+    { owner = "Alfa", status = "2h 0m" },
+    { owner = "Beta", status = "Ready" },
+  }
+end
 ShirsLazyTrix.GetCooldownCharacterStatuses = function(key)
   if key ~= "mooncloth" then return {} end
   return {
@@ -189,7 +213,8 @@ ShirsLazyTrix.CreateUI()
 local settings = named.ShirsLazyTrixSettingsFrame
 local minimap = named.ShirsLazyTrixMinimapButton
 local cooldownPanel = named.ShirsLazyTrixCooldownPanel
-if not settings or not minimap or not cooldownPanel then error("UI frames were not constructed", 2) end
+local raidInfoPanel = named.ShirsLazyTrixRaidInfoPanel
+if not settings or not minimap or not cooldownPanel or not raidInfoPanel then error("UI frames were not constructed", 2) end
 if settings.width ~= 620 or settings.height ~= 600 then error("compact two-column settings geometry mismatch", 2) end
 if settings.point[5] ~= 0 then error("settings panel must use a viewport-safe center anchor", 2) end
 if not settings.backdrop or settings.backdrop.bgFile ~= "Interface\\Tooltips\\UI-Tooltip-Background" then error("settings backdrop mismatch", 2) end
@@ -212,6 +237,13 @@ local cooldownLock = named.ShirsLazyTrixCooldownLock
 if not cooldownLock then error("cooldown panel lock button missing", 2) end
 if not cooldownLock.lockLabel or cooldownLock.lockLabel.text ~= "U" then error("cooldown panel unlock label missing", 2) end
 if cooldownPanel.fontStrings[2].point[4] ~= -36 then error("cooldown drag text was not moved left for the lock button", 2) end
+if raidInfoPanel.width ~= 300 or raidInfoPanel.height ~= 82 then error("raid info panel empty-state geometry mismatch", 2) end
+if raidInfoPanel:IsVisible() then error("disabled raid info panel should start hidden", 2) end
+if not raidInfoPanel.movable or not raidInfoPanel.clamped or not raidInfoPanel.scripts.OnDragStart or not raidInfoPanel.scripts.OnDragStop then
+  error("raid info panel drag contract missing", 2)
+end
+local raidInfoLock = named.ShirsLazyTrixRaidInfoLock
+if not raidInfoLock or not raidInfoLock.lockLabel or raidInfoLock.lockLabel.text ~= "U" then error("raid info panel lock missing", 2) end
 
 minimap.scripts.OnDragStart()
 if not minimap.scripts.OnUpdate then error("drag did not start position updates", 2) end
@@ -241,6 +273,7 @@ local expandTrainers = named.ShirsLazyTrixExpandTrainers
 local trainAll = named.ShirsLazyTrixTrainAll
 local autoOpenTrainers = named.ShirsLazyTrixAutoOpenTrainers
 local showCooldownPanel = named.ShirsLazyTrixShowCooldownPanel
+local showRaidInfoPanel = named.ShirsLazyTrixShowRaidInfoPanel
 local hideCooldownInCombat = named.ShirsLazyTrixHideCooldownPanelInCombat
 local notifyOtherMooncloth = named.ShirsLazyTrixNotifyOtherMooncloth
 local notifyOtherArcanite = named.ShirsLazyTrixNotifyOtherArcanite
@@ -259,6 +292,7 @@ if not expandTrainers then error("expanded trainer checkbox missing", 2) end
 if not trainAll then error("Train All checkbox missing", 2) end
 if not autoOpenTrainers then error("automatic trainer gossip checkbox missing", 2) end
 if not showCooldownPanel then error("profession cooldown panel checkbox missing", 2) end
+if not showRaidInfoPanel then error("raid reset panel checkbox missing", 2) end
 if not hideCooldownInCombat then error("cooldown combat-hide checkbox missing", 2) end
 if not notifyOtherMooncloth or not notifyOtherArcanite or not notifyOtherSalt then error("individual other-character reminder checkboxes missing", 2) end
 if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
@@ -274,7 +308,7 @@ if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showIt
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
 if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
 if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -319,6 +353,62 @@ showCooldownPanel.scripts.OnClick()
 if ShirsLazyTrixDB.showCooldownPanel ~= true or not cooldownPanel:IsVisible() then
   error("cooldown checkbox did not show the panel", 2)
 end
+
+showRaidInfoPanel.checked = 1
+this = showRaidInfoPanel
+showRaidInfoPanel.scripts.OnClick()
+if ShirsLazyTrixDB.showRaidInfoPanel ~= true or not raidInfoPanel:IsVisible() then
+  error("raid info checkbox did not show the panel", 2)
+end
+local raidInfoRow = named.ShirsLazyTrixRaidInfoRow1
+if not raidInfoRow then error("raid info row missing", 2) end
+if raidInfoRow.label.text ~= "Molten Core" or raidInfoRow.status.text ~= "1h 0m" then
+  error("raid info row status text mismatch", 2)
+end
+if raidInfoPanel.height ~= 85 then error("raid info panel did not size for two rows", 2) end
+raidRows = { { name = "Molten Core", id = "A1", status = "1h 0m" } }
+ShirsLazyTrix.RefreshRaidInfoPanel()
+if raidInfoPanel.height ~= 62 or named.ShirsLazyTrixRaidInfoRow2:IsVisible() then error("raid info panel did not shrink to one row", 2) end
+raidRows = {}
+ShirsLazyTrix.RefreshRaidInfoPanel()
+if raidInfoPanel.height ~= 82 or raidInfoPanel.emptyLabel.text ~= "No saved raid lockouts." then error("raid info panel empty resize mismatch", 2) end
+raidRows = {}
+local raidIndex
+for raidIndex = 1, 10 do
+  table.insert(raidRows, { name = "Raid " .. raidIndex, id = raidIndex, status = "1h 0m" })
+end
+ShirsLazyTrix.RefreshRaidInfoPanel()
+if raidInfoPanel.height ~= 269 then error("raid info panel did not size for ten rows", 2) end
+raidRows = {
+  { name = "Molten Core", id = "A1", status = "1h 0m" },
+  { name = "Onyxia's Lair", id = "B2", status = "Ready" },
+}
+ShirsLazyTrix.RefreshRaidInfoPanel()
+this = raidInfoRow
+raidInfoRow.scripts.OnEnter()
+if GameTooltip.lines[5] ~= "Alfa: 2h 0m" or GameTooltip.lines[6] ~= "Beta: Ready" then
+  error("other-character raid hover lines missing", 2)
+end
+raidInfoRow.scripts.OnLeave()
+raidInfoPanel.point = { "TOPRIGHT", UIParent, "TOPRIGHT", -70, -140 }
+this = raidInfoPanel
+raidInfoPanel.scripts.OnDragStart()
+if not raidInfoPanel.moving then error("raid info panel drag did not start", 2) end
+raidInfoPanel.scripts.OnDragStop()
+if raidInfoPanel.moving then error("raid info panel drag did not stop", 2) end
+if not savedRaidInfoPosition or savedRaidInfoPosition[1] ~= "TOPRIGHT" or savedRaidInfoPosition[2] ~= "TOPRIGHT" or savedRaidInfoPosition[3] ~= -70 or savedRaidInfoPosition[4] ~= -140 then
+  error("raid info panel position was not saved", 2)
+end
+this = raidInfoLock
+raidInfoLock.scripts.OnClick()
+if ShirsLazyTrixDB.raidInfoPanelLocked ~= true or raidInfoPanel.movable ~= false then error("raid info panel did not lock", 2) end
+raidInfoPanel.moving = false
+this = raidInfoPanel
+raidInfoPanel.scripts.OnDragStart()
+if raidInfoPanel.moving then error("locked raid info panel started moving", 2) end
+this = raidInfoLock
+raidInfoLock.scripts.OnClick()
+if ShirsLazyTrixDB.raidInfoPanelLocked ~= false or raidInfoPanel.movable ~= true then error("raid info panel did not unlock", 2) end
 
 local moonclothRow = named.ShirsLazyTrixCooldownMooncloth
 local arcaniteRow = named.ShirsLazyTrixCooldownArcanite

@@ -19,6 +19,8 @@ local merchantOrder = {}
 local trainerGossipConsumed = false
 local gossipHandled = 0
 local cooldownInitializations = 0
+local raidInfoInitializations = 0
+local raidInfoUpdates = 0
 local cooldownLoginNotices = 0
 local cooldownBagRefreshes = 0
 local cooldownTradeRefreshes = 0
@@ -79,6 +81,12 @@ ShirsLazyTrix = {
   InitializeCooldowns = function()
     cooldownInitializations = cooldownInitializations + 1
   end,
+  InitializeRaidInfo = function()
+    raidInfoInitializations = raidInfoInitializations + 1
+  end,
+  HandleRaidInfoUpdate = function()
+    raidInfoUpdates = raidInfoUpdates + 1
+  end,
   NotifyReadyCooldownsForOtherCharacters = function()
     cooldownLoginNotices = cooldownLoginNotices + 1
   end,
@@ -103,6 +111,9 @@ ShirsLazyTrix = {
   RefreshCooldownPanelVisibility = function()
     cooldownVisibilityRefreshes = cooldownVisibilityRefreshes + 1
   end,
+  RefreshRaidInfoPanelVisibility = function()
+    cooldownVisibilityRefreshes = cooldownVisibilityRefreshes + 1
+  end,
 }
 SlashCmdList = {}
 
@@ -113,6 +124,7 @@ assert(frame.events.MERCHANT_CLOSED, "MERCHANT_CLOSED is not registered")
 assert(frame.events.RESURRECT_REQUEST, "RESURRECT_REQUEST is not registered")
 assert(frame.events.CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS, "stealth buff chat event is not registered")
 assert(frame.events.PLAYER_ENTERING_WORLD, "PLAYER_ENTERING_WORLD is not registered")
+assert(frame.events.UPDATE_INSTANCE_INFO, "UPDATE_INSTANCE_INFO is not registered")
 assert(frame.events.BAG_UPDATE, "BAG_UPDATE is not registered")
 assert(frame.events.BAG_UPDATE_COOLDOWN, "BAG_UPDATE_COOLDOWN is not registered")
 assert(frame.events.TRADE_SKILL_SHOW, "TRADE_SKILL_SHOW is not registered")
@@ -129,10 +141,12 @@ assert(cooldownLoginNotices == 0, "other-character notices ran before SavedVaria
 event = "VARIABLES_LOADED"
 frame.scripts.OnEvent()
 assert(cooldownInitializations == 2, "cooldowns were not initialized after SavedVariables")
+assert(raidInfoInitializations == 2, "raid info was not initialized after SavedVariables")
 assert(tooltipHookInitializations == 1, "tooltip hooks were not refreshed after SavedVariables loaded")
 event = "PLAYER_ENTERING_WORLD"
 frame.scripts.OnEvent()
 assert(cooldownInitializations == 3, "cooldowns were not initialized on world entry")
+assert(raidInfoInitializations == 3, "raid info was not initialized on world entry")
 assert(cooldownLoginNotices == 0, "other-character ready cooldowns were announced without the login delay")
 arg1 = -100
 frame.scripts.OnUpdate()
@@ -150,6 +164,9 @@ assert(cooldownLoginNotices == 1, "other-character ready cooldowns were not anno
 event = "PLAYER_ENTERING_WORLD"
 frame.scripts.OnEvent()
 assert(cooldownLoginNotices == 1, "other-character ready cooldowns repeated during the same session")
+event = "UPDATE_INSTANCE_INFO"
+frame.scripts.OnEvent()
+assert(raidInfoUpdates == 1, "raid-info update event was not dispatched")
 event = "ZONE_CHANGED_NEW_AREA"
 frame.scripts.OnEvent()
 assert(cooldownVisibilityRefreshes >= 2, "instance visibility was not refreshed on world and zone changes")

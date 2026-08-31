@@ -6,6 +6,8 @@ local uptime = 500
 local profession = "Tailoring"
 local tradeRows = {}
 local bagRows = {}
+local raidRows = {}
+local raidInfoRequests = 0
 local castCalls = {}
 local craftCalls = {}
 local itemUseCalls = {}
@@ -54,6 +56,12 @@ function GetContainerItemCooldown(bag, slot)
   if enabled == nil then enabled = 1 end
   return row.start, row.duration, enabled
 end
+function RequestRaidInfo() raidInfoRequests = raidInfoRequests + 1 end
+function GetNumSavedInstances() return table.getn(raidRows) end
+function GetSavedInstanceInfo(index)
+  local row = raidRows[index]
+  return row and row.name, row and row.id, row and row.reset
+end
 function CastSpellByName(name) table.insert(castCalls, name) end
 function DoTradeSkill(index, amount) table.insert(craftCalls, { index, amount }) end
 function UseContainerItem(bag, slot) table.insert(itemUseCalls, { bag, slot }) end
@@ -78,6 +86,38 @@ end
 
 local key = ShirsLazyTrix.CooldownCharacterKey()
 assertEqual(key, "Microbot Vanilla\031Shirina", "character key")
+
+raidRows = {
+  { name = "Molten Core", id = "A1", reset = 3600 },
+  { name = "Onyxia's Lair", id = "B2", reset = 0 },
+}
+assertEqual(ShirsLazyTrix.RequestRaidInfo(), true, "raid info request")
+assertEqual(raidInfoRequests, 1, "raid info request count")
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "raid info observation")
+local raidState = ShirsLazyTrix.GetCurrentRaidInfo()
+assertEqual(raidState.known, true, "raid info state known")
+assertEqual(table.getn(raidState.instances), 2, "raid row count")
+assertEqual(raidState.instances[1].name, "Molten Core", "raid instance name")
+assertEqual(raidState.instances[1].id, "A1", "raid instance id")
+assertEqual(raidState.instances[1].readyAt, now + 3600, "raid absolute reset time")
+assertEqual(ShirsLazyTrix.FormatRaidInfoStatus(raidState.instances[1], now), "1h 0m", "raid reset status")
+assertEqual(ShirsLazyTrix.FormatRaidInfoStatus(raidState.instances[2], now), "Ready", "ready raid status")
+raidRows[2].reset = "invalid"
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), false, "malformed raid row fails closed")
+assertEqual(table.getn(raidState.instances), 2, "malformed raid row preserves prior snapshot")
+raidRows = {}
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response observation")
+assertEqual(table.getn(raidState.instances), 0, "empty raid response clears snapshot")
+ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031Alfa"] = {
+  raidInfo = {
+    known = true,
+    instances = { { name = "Molten Core", id = "X9", readyAt = now + 7200 } },
+  },
+}
+local otherRaidRows = ShirsLazyTrix.GetRaidInfoCharacterStatuses("Molten Core", now)
+assertEqual(table.getn(otherRaidRows), 1, "other-character raid hover row count")
+assertEqual(otherRaidRows[1].owner, "Alfa", "other-character raid owner")
+assertEqual(otherRaidRows[1].status, "2h 0m", "other-character raid status")
 
 assertEqual(ShirsLazyTrix.FormatCooldownStatus(nil, now), "Not known", "unknown status")
 assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now - 1 }, now), "Ready", "ready status")

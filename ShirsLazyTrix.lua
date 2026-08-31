@@ -27,6 +27,7 @@ frame:RegisterEvent("CHAT_MSG_SPELL_PERIODIC_SELF_BUFFS")
 frame:RegisterEvent("CHAT_MSG_WHISPER")
 frame:RegisterEvent("CHAT_MSG_GUILD")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+frame:RegisterEvent("UPDATE_INSTANCE_INFO")
 frame:RegisterEvent("BAG_UPDATE")
 frame:RegisterEvent("BAG_UPDATE_COOLDOWN")
 frame:RegisterEvent("TRADE_SKILL_SHOW")
@@ -42,15 +43,20 @@ frame:SetScript("OnEvent", function()
     ShirsLazyTrix.EnsureDatabase()
     ShirsLazyTrix.CreateUI()
     ShirsLazyTrix.InitializeCooldowns()
+    ShirsLazyTrix.InitializeRaidInfo()
     ShirsLazyTrix.InstallItemIDTooltipHooks()
     scheduleReadyCooldownLoginNotice()
   elseif event == "PLAYER_ENTERING_WORLD" then
     enteredWorld = true
     ShirsLazyTrix.InitializeCooldowns()
+    ShirsLazyTrix.InitializeRaidInfo()
     ShirsLazyTrix.RefreshCooldownPanelVisibility()
     scheduleReadyCooldownLoginNotice()
+  elseif event == "UPDATE_INSTANCE_INFO" then
+    ShirsLazyTrix.HandleRaidInfoUpdate()
   elseif event == "ZONE_CHANGED_NEW_AREA" then
     ShirsLazyTrix.RefreshCooldownPanelVisibility()
+    ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
   elseif event == "BAG_UPDATE" or event == "BAG_UPDATE_COOLDOWN" then
     ShirsLazyTrix.RefreshCooldownObservations()
   elseif event == "TRADE_SKILL_SHOW" then
