@@ -1,5 +1,11 @@
 # Quest, vendor, and world automation precedents
 
+## v0.0.17 CCP raid schedule
+
+The installed CCP 4.17 on the exact Microbot 1.12.1 client parses the server reply `ACINFO:SELFLOCK:SCHED` into `CCP_SelfLockData.sched`. Each record supplies a map ID, raid name, seconds until reset, and reset cycle. The exact-client map IDs are `249` Onyxia's Lair, `309` Zul'Gurub, and `509` Ruins of Ahn'Qiraj (AQ20). CCP stores reset times from `GetTime()`, so LazyTrix converts the uptime delta to its wall-clock status model.
+
+LazyTrix reads the existing CCP data path without copying CCP code. Its new default-off setting adds only those three schedule rows when the current character has no matching native lockout, preserves native rows ahead of schedule rows, validates map, time, and cycle bounds, and fails closed when CCP schedule data is absent or malformed. This is exact local source evidence for the mechanism; a live server reply is still required to populate the schedule after a client restart.
+
 ## Exact-client source
 
 LazyPig 6.0.4 declares Interface `11200` and handles `QUEST_GREETING`, `GOSSIP_SHOW`, `QUEST_PROGRESS`, and `QUEST_COMPLETE`. It selects active or available quests through stock Vanilla functions and proves `IsShiftKeyDown()` is available in the exact client. It calls `CompleteQuest()` without checking `IsQuestCompletable()`.

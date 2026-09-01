@@ -8,6 +8,8 @@ local tradeRows = {}
 local bagRows = {}
 local raidRows = {}
 local raidInfoRequests = 0
+local ccpScheduleRequests = 0
+local ccpMessages = {}
 local castCalls = {}
 local craftCalls = {}
 local itemUseCalls = {}
@@ -57,6 +59,8 @@ function GetContainerItemCooldown(bag, slot)
   return row.start, row.duration, enabled
 end
 function RequestRaidInfo() raidInfoRequests = raidInfoRequests + 1 end
+function CCP_SelfLockRequest(force) ccpScheduleRequests = ccpScheduleRequests + 1 end
+function CCP_Send(message) table.insert(ccpMessages, message) end
 function GetNumSavedInstances() return table.getn(raidRows) end
 function GetSavedInstanceInfo(index)
   local row = raidRows[index]
@@ -87,12 +91,25 @@ end
 local key = ShirsLazyTrix.CooldownCharacterKey()
 assertEqual(key, "Microbot Vanilla\031Shirina", "character key")
 
+local cooldownPanelRefreshes = 0
+local raidPanelRefreshes = 0
+ShirsLazyTrix.RefreshCooldownPanel = function() cooldownPanelRefreshes = cooldownPanelRefreshes + 1 end
+ShirsLazyTrix.RefreshRaidInfoPanel = function() raidPanelRefreshes = raidPanelRefreshes + 1 end
+ShirsLazyTrix.HandleCooldownOnUpdate(0.25)
+assertEqual(cooldownPanelRefreshes, 1, "global cooldown timer refreshes the cooldown panel")
+assertEqual(raidPanelRefreshes, 0, "global cooldown timer leaves raid refresh to its visible panel timer")
+ShirsLazyTrix.RefreshCooldownPanel = nil
+ShirsLazyTrix.RefreshRaidInfoPanel = nil
+
 raidRows = {
   { name = "Molten Core", id = "A1", reset = 3600 },
   { name = "Onyxia's Lair", id = "B2", reset = 0 },
 }
 assertEqual(ShirsLazyTrix.RequestRaidInfo(), true, "raid info request")
 assertEqual(raidInfoRequests, 1, "raid info request count")
+assertEqual(ShirsLazyTrix.RequestCCPRaidSchedule(), true, "CCP schedule request")
+assertEqual(ccpMessages[1], ".stats locks", "CCP schedule request uses the hidden-safe queue")
+assertEqual(ccpScheduleRequests, 0, "CCP schedule request does not use the visible-frame helper")
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "raid info observation")
 local raidState = ShirsLazyTrix.GetCurrentRaidInfo()
 assertEqual(raidState.known, true, "raid info state known")
@@ -127,6 +144,71 @@ assertEqual(canonicalReadyRows, 0, "saved raid alias suppresses canonical ready 
 assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false)), 1, "ready toggle off keeps saved rows only")
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response restores ready catalog state")
+CCP_SelfLockData = {
+  sched = {
+    { map = 509, name = "Ruins of Ahn'Qiraj", resetAt = uptime + 7200, cycle = 3 },
+    { map = 309, name = "Zul'Gurub", resetAt = uptime + 3600, cycle = 3 },
+    { map = 249, name = "Onyxia's Lair", resetAt = uptime + 1800, cycle = 5 },
+    { map = 531, name = "Temple of Ahn'Qiraj", resetAt = uptime + 9999, cycle = 7 },
+  },
+}
+local savedGlobal = _G
+_G = nil
+function getglobal(name)
+  if name == "CCP_SelfLockData" then return CCP_SelfLockData end
+end
+raidState.known = false
+assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "unknown native raid info suppresses CCP schedule rows")
+raidState.known = true
+local scheduledRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)
+_G = savedGlobal
+assertEqual(table.getn(scheduledRows), 3, "CCP schedule exposes the three requested raids")
+assertEqual(scheduledRows[1].name, "Onyxia's Lair", "CCP schedule order puts Onyxia first")
+assertEqual(scheduledRows[1].readyAt, now + 1800, "CCP uptime maps to wall-clock reset")
+assertEqual(scheduledRows[1].cycle, 5, "CCP schedule cycle is preserved")
+assertEqual(scheduledRows[1].scheduled, true, "CCP schedule row is marked scheduled")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(scheduledRows[1], now), "Ready - resets in 30m 0s", "unsaved CCP schedule row states readiness and reset")
+local validSchedule = CCP_SelfLockData.sched
+local staleResetTimes = { uptime, uptime - 1 }
+local staleResetIndex
+for staleResetIndex = 1, table.getn(staleResetTimes) do
+  CCP_SelfLockData.sched = {
+    { map = 249, name = "Onyxia's Lair", resetAt = staleResetTimes[staleResetIndex], cycle = 5 },
+  }
+  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "CCP reset at or before current uptime fails closed")
+end
+CCP_SelfLockData.sched = validSchedule
+local invalidCycles = { 0, 1.5, 366.5 }
+local invalidCycleIndex
+for invalidCycleIndex = 1, table.getn(invalidCycles) do
+  CCP_SelfLockData.sched = {
+    { map = 249, name = "Onyxia's Lair", resetAt = uptime + 1800, cycle = invalidCycles[invalidCycleIndex] },
+  }
+  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "invalid CCP cycle fails closed")
+end
+CCP_SelfLockData.sched = validSchedule
+assertEqual(scheduledRows[2].name, "Zul'Gurub", "CCP schedule includes Zul'Gurub")
+assertEqual(scheduledRows[3].name, "Ruins of Ahn'Qiraj", "CCP schedule includes AQ20")
+local combinedRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true, true)
+assertEqual(table.getn(combinedRows), 7, "combined ready and schedule rows avoid synthetic duplicates")
+local combinedScheduled = 0
+local combinedNames = {}
+local combinedIndex
+for combinedIndex = 1, table.getn(combinedRows) do
+  local combinedRow = combinedRows[combinedIndex]
+  combinedNames[combinedRow.name] = (combinedNames[combinedRow.name] or 0) + 1
+  if combinedRow.scheduled == true then combinedScheduled = combinedScheduled + 1 end
+end
+assertEqual(combinedNames["Onyxia's Lair"], 1, "combined Onyxia row appears once")
+assertEqual(combinedNames["Zul'Gurub"], 1, "combined Zul'Gurub row appears once")
+assertEqual(combinedNames["Ruins of Ahn'Qiraj"], 1, "combined AQ20 row appears once")
+assertEqual(combinedScheduled, 3, "combined rows preserve scheduled reset details")
+raidRows = { { name = "Zul'Gurub", id = "Z9", reset = 600 } }
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "saved raid remains valid with CCP schedule")
+local mixedRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)
+assertEqual(table.getn(mixedRows), 3, "saved raid suppresses duplicate CCP schedule row")
+assertEqual(mixedRows[1].name, "Zul'Gurub", "saved raid keeps native row first")
+assertEqual(mixedRows[2].name, "Onyxia's Lair", "remaining CCP schedule row is retained")
 ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031Alfa"] = {
   raidInfo = {
     known = true,

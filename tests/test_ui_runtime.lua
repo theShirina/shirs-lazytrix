@@ -162,6 +162,8 @@ ShirsLazyTrix.FormatCooldownStatus = function(entry)
 end
 local accountCooldownTick = 0
 local raidInfoRequests = 0
+local ccpScheduleRequests = 0
+local scheduledStatus = "2d 14h"
 local raidRows = {
   { name = "Molten Core", id = "A1", status = "1h 0m" },
   { name = "Onyxia's Lair", id = "B2", status = "Ready" },
@@ -176,14 +178,18 @@ ShirsLazyTrix.SaveRaidInfoPanelPosition = function(point, relativePoint, x, y)
   savedRaidInfoPosition = { point, relativePoint, x, y }
 end
 ShirsLazyTrix.RequestRaidInfo = function() raidInfoRequests = raidInfoRequests + 1 return true end
+ShirsLazyTrix.RequestCCPRaidSchedule = function() ccpScheduleRequests = ccpScheduleRequests + 1 return true end
 ShirsLazyTrix.GetCurrentRaidInfo = function()
   return { known = true, instances = raidRows }
 end
-ShirsLazyTrix.GetRaidInfoDisplayEntries = function(includeReady)
+ShirsLazyTrix.GetRaidInfoDisplayEntries = function(includeReady, includeSchedule)
   local entries = {}
   local index
   for index = 1, table.getn(raidRows) do
     table.insert(entries, raidRows[index])
+  end
+  if includeSchedule then
+    table.insert(entries, { name = "Ruins of Ahn'Qiraj", id = "509", scheduled = true, status = scheduledStatus })
   end
   if includeReady then
     for index = 1, table.getn(raidReadyRows) do
@@ -194,6 +200,11 @@ ShirsLazyTrix.GetRaidInfoDisplayEntries = function(includeReady)
 end
 ShirsLazyTrix.FormatRaidInfoStatus = function(entry)
   return entry and entry.status or "Not known"
+end
+ShirsLazyTrix.FormatRaidInfoDisplayStatus = function(entry)
+  if entry and entry.scheduled then return "Ready - resets in " .. ShirsLazyTrix.FormatRaidInfoStatus(entry) end
+  if entry and entry.ready then return "Ready" end
+  return ShirsLazyTrix.FormatRaidInfoStatus(entry)
 end
 ShirsLazyTrix.GetRaidInfoCharacterStatuses = function(name)
   if name ~= "Molten Core" then return {} end
@@ -222,7 +233,7 @@ ShirsLazyTrix.ApplyMinimapButtonSize = function(value) ShirsLazyTrixDB.minimapBu
 ShirsLazyTrix.RefreshMinimapButtonCollector = function() collectorRefreshes = collectorRefreshes + 1 return true end
 ShirsLazyTrix.ToggleMinimapButtonTray = function() trayToggles = trayToggles + 1 return true end
 ShirsLazyTrix.InitializeMinimapButtonCollector = function(button) collectorInitializations = collectorInitializations + 1 return button end
-ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, showRaidInfoPanel = false, showRaidInfoReady = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, lootRows = 4, consolidateMinimapButtons = false, minimapButtonSize = 24, minimapAngle = 220 }
+ShirsLazyTrixDB = { turnIn = true, pickUp = false, automationOnShift = false, autoSellGray = false, autoRepairAll = false, autoAcceptOpenWorldRes = false, autoRemoveImmolationOnStealth = false, expandTrainers = false, trainAll = false, autoOpenTrainers = false, showCooldownPanel = false, showRaidInfoPanel = false, showRaidInfoSchedule = false, showRaidInfoReady = false, cooldownPanelLocked = false, hideCooldownPanelInCombat = false, notifyOtherMooncloth = true, notifyOtherArcanite = true, notifyOtherSalt = true, showItemIDs = false, lootRows = 4, consolidateMinimapButtons = false, minimapButtonSize = 24, minimapAngle = 220 }
 
 dofile(root .. "/ShirsLazyTrix_UI.lua")
 ShirsLazyTrix.CreateUI()
@@ -298,6 +309,7 @@ local trainAll = named.ShirsLazyTrixTrainAll
 local autoOpenTrainers = named.ShirsLazyTrixAutoOpenTrainers
 local showCooldownPanel = named.ShirsLazyTrixShowCooldownPanel
 local showRaidInfoPanel = named.ShirsLazyTrixShowRaidInfoPanel
+local showRaidInfoSchedule = named.ShirsLazyTrixShowRaidInfoSchedule
 local hideCooldownInCombat = named.ShirsLazyTrixHideCooldownPanelInCombat
 local notifyOtherMooncloth = named.ShirsLazyTrixNotifyOtherMooncloth
 local notifyOtherArcanite = named.ShirsLazyTrixNotifyOtherArcanite
@@ -317,6 +329,7 @@ if not trainAll then error("Train All checkbox missing", 2) end
 if not autoOpenTrainers then error("automatic trainer gossip checkbox missing", 2) end
 if not showCooldownPanel then error("profession cooldown panel checkbox missing", 2) end
 if not showRaidInfoPanel then error("raid reset panel checkbox missing", 2) end
+if not showRaidInfoSchedule then error("CCP raid schedule checkbox missing", 2) end
 if not hideCooldownInCombat then error("cooldown combat-hide checkbox missing", 2) end
 if not notifyOtherMooncloth or not notifyOtherArcanite or not notifyOtherSalt then error("individual other-character reminder checkboxes missing", 2) end
 if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
@@ -333,10 +346,10 @@ if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showRa
 if notifyOtherMooncloth.point[5] ~= -273 or notifyOtherArcanite.point[5] ~= -273 or notifyOtherSalt.point[5] ~= -273 then error("ready reminder vertical position mismatch", 2) end
 if showRaidInfoPanel.point[5] ~= -330 then error("raid reset info vertical position mismatch", 2) end
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
-if lootRowsSlider.point[5] ~= -506 or minimapButtonSizeSlider.point[5] ~= -506 then error("lower settings controls did not move up", 2) end
+if lootRowsSlider.point[5] ~= -534 or minimapButtonSizeSlider.point[5] ~= -534 then error("lower settings controls did not move down to clear CCP schedule controls", 2) end
 if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
 if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or showRaidInfoSchedule.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()
@@ -382,12 +395,34 @@ if ShirsLazyTrixDB.showCooldownPanel ~= true or not cooldownPanel:IsVisible() th
   error("cooldown checkbox did not show the panel", 2)
 end
 
+showRaidInfoSchedule.checked = 1
+this = showRaidInfoSchedule
+showRaidInfoSchedule.scripts.OnClick()
+if ShirsLazyTrixDB.showRaidInfoSchedule ~= true or ccpScheduleRequests ~= 1 then
+  error("CCP schedule checkbox did not request hidden schedule data", 2)
+end
+
 showRaidInfoPanel.checked = 1
 this = showRaidInfoPanel
 showRaidInfoPanel.scripts.OnClick()
 if ShirsLazyTrixDB.showRaidInfoPanel ~= true or not raidInfoPanel:IsVisible() then
   error("raid info checkbox did not show the panel", 2)
 end
+if ccpScheduleRequests ~= 2 then error("opening raid info did not refresh enabled CCP schedules", 2) end
+local scheduledRaidRow = named.ShirsLazyTrixRaidInfoRow3
+if scheduledRaidRow.status.text ~= "Ready - resets in 2d 14h" or scheduledRaidRow.raidScheduled ~= true then
+  error("scheduled unsaved raid row did not show Ready plus reset", 2)
+end
+scheduledStatus = "2d 13h"
+this = raidInfoPanel
+arg1 = 1
+raidInfoPanel.scripts.OnUpdate()
+if scheduledRaidRow.status.text ~= "Ready - resets in 2d 13h" then error("raid panel did not repaint parsed CCP data", 2) end
+showRaidInfoSchedule.checked = nil
+this = showRaidInfoSchedule
+showRaidInfoSchedule.scripts.OnClick()
+if ShirsLazyTrixDB.showRaidInfoSchedule ~= false or scheduledRaidRow:IsVisible() then error("CCP schedule checkbox did not remove scheduled rows", 2) end
+
 local raidInfoRow = named.ShirsLazyTrixRaidInfoRow1
 if not raidInfoRow then error("raid info row missing", 2) end
 if raidInfoRow.label.text ~= "Molten Core" or raidInfoRow.status.text ~= "1h 0m" then

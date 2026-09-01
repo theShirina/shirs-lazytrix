@@ -88,6 +88,7 @@ assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "automatic trainer gossip d
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "profession cooldown panel default")
 assertEqual(ShirsLazyTrixDB.showRaidInfoPanel, false, "raid reset panel default")
 assertEqual(ShirsLazyTrixDB.showRaidInfoReady, false, "ready raid rows default")
+assertEqual(ShirsLazyTrixDB.showRaidInfoSchedule, false, "CCP raid schedule default")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "cooldown panel lock default")
 assertEqual(ShirsLazyTrixDB.raidInfoPanelLocked, false, "raid reset panel lock default")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "cooldown combat-hide default")
@@ -106,6 +107,7 @@ ShirsLazyTrixDB = {
   showCooldownPanel = true,
   showRaidInfoPanel = true,
   showRaidInfoReady = true,
+  showRaidInfoSchedule = true,
   cooldownsByCharacter = { ["Realm\031Character"] = { mooncloth = { known = true, readyAt = 123 } } },
   cooldownPanelPosition = { point = "TOPLEFT", relativePoint = "TOPLEFT", x = 5, y = -7 },
   raidInfoPanelPosition = { point = "TOPRIGHT", relativePoint = "TOPRIGHT", x = -5, y = -12 },
@@ -124,6 +126,7 @@ ShirsLazyTrix.EnsureDatabase()
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, true, "profession cooldown panel choice is preserved")
 assertEqual(ShirsLazyTrixDB.showRaidInfoPanel, true, "raid reset panel choice is preserved")
 assertEqual(ShirsLazyTrixDB.showRaidInfoReady, true, "ready raid rows choice is preserved")
+assertEqual(ShirsLazyTrixDB.showRaidInfoSchedule, true, "CCP raid schedule choice is preserved")
 assertEqual(ShirsLazyTrixDB.cooldownsByCharacter["Realm\031Character"].mooncloth.readyAt, 123, "character cooldown state is preserved")
 assertEqual(ShirsLazyTrixDB.cooldownPanelPosition.x, 5, "cooldown panel position is preserved")
 assertEqual(ShirsLazyTrixDB.raidInfoPanelPosition.x, -5, "raid reset panel position is preserved")
@@ -167,6 +170,7 @@ ShirsLazyTrixDB = {
   showCooldownPanel = "invalid",
   showRaidInfoPanel = "invalid",
   showRaidInfoReady = "invalid",
+  showRaidInfoSchedule = "invalid",
   cooldownPanelLocked = "invalid",
   raidInfoPanelLocked = "invalid",
   hideCooldownPanelInCombat = "invalid",
@@ -196,6 +200,7 @@ assertEqual(ShirsLazyTrixDB.autoOpenTrainers, false, "invalid automatic trainer 
 assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "invalid profession cooldown panel setting repairs")
 assertEqual(ShirsLazyTrixDB.showRaidInfoPanel, false, "invalid raid reset panel setting repairs")
 assertEqual(ShirsLazyTrixDB.showRaidInfoReady, false, "invalid ready raid rows setting repairs")
+assertEqual(ShirsLazyTrixDB.showRaidInfoSchedule, false, "invalid CCP raid schedule setting repairs")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "invalid cooldown panel lock repairs")
 assertEqual(ShirsLazyTrixDB.raidInfoPanelLocked, false, "invalid raid reset panel lock repairs")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "invalid cooldown combat-hide setting repairs")

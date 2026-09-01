@@ -11,6 +11,11 @@ local MAX_READY_TIME = MAX_WALL_TIME + MAX_COOLDOWN_SECONDS
 local UPTIME_WRAP_SECONDS = (2 ^ 32) / 1000
 local MAX_SAVED_RAID_INSTANCES = 10
 local RAID_INFO_REQUEST_COOLDOWN = 2
+local RAID_INFO_CCP_SCHEDULE = {
+  { map = 249, name = "Onyxia's Lair", aliases = { "Onyxia's Lair", "Onyxia" } },
+  { map = 309, name = "Zul'Gurub", aliases = { "Zul'Gurub" } },
+  { map = 509, name = "Ruins of Ahn'Qiraj", aliases = { "Ruins of Ahn'Qiraj", "The Ruins of Ahn'Qiraj", "AQ20" } },
+}
 
 local DEFINITIONS = {
   mooncloth = {
@@ -149,7 +154,53 @@ local function raidCatalogMatches(savedName, catalogEntry)
   return false
 end
 
-function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady)
+local function ccpScheduleDisplayEntries(saved)
+  local data = nil
+  if type(_G) == "table" then
+    data = _G.CCP_SelfLockData
+  elseif type(getglobal) == "function" then
+    data = getglobal("CCP_SelfLockData")
+  end
+  local schedule = type(data) == "table" and data.sched or nil
+  local entries = {}
+  if type(schedule) ~= "table" or type(GetTime) ~= "function" then return entries end
+  local currentUptime = uptime()
+  local observedAt = wallTime(nil)
+  local catalogIndex, scheduleIndex, savedIndex
+  for catalogIndex = 1, table.getn(RAID_INFO_CCP_SCHEDULE) do
+    local catalogEntry = RAID_INFO_CCP_SCHEDULE[catalogIndex]
+    local savedMatch = false
+    for savedIndex = 1, table.getn(saved) do
+      if type(saved[savedIndex]) == "table" and raidCatalogMatches(saved[savedIndex].name, catalogEntry) then
+        savedMatch = true
+        break
+      end
+    end
+    if not savedMatch then
+      for scheduleIndex = 1, table.getn(schedule) do
+        local scheduled = schedule[scheduleIndex]
+        if type(scheduled) == "table" and scheduled.map == catalogEntry.map and
+           numberInRange(scheduled.resetAt, 0, MAX_UPTIME_SECONDS) and scheduled.resetAt > currentUptime and
+           numberInRange(scheduled.cycle, 1, 366) and scheduled.cycle == math.floor(scheduled.cycle) then
+          local delta = scheduled.resetAt - currentUptime
+          if delta <= MAX_COOLDOWN_SECONDS then
+            table.insert(entries, {
+              name = catalogEntry.name,
+              id = tostring(catalogEntry.map),
+              readyAt = observedAt + delta,
+              cycle = scheduled.cycle,
+              scheduled = true,
+            })
+          end
+          break
+        end
+      end
+    end
+  end
+  return entries
+end
+
+function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedule)
   local state = currentRaidInfoState()
   local entries = {}
   local saved = state.instances
@@ -178,11 +229,31 @@ function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady)
       end
     end
   end
+  if includeCCPSchedule and state.known == true then
+    local scheduleEntries = ccpScheduleDisplayEntries(saved)
+    local scheduleIndex
+    for scheduleIndex = 1, table.getn(scheduleEntries) do
+      local entryIndex
+      for entryIndex = table.getn(entries), 1, -1 do
+        if entries[entryIndex].ready == true and sameText(entries[entryIndex].name, scheduleEntries[scheduleIndex].name) then
+          table.remove(entries, entryIndex)
+        end
+      end
+      if table.getn(entries) >= MAX_SAVED_RAID_INSTANCES then break end
+      table.insert(entries, scheduleEntries[scheduleIndex])
+    end
+  end
   return entries
 end
 
 function ShirsLazyTrix.GetRaidInfoReadyCatalog()
   return RAID_INFO_READY_CATALOG
+end
+
+function ShirsLazyTrix.RequestCCPRaidSchedule()
+  if type(CCP_Send) ~= "function" then return false end
+  CCP_Send(".stats locks")
+  return true
 end
 
 function ShirsLazyTrix.RequestRaidInfo()
@@ -237,6 +308,14 @@ function ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
   return ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = entry.readyAt }, now)
 end
 
+function ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry, now)
+  if type(entry) == "table" and entry.scheduled == true then
+    return "Ready - resets in " .. ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
+  end
+  if type(entry) == "table" and entry.ready == true then return "Ready" end
+  return ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
+end
+
 function ShirsLazyTrix.HandleRaidInfoUpdate(now)
   if type(ShirsLazyTrixDB) ~= "table" or ShirsLazyTrixDB.showRaidInfoPanel ~= true then return false end
   local updated = ShirsLazyTrix.UpdateRaidInfoObservations(now)
@@ -248,6 +327,9 @@ function ShirsLazyTrix.InitializeRaidInfo()
   currentRaidInfoState()
   if type(ShirsLazyTrixDB) == "table" and ShirsLazyTrixDB.showRaidInfoPanel == true then
     ShirsLazyTrix.RequestRaidInfo()
+    if ShirsLazyTrixDB.showRaidInfoSchedule == true then
+      ShirsLazyTrix.RequestCCPRaidSchedule()
+    end
   end
   if ShirsLazyTrix.RefreshRaidInfoPanelVisibility then
     ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
@@ -807,7 +889,6 @@ function ShirsLazyTrix.HandleCooldownOnUpdate(elapsed)
   if refreshElapsed >= COOLDOWN_REFRESH_SECONDS then
     refreshElapsed = 0
     if ShirsLazyTrix.RefreshCooldownPanel then ShirsLazyTrix.RefreshCooldownPanel() end
-    if ShirsLazyTrix.RefreshRaidInfoPanel then ShirsLazyTrix.RefreshRaidInfoPanel() end
   end
 end
 

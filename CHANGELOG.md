@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.17
+
+### Added
+
+- Added an optional CCP schedule view for AQ20, Zul'Gurub, and Onyxia's Lair.
+- Shows the server-provided reset countdown and cycle when no personal lockout row exists.
+
+### Changed
+
+- Scheduled unsaved raids now read `Ready - resets in ...`.
+- Requests CCP's schedule through its normal command queue without opening CCP's Raid Lockouts panel.
+
 ## 0.0.16
 
 ### Added

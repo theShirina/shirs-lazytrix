@@ -89,6 +89,13 @@ assertContains('local RAID_SETTINGS_CONTENT_RISE = 30', "raid settings gap tight
 assertContains('raidSettingsY(-292)', "raid settings use scoped upward nudge")
 assertContains('local raidSection = createText(frame, "RAID RESET INFO", 11)', "separate raid reset settings section")
 assertContains('"Show raid reset panel", "showRaidInfoPanel", raidSettingsY(-364), 326, 260', "raid reset checkbox placement")
+assertContains('"Show CCP raid schedules", "showRaidInfoSchedule", raidSettingsY(-392), 326, 260', "CCP schedule checkbox placement")
+assertContains('tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-434))', "tooltip heading clears CCP schedule checkbox")
+assertContains('"Show item IDs in tooltips", "showItemIDs", raidSettingsY(-449), 326, 260', "item-ID checkbox follows tooltip heading")
+assertContains('interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-492))', "loot section follows tooltip controls")
+assertContains('raidSettingsY(-507)', "minimap collector placement after loot heading")
+assertContains('raidSettingsY(-520)', "loot expansion placement after minimap collector")
+assertContains('raidSettingsY(-568)', "loot sliders clear their checkboxes")
 assertContains('reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-292))', "ready reminders placement")
 assertContains('local RAID_INFO_PANEL_WIDTH = 250', "matching raid panel width")
 assertContains('local RAID_INFO_ROW_WIDTH = 222', "matching raid row width")
@@ -104,6 +111,12 @@ assertContains('CreateFrame("CheckButton", "ShirsLazyTrixRaidInfoReadyToggle"', 
 assertContains('readyLabel:SetText("Show all")', "ready raid toggle label")
 assertContains('ShirsLazyTrixDB.showRaidInfoReady', "ready raid toggle state")
 assertContains('ShirsLazyTrix.GetRaidInfoDisplayEntries', "ready raid display entries")
+assertContains('ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry)', "scheduled raid rows show readiness plus reset")
+assertContains('if row.raidReady or row.raidScheduled then', "ready scheduled rows use the Ready color")
+assertContains('name == "ShirsLazyTrixShowRaidInfoPanel" and ShirsLazyTrixDB.showRaidInfoSchedule == true', "opening LazyTrix raid panel requests enabled CCP schedules")
+assertContains('panel.raidInfoRefreshElapsed = 0', "raid panel owns a bounded refresh timer")
+assertContains('panel:SetScript("OnUpdate"', "visible raid panel refreshes after CCP replies")
+assertContains('if this.raidInfoRefreshElapsed >= 1 then', "raid panel refresh is limited to once per second")
 assertContains('ShirsLazyTrix.GetRaidInfoCharacterStatuses', "other-character raid hover data")
 assertContains('ShirsLazyTrix.SaveRaidInfoPanelPosition', "saved raid info panel position")
 assertContains('dragNote:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -36, -11)', "raid panel drag note left offset")
@@ -121,8 +134,8 @@ assertContains("Gray-only selling. Vendor actions stay independent.", "merchant 
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 22 then
-  error("UI must define exactly twenty-one checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 23 then
+  error("UI must define exactly twenty-two checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")
