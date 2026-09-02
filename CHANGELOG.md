@@ -5,23 +5,23 @@
 ### Added
 
 - Added an optional CCP schedule view for AQ20, Zul'Gurub, and Onyxia's Lair.
-- Shows the server-provided reset countdown and cycle when no personal lockout row exists.
+- Shows the server reset countdown and cycle when no personal lockout exists.
 
 ### Changed
 
-- Scheduled unsaved raids now read `Ready - resets in ...`.
-- Requests CCP's schedule through its normal command queue without opening CCP's Raid Lockouts panel.
+- Scheduled raids without a personal lockout now show `Ready - resets in ...`.
+- Reads CCP's schedule without opening the CCP Raid Lockouts panel.
 
 ## 0.0.16
 
 ### Added
 
-- Added a Show all option to Raid Reset Info that lists standard raids without current lockouts as Ready.
-- Added a compact Raid Reset header toggle to switch between saved lockouts and the full raid list.
+- Added a Show all option to Raid Reset Info for standard raids without current lockouts.
+- Added a compact Raid Reset header toggle between saved lockouts and the full raid list.
 
 ### Changed
 
-- Tightened the settings spacing above Other-Character Ready Reminders.
+- Reduced the settings gap above Other-Character Ready Reminders.
 
 ## 0.0.15
 
@@ -98,7 +98,7 @@
 
 - Added a default-off movable panel for the current character's Mooncloth, Transmute: Arcanite, and Salt Shaker cooldowns.
 - Saves panel position and observed cooldown times per realm and character.
-- Clicking a ready row revalidates the live recipe or bag item before requesting exactly one craft or use.
+- Clicking a ready row checks the live recipe or bag item before requesting one craft or use.
 - Blocks duplicate and reentrant Salt Shaker submissions while the first request is pending.
 - Corrects Salt Shaker cooldowns after the client's uptime counter wraps.
 - Added a small lock button and moved the drag hint left to make room for it.
@@ -162,7 +162,7 @@
 - Added one optional Shift-required automation mode covering both quest pickup and turn-in.
 - Prevented item-gated or otherwise incomplete gossip quests from entering a repeated turn-in loop.
 - Added an opt-in vendor action that sells gray-quality items only.
-- Reused the proven asynchronous queue, slot revalidation, cancellation, and delayed-proceeds handling from Shir's Inventory.
+- Handles vendor sales with slot checks, cancellation, and delayed proceeds.
 - Excluded item marking and merchant-button controls.
 
 ## 0.0.1

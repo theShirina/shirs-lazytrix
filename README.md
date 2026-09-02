@@ -45,7 +45,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.17 adds an optio
 - Optionally shows CCP's scheduled reset countdown for AQ20, Zul'Gurub, and Onyxia's Lair.
 - Resizes the Raid Info panel to the number of visible raid rows, including compact empty and waiting states.
 - Optionally shows `Item ID: <number>` beneath item tooltips from bags, equipment, loot, vendors, quests, professions, and item links.
-- Sells one revalidated gray stack per tick and waits for proceeds to settle.
+- Sells one confirmed gray stack at a time and waits for the proceeds to settle.
 - Does not support marked junk or add a merchant button.
 - Minimal dark navy settings panel with the shared blue and gold addon style.
 - Standard 32×32 movable minimap button with an original high-contrast LazyTrix icon.
@@ -102,4 +102,4 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Compatibility
 
-Built and checked for a WoW 1.12 client, Interface `11200`, and Lua 5.0.3. Other clients have not been tested.
+Made for a WoW 1.12 client with Interface `11200` and Lua 5.0.3. Other clients are not supported by this project.
