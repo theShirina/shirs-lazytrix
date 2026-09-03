@@ -310,6 +310,7 @@ local autoOpenTrainers = named.ShirsLazyTrixAutoOpenTrainers
 local showCooldownPanel = named.ShirsLazyTrixShowCooldownPanel
 local showRaidInfoPanel = named.ShirsLazyTrixShowRaidInfoPanel
 local showRaidInfoSchedule = named.ShirsLazyTrixShowRaidInfoSchedule
+local hideRaidInfoInInstances = named.ShirsLazyTrixHideRaidInfoPanelInInstances
 local hideCooldownInCombat = named.ShirsLazyTrixHideCooldownPanelInCombat
 local notifyOtherMooncloth = named.ShirsLazyTrixNotifyOtherMooncloth
 local notifyOtherArcanite = named.ShirsLazyTrixNotifyOtherArcanite
@@ -330,6 +331,7 @@ if not autoOpenTrainers then error("automatic trainer gossip checkbox missing", 
 if not showCooldownPanel then error("profession cooldown panel checkbox missing", 2) end
 if not showRaidInfoPanel then error("raid reset panel checkbox missing", 2) end
 if not showRaidInfoSchedule then error("CCP raid schedule checkbox missing", 2) end
+if not hideRaidInfoInInstances then error("Raid Info instance-hide checkbox missing", 2) end
 if not hideCooldownInCombat then error("cooldown combat-hide checkbox missing", 2) end
 if not notifyOtherMooncloth or not notifyOtherArcanite or not notifyOtherSalt then error("individual other-character reminder checkboxes missing", 2) end
 if not showItemIDs then error("item-ID tooltip checkbox missing", 2) end
@@ -346,10 +348,10 @@ if expandTrainers.point[4] ~= 326 or showCooldownPanel.point[4] ~= 326 or showRa
 if notifyOtherMooncloth.point[5] ~= -273 or notifyOtherArcanite.point[5] ~= -273 or notifyOtherSalt.point[5] ~= -273 then error("ready reminder vertical position mismatch", 2) end
 if showRaidInfoPanel.point[5] ~= -330 then error("raid reset info vertical position mismatch", 2) end
 if lootRowsSlider.point[4] ~= 334 or minimapButtonSizeSlider.point[4] ~= 480 then error("compact slider columns mismatch", 2) end
-if lootRowsSlider.point[5] ~= -534 or minimapButtonSizeSlider.point[5] ~= -534 then error("lower settings controls did not move down to clear CCP schedule controls", 2) end
+if lootRowsSlider.point[5] ~= -562 or minimapButtonSizeSlider.point[5] ~= -562 then error("lower settings controls did not move down to clear Raid Info controls", 2) end
 if lootRowsSlider.point[5] < -settings.height + 25 then error("stock loot row slider extends beyond the settings panel", 2) end
 if minimapButtonSizeSlider.point[5] < -settings.height + 25 then error("minimap button size slider extends beyond the settings panel", 2) end
-if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or showRaidInfoSchedule.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
+if turnIn.checked ~= 1 or pickUp.checked ~= nil or shiftAutomation.checked ~= nil or autoSellGray.checked ~= nil or autoRepairAll.checked ~= nil or autoAcceptOpenWorldRes.checked ~= nil or autoRemoveImmolationOnStealth.checked ~= nil or expandTrainers.checked ~= nil or trainAll.checked ~= nil or autoOpenTrainers.checked ~= nil or showCooldownPanel.checked ~= nil or showRaidInfoPanel.checked ~= nil or showRaidInfoSchedule.checked ~= nil or hideRaidInfoInInstances.checked ~= nil or hideCooldownInCombat.checked ~= nil or notifyOtherMooncloth.checked ~= 1 or notifyOtherArcanite.checked ~= 1 or notifyOtherSalt.checked ~= 1 or showItemIDs.checked ~= nil then error("settings did not refresh checkbox states", 2) end
 turnIn.checked = nil
 this = turnIn
 turnIn.scripts.OnClick()

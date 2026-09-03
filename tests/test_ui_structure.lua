@@ -90,12 +90,13 @@ assertContains('raidSettingsY(-292)', "raid settings use scoped upward nudge")
 assertContains('local raidSection = createText(frame, "RAID RESET INFO", 11)', "separate raid reset settings section")
 assertContains('"Show raid reset panel", "showRaidInfoPanel", raidSettingsY(-364), 326, 260', "raid reset checkbox placement")
 assertContains('"Show CCP raid schedules", "showRaidInfoSchedule", raidSettingsY(-392), 326, 260', "CCP schedule checkbox placement")
-assertContains('tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-434))', "tooltip heading clears CCP schedule checkbox")
-assertContains('"Show item IDs in tooltips", "showItemIDs", raidSettingsY(-449), 326, 260', "item-ID checkbox follows tooltip heading")
-assertContains('interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-492))', "loot section follows tooltip controls")
-assertContains('raidSettingsY(-507)', "minimap collector placement after loot heading")
-assertContains('raidSettingsY(-520)', "loot expansion placement after minimap collector")
-assertContains('raidSettingsY(-568)', "loot sliders clear their checkboxes")
+assertContains('"Hide in instances and raids", "hideRaidInfoPanelInInstances", raidSettingsY(-420), 326, 260', "Raid Info instance-hide checkbox placement")
+assertContains('tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-462))', "tooltip heading clears Raid Info controls")
+assertContains('"Show item IDs in tooltips", "showItemIDs", raidSettingsY(-477), 326, 260', "item-ID checkbox follows tooltip heading")
+assertContains('interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-520))', "loot section follows tooltip controls")
+assertContains('raidSettingsY(-535)', "minimap collector placement after loot heading")
+assertContains('raidSettingsY(-548)', "loot expansion placement after minimap collector")
+assertContains('raidSettingsY(-596)', "loot sliders clear their checkboxes")
 assertContains('reminderLabel:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-292))', "ready reminders placement")
 assertContains('local RAID_INFO_PANEL_WIDTH = 250', "matching raid panel width")
 assertContains('local RAID_INFO_ROW_WIDTH = 222', "matching raid row width")
@@ -134,8 +135,8 @@ assertContains("Gray-only selling. Vendor actions stay independent.", "merchant 
 assertContains('table.insert(UISpecialFrames, "ShirsLazyTrixSettingsFrame")', "Escape closes settings")
 assertAbsent("repeatable", "repeatable controls must be removed")
 
-if count('createCheckbox(') ~= 23 then
-  error("UI must define exactly twenty-two checkbox calls plus the helper", 2)
+if count('createCheckbox(') ~= 24 then
+  error("UI must define exactly twenty-three checkbox calls plus the helper", 2)
 end
 
 print("ui-minimal-family-style: PASS")

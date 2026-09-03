@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.0.18
+
+### Added
+
+- Added a saved `Hide in instances and raids` setting for the Raid Reset Info panel, on by default.
+
+### Changed
+
+- Raid Reset Info now shows Temple of Ahn'Qiraj as `AQ40`, Ruins of Ahn'Qiraj as `AQ-20`, and Onyxia's Lair as `Onyxia`.
+- Turning off the new setting keeps Raid Reset Info visible in instances and raids while preserving the separate combat-hide setting.
+
 ## 0.0.17
 
 ### Added

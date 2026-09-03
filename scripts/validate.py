@@ -127,7 +127,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.17\s*$", toc, re.MULTILINE), "TOC version must be 0.0.17"
+    assert re.search(r"^## Version:\s*0\.0\.18\s*$", toc, re.MULTILINE), "TOC version must be 0.0.18"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -401,9 +401,9 @@ def validate_source() -> None:
         assert "repeatable" not in text.lower(), f"obsolete recurrence wording remains in {name}"
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "ShirsLazyTrix-v0.0.17.zip" in readme, "README download must match the TOC version"
+    assert "ShirsLazyTrix-v0.0.18.zip" in readme, "README download must match the TOC version"
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    assert "ShirsLazyTrix-v0.0.17.zip" in workflow, "workflow package check must match the TOC version"
+    assert "ShirsLazyTrix-v0.0.18.zip" in workflow, "workflow package check must match the TOC version"
 
     combined = "\n".join((ROOT / name).read_text(encoding="utf-8") for name in LUA_FILES)
     forbidden = ("C_QuestLog", "QUEST_ACCEPT_CONFIRM", "QUEST_AUTOCOMPLETE", "hooksecurefunc")

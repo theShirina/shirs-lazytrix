@@ -33,7 +33,8 @@ local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
       ShirsLazyTrix.RefreshTrainerFeature()
     elseif name == "ShirsLazyTrixShowCooldownPanel" and ShirsLazyTrix.RefreshCooldownPanelVisibility then
       ShirsLazyTrix.RefreshCooldownPanelVisibility()
-    elseif name == "ShirsLazyTrixShowRaidInfoPanel" or name == "ShirsLazyTrixShowRaidInfoSchedule" then
+    elseif name == "ShirsLazyTrixShowRaidInfoPanel" or name == "ShirsLazyTrixShowRaidInfoSchedule" or
+           name == "ShirsLazyTrixHideRaidInfoPanelInInstances" then
       if this:GetChecked() and name == "ShirsLazyTrixShowRaidInfoPanel" and ShirsLazyTrix.RequestRaidInfo then
         ShirsLazyTrix.RequestRaidInfo()
       end
@@ -70,6 +71,7 @@ function ShirsLazyTrix.RefreshSettings()
   ShirsLazyTrixShowCooldownPanel:SetChecked(ShirsLazyTrixDB.showCooldownPanel and 1 or nil)
   ShirsLazyTrixShowRaidInfoPanel:SetChecked(ShirsLazyTrixDB.showRaidInfoPanel and 1 or nil)
   ShirsLazyTrixShowRaidInfoSchedule:SetChecked(ShirsLazyTrixDB.showRaidInfoSchedule and 1 or nil)
+  ShirsLazyTrixHideRaidInfoPanelInInstances:SetChecked(ShirsLazyTrixDB.hideRaidInfoPanelInInstances and 1 or nil)
   ShirsLazyTrixHideCooldownPanelInCombat:SetChecked(ShirsLazyTrixDB.hideCooldownPanelInCombat and 1 or nil)
   ShirsLazyTrixInviteFromWhispers:SetChecked(ShirsLazyTrixDB.inviteFromWhispers and 1 or nil)
   ShirsLazyTrixInviteFromGuild:SetChecked(ShirsLazyTrixDB.inviteFromGuild and 1 or nil)
@@ -98,6 +100,13 @@ local RAID_INFO_PANEL_WIDTH = 250
 local RAID_INFO_ROW_WIDTH = 222
 local RAID_INFO_PANEL_MIN_HEIGHT = 62
 local RAID_INFO_PANEL_EMPTY_HEIGHT = 82
+
+local function raidInfoDisplayName(name)
+  if name == "Onyxia's Lair" then return "Onyxia" end
+  if name == "Temple of Ahn'Qiraj" then return "AQ40" end
+  if name == "Ruins of Ahn'Qiraj" then return "AQ-20" end
+  return name
+end
 
 function ShirsLazyTrix.RefreshCooldownRowTooltip(row)
   if not row or not row.cooldownKey or not GameTooltip then return false end
@@ -517,7 +526,7 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
       row.raidScheduled = entry.scheduled == true
       row.raidCycle = entry.cycle
       row.statusText = ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry)
-      row.label:SetText(entry.name)
+      row.label:SetText(raidInfoDisplayName(entry.name))
       row.status:SetText(row.statusText)
       if row.raidReady or row.raidScheduled then
         row.status:SetTextColor(0.35, 1, 0.45)
@@ -565,12 +574,13 @@ end
 function ShirsLazyTrix.RefreshRaidInfoPanelVisibility()
   local panel = createRaidInfoPanel()
   local insideInstance = false
-  if ShirsLazyTrixDB.hideCooldownPanelInCombat and type(IsInInstance) == "function" then
+  if ShirsLazyTrixDB.hideRaidInfoPanelInInstances and type(IsInInstance) == "function" then
     local instanceState = IsInInstance()
     insideInstance = instanceState == true or instanceState == 1
   end
   if ShirsLazyTrixDB.showRaidInfoPanel and
-     not (ShirsLazyTrixDB.hideCooldownPanelInCombat and (cooldownPanelInCombat or insideInstance)) then
+     not (ShirsLazyTrixDB.hideCooldownPanelInCombat and cooldownPanelInCombat) and
+     not (ShirsLazyTrixDB.hideRaidInfoPanelInInstances and insideInstance) then
     ShirsLazyTrix.RefreshRaidInfoPanel()
     panel:Show()
   else
@@ -720,24 +730,25 @@ local function createSettingsFrame()
   raidSection:SetTextColor(1, 0.82, 0)
   createCheckbox(frame, "ShirsLazyTrixShowRaidInfoPanel", "Show raid reset panel", "showRaidInfoPanel", raidSettingsY(-364), 326, 260)
   createCheckbox(frame, "ShirsLazyTrixShowRaidInfoSchedule", "Show CCP raid schedules", "showRaidInfoSchedule", raidSettingsY(-392), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixHideRaidInfoPanelInInstances", "Hide in instances and raids", "hideRaidInfoPanelInInstances", raidSettingsY(-420), 326, 260)
 
   local tooltipSection = createText(frame, "TOOLTIPS", 11)
-  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-434))
+  tooltipSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-462))
   tooltipSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", raidSettingsY(-449), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixShowItemIDs", "Show item IDs in tooltips", "showItemIDs", raidSettingsY(-477), 326, 260)
 
   local interfaceSection = createText(frame, "LOOT & MINIMAP", 11)
-  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-492))
+  interfaceSection:SetPoint("TOPLEFT", frame, "TOPLEFT", 326, raidSettingsY(-520))
   interfaceSection:SetTextColor(1, 0.82, 0)
 
-  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", raidSettingsY(-520), 326, 260)
+  createCheckbox(frame, "ShirsLazyTrixExpandLootRows", "Expand Blizzard loot rows", "expandLootRows", raidSettingsY(-548), 326, 260)
   createCheckbox(
     frame,
     "ShirsLazyTrixConsolidateMinimapButtons",
     "Collect addon minimap buttons",
     "consolidateMinimapButtons",
-    raidSettingsY(-507),
+    raidSettingsY(-535),
     326,
     260
   )
@@ -756,7 +767,7 @@ local function createSettingsFrame()
 
   local lootSlider = CreateFrame("Slider", "ShirsLazyTrixLootRowsSlider", frame, "OptionsSliderTemplate")
   lootSlider:SetWidth(110)
-  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, raidSettingsY(-568))
+  lootSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 334, raidSettingsY(-596))
   lootSlider:SetMinMaxValues(4, 12)
   lootSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixLootRowsSliderLow"):SetText("4")
@@ -770,7 +781,7 @@ local function createSettingsFrame()
 
   local buttonSizeSlider = CreateFrame("Slider", "ShirsLazyTrixMinimapButtonSizeSlider", frame, "OptionsSliderTemplate")
   buttonSizeSlider:SetWidth(110)
-  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, raidSettingsY(-568))
+  buttonSizeSlider:SetPoint("TOPLEFT", frame, "TOPLEFT", 480, raidSettingsY(-596))
   buttonSizeSlider:SetMinMaxValues(18, 32)
   buttonSizeSlider:SetValueStep(1)
   getglobal("ShirsLazyTrixMinimapButtonSizeSliderLow"):SetText("18")

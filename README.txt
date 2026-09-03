@@ -1,4 +1,4 @@
-Shir's LazyTrix 0.0.17
+Shir's LazyTrix 0.0.18
 
 WoW 1.12 client.
 
@@ -25,7 +25,8 @@ The minimalist dark navy panel uses the shared blue and gold addon style.
 - Show Raid Info panel
 - Show all raids without current lockouts as Ready in Raid Info
 - Show CCP schedules for AQ20, Zul'Gurub, and Onyxia's Lair in Raid Info
-- Hide cooldown panels in combat and instances
+- Hide Raid Info in instances and raids (on by default)
+- Hide cooldown panels in combat
 - Other-character Mooncloth ready reminder
 - Other-character Arcanite ready reminder
 - Other-character Salt Shaker ready reminder
@@ -66,7 +67,7 @@ PROFESSION COOLDOWNS
 "Show profession cooldown panel" is off by default. When enabled, the movable panel shows this character's Mooncloth, Transmute: Arcanite, and Salt Shaker state. Hover a row to see the live status for every saved character on the account. Open Tailoring or Alchemy once on each character so LazyTrix can save the live recipe cooldown. While that profession window stays open, LazyTrix refreshes its observations twice per second so a completed manual or panel-triggered craft updates without closing the window. Ten seconds after login, LazyTrix announces ready saved cooldowns for your other characters, but not the character you logged into. Mooncloth, Arcanite, and Salt Shaker reminders each have their own switch and default on. These switches affect login reminders only; they do not remove saved cooldowns or panel rows. Clicking a ready row rechecks the live recipe or bag item before requesting exactly one craft or use; the game still checks reagents, location, skill, and bag space. Use the small lock button to keep the panel in place. The separate hide option hides it during combat and while inside battlegrounds, raids, or dungeons, then restores it afterward.
 
 RAID RESET INFO
-"Show Raid Info panel" is off by default. When enabled, the movable panel shows this character's saved raid instances and reset countdowns from the client's Raid Info data. Use the Show all checkbox in the panel header to add standard raids without a current lockout and display them as Ready. Enable Show CCP raid schedules in settings to add AQ20, Zul'Gurub, and Onyxia's Lair from the server schedule. LazyTrix requests the schedule through CCP without opening CCP's Raid Lockouts panel, then shows each unsaved scheduled raid as "Ready - resets in ..." with its cycle in the tooltip. Hover a raid row to see matching raid data last observed for other saved characters; LazyTrix does not query those characters live. Use the lock button to keep the panel in place. The shared hide option hides both cooldown panels during combat and while inside battlegrounds, raids, or dungeons.
+"Show Raid Info panel" is off by default. When enabled, the movable panel shows this character's saved raid instances and reset countdowns from the client's Raid Info data. Temple of Ahn'Qiraj is shown as "AQ40", Ruins of Ahn'Qiraj as "AQ-20", and Onyxia's Lair as "Onyxia". Use the Show all checkbox in the panel header to add standard raids without a current lockout and display them as Ready. Enable Show CCP raid schedules in settings to add AQ20, Zul'Gurub, and Onyxia's Lair from the server schedule. LazyTrix requests the schedule through CCP without opening CCP's Raid Lockouts panel, then shows each unsaved scheduled raid as "Ready - resets in ..." with its cycle in the tooltip. Hover a raid row to see matching raid data last observed for other saved characters; LazyTrix does not query those characters live. Use the lock button to keep the panel in place. "Hide in instances and raids" is on by default and hides the Raid Info panel in instances and raids. Turn it off to keep that panel visible there; the separate combat-hide option still applies.
 
 LOOT AND MINIMAP
 Loot rows default to four and can be set from four to twelve. The stock header, portrait, close button, text, and item rows stay at full scale. LazyTrix repeats a clean stock body strip for each added row and moves one stock bottom strip to the new edge. It leaves pfUI-owned loot unchanged. The minimap-button collector is off by default. Collected buttons default to 24 pixels and can be set from 18 to 32 pixels. When enabled, left-click the LazyTrix button to open the collected addon buttons and right-click it to open settings. LazyTrix restores collected buttons to their original parent, position, size, scale, textures, frame layer, and frame level when the option is disabled.

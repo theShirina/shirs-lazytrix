@@ -89,6 +89,7 @@ assertEqual(ShirsLazyTrixDB.showCooldownPanel, false, "profession cooldown panel
 assertEqual(ShirsLazyTrixDB.showRaidInfoPanel, false, "raid reset panel default")
 assertEqual(ShirsLazyTrixDB.showRaidInfoReady, false, "ready raid rows default")
 assertEqual(ShirsLazyTrixDB.showRaidInfoSchedule, false, "CCP raid schedule default")
+assertEqual(ShirsLazyTrixDB.hideRaidInfoPanelInInstances, true, "Raid Info instance-hide default")
 assertEqual(ShirsLazyTrixDB.cooldownPanelLocked, false, "cooldown panel lock default")
 assertEqual(ShirsLazyTrixDB.raidInfoPanelLocked, false, "raid reset panel lock default")
 assertEqual(ShirsLazyTrixDB.hideCooldownPanelInCombat, false, "cooldown combat-hide default")
@@ -108,6 +109,7 @@ ShirsLazyTrixDB = {
   showRaidInfoPanel = true,
   showRaidInfoReady = true,
   showRaidInfoSchedule = true,
+  hideRaidInfoPanelInInstances = false,
   cooldownsByCharacter = { ["Realm\031Character"] = { mooncloth = { known = true, readyAt = 123 } } },
   cooldownPanelPosition = { point = "TOPLEFT", relativePoint = "TOPLEFT", x = 5, y = -7 },
   raidInfoPanelPosition = { point = "TOPRIGHT", relativePoint = "TOPRIGHT", x = -5, y = -12 },
