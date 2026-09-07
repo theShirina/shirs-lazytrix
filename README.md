@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.18 adds shorter Raid Info labels and a saved option to hide the panel in instances and raids.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.19 moves the profession cooldown and Raid Info panels behind other windows while keeping the 0.0.18 Raid Info labels and hide setting.
 
 ## Features
 
@@ -45,6 +45,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.18 adds shorter 
 - Optionally shows CCP's scheduled reset countdown for AQ20, Zul'Gurub, and Onyxia's Lair.
 - Uses the short Raid Info labels AQ40, AQ-20, and Onyxia.
 - Resizes the Raid Info panel to the number of visible raid rows, including compact empty and waiting states.
+- Keeps the profession cooldown and Raid Info panels behind higher-priority windows.
 - Optionally shows `Item ID: <number>` beneath item tooltips from bags, equipment, loot, vendors, quests, professions, and item links.
 - Sells one confirmed gray stack at a time and waits for the proceeds to settle.
 - Does not support marked junk or add a merchant button.
@@ -97,7 +98,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.18.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.18/ShirsLazyTrix-v0.0.18.zip).
+1. Download [`ShirsLazyTrix-v0.0.19.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.19/ShirsLazyTrix-v0.0.19.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

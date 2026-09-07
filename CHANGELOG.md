@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.19
+
+### Changed
+
+- Moved the profession cooldown and Raid Info panels behind other windows while keeping their rows and controls together.
+- Preserved the 0.0.18 AQ20 label normalization and Raid Info instance-hide setting.
+
 ## 0.0.18
 
 ### Added
