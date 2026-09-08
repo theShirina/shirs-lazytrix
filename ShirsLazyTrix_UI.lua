@@ -103,8 +103,8 @@ local RAID_INFO_PANEL_EMPTY_HEIGHT = 82
 
 local function raidInfoDisplayName(name)
   if name == "Onyxia's Lair" then return "Onyxia" end
-  if name == "Temple of Ahn'Qiraj" then return "AQ40" end
-  if name == "Ruins of Ahn'Qiraj" then return "AQ-20" end
+  if name == "Temple of Ahn'Qiraj" or name == "Ahn'Qiraj Temple" then return "AQ40" end
+  if name == "Ruins of Ahn'Qiraj" or name == "The Ruins of Ahn'Qiraj" then return "AQ20" end
   return name
 end
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.20
+
+### Fixed
+
+- Saved AQ40 lockouts from other characters now appear when the client uses either `Temple of Ahn'Qiraj` or `Ahn'Qiraj Temple`.
+- The AQ20 label no longer appears as `AQ-20`; it now shows as `AQ20`.
+
 ## 0.0.19
 
 ### Changed

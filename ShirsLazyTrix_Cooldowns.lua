@@ -142,7 +142,7 @@ local RAID_INFO_READY_CATALOG = {
   { name = "Blackwing Lair", aliases = { "Blackwing Lair" } },
   { name = "Zul'Gurub", aliases = { "Zul'Gurub" } },
   { name = "Ruins of Ahn'Qiraj", aliases = { "Ruins of Ahn'Qiraj", "The Ruins of Ahn'Qiraj", "AQ20" } },
-  { name = "Temple of Ahn'Qiraj", aliases = { "Temple of Ahn'Qiraj", "Ahn'Qiraj", "AQ40" } },
+  { name = "Temple of Ahn'Qiraj", aliases = { "Temple of Ahn'Qiraj", "Ahn'Qiraj Temple", "Ahn'Qiraj", "AQ40" } },
   { name = "Naxxramas", aliases = { "Naxxramas" } },
 }
 
@@ -150,6 +150,16 @@ local function raidCatalogMatches(savedName, catalogEntry)
   local aliasIndex
   for aliasIndex = 1, table.getn(catalogEntry.aliases) do
     if sameText(savedName, catalogEntry.aliases[aliasIndex]) then return true end
+  end
+  return false
+end
+
+local function raidNamesMatch(left, right)
+  if sameText(left, right) then return true end
+  local catalogIndex
+  for catalogIndex = 1, table.getn(RAID_INFO_READY_CATALOG) do
+    local catalogEntry = RAID_INFO_READY_CATALOG[catalogIndex]
+    if raidCatalogMatches(left, catalogEntry) and raidCatalogMatches(right, catalogEntry) then return true end
   end
   return false
 end
@@ -529,7 +539,7 @@ function ShirsLazyTrix.GetRaidInfoCharacterStatuses(instanceName, now)
       local index
       for index = 1, table.getn(state.raidInfo.instances) do
         local entry = state.raidInfo.instances[index]
-        if type(entry) == "table" and sameText(entry.name, instanceName) then
+        if type(entry) == "table" and raidNamesMatch(entry.name, instanceName) then
           local owner = character
           if realm ~= currentRealm then owner = owner .. " (" .. realm .. ")" end
           table.insert(rows, {

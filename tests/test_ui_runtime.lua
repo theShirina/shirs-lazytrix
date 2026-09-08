@@ -189,7 +189,7 @@ ShirsLazyTrix.GetRaidInfoDisplayEntries = function(includeReady, includeSchedule
     table.insert(entries, raidRows[index])
   end
   if includeSchedule then
-    table.insert(entries, { name = "Ruins of Ahn'Qiraj", id = "509", scheduled = true, status = scheduledStatus })
+    table.insert(entries, { name = "The Ruins of Ahn'Qiraj", id = "509", scheduled = true, status = scheduledStatus })
   end
   if includeReady then
     for index = 1, table.getn(raidReadyRows) do
@@ -412,6 +412,12 @@ if ShirsLazyTrixDB.showRaidInfoPanel ~= true or not raidInfoPanel:IsVisible() th
 end
 if ccpScheduleRequests ~= 2 then error("opening raid info did not refresh enabled CCP schedules", 2) end
 local scheduledRaidRow = named.ShirsLazyTrixRaidInfoRow3
+if scheduledRaidRow.label.text ~= "AQ20" then
+  error("Ruins of Ahn'Qiraj short label must be AQ20", 2)
+end
+if scheduledRaidRow.raidName ~= "The Ruins of Ahn'Qiraj" then
+  error("AQ20 display normalization must preserve the raw raid name", 2)
+end
 if scheduledRaidRow.status.text ~= "Ready - resets in 2d 14h" or scheduledRaidRow.raidScheduled ~= true then
   error("scheduled unsaved raid row did not show Ready plus reset", 2)
 end

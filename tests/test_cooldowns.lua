@@ -219,6 +219,28 @@ local otherRaidRows = ShirsLazyTrix.GetRaidInfoCharacterStatuses("Molten Core", 
 assertEqual(table.getn(otherRaidRows), 1, "other-character raid hover row count")
 assertEqual(otherRaidRows[1].owner, "Alfa", "other-character raid owner")
 assertEqual(otherRaidRows[1].status, "2h 0m", "other-character raid status")
+ShirsLazyTrixDB.cooldownsByCharacter = {
+  ["Microbot Vanilla\031Shirina"] = {
+    raidInfo = { known = true, instances = { { name = "Ahn'Qiraj Temple", readyAt = now + 7200 } } },
+  },
+  ["Microbot Vanilla\031Alfa"] = {
+    raidInfo = { known = true, instances = { { name = "Temple of Ahn'Qiraj", readyAt = now + 7200 } } },
+  },
+  ["Microbot Vanilla\031Beta"] = {
+    raidInfo = { known = true, instances = { { name = "Ahn'Qiraj Temple", readyAt = now + 7200 } } },
+  },
+  ["Other Realm\031Shirina"] = {
+    raidInfo = { known = true, instances = { { name = "Temple of Ahn'Qiraj", readyAt = now + 7200 } } },
+  },
+}
+local canonicalAQ40Rows = ShirsLazyTrix.GetRaidInfoCharacterStatuses("Temple of Ahn'Qiraj", now)
+assertEqual(table.getn(canonicalAQ40Rows), 3, "canonical AQ40 name matches both saved name forms but excludes the exact current character")
+assertEqual(canonicalAQ40Rows[1].owner, "Alfa", "canonical AQ40 same-realm owner")
+assertEqual(canonicalAQ40Rows[2].owner, "Beta", "observed AQ40 same-realm owner")
+assertEqual(canonicalAQ40Rows[3].owner, "Shirina (Other Realm)", "same character name on another realm remains labeled and visible")
+local observedAQ40Rows = ShirsLazyTrix.GetRaidInfoCharacterStatuses("Ahn'Qiraj Temple", now)
+assertEqual(table.getn(observedAQ40Rows), 3, "observed AQ40 name matches both saved name forms")
+assertEqual(observedAQ40Rows[1].owner, "Alfa", "observed AQ40 query matches canonical saved name")
 
 assertEqual(ShirsLazyTrix.FormatCooldownStatus(nil, now), "Not known", "unknown status")
 assertEqual(ShirsLazyTrix.FormatCooldownStatus({ known = true, readyAt = now - 1 }, now), "Ready", "ready status")
