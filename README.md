@@ -41,6 +41,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.20 corrects the 
 - Corrects Salt Shaker cooldowns across the client's uptime wrap instead of showing roughly 50 days.
 - Optional movable Raid Info panel for this character's saved raid lockouts and reset times.
 - Hovering a raid row shows matching saved raid data for other characters, with last-observed status.
+- Matches saved AQ40 lockouts when the client uses either server raid-name order.
 - The Raid Info header's Show all option adds standard raids without a current lockout and labels them Ready.
 - Optionally shows CCP's scheduled reset countdown for AQ20, Zul'Gurub, and Onyxia's Lair.
 - Uses the short Raid Info labels AQ40, AQ20, and Onyxia.
