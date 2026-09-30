@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.21
+
+### Added
+
+- Raid Info now shows active raid lockouts held by other saved characters when Microbot Control Panel is loaded, even when Show all is off.
+- Hovering an account-wide lockout shows its holders; when this character has the same raid locked, their names appear on the existing row.
+
 ## 0.0.20
 
 ### Fixed

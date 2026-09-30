@@ -8,6 +8,7 @@ local tradeRows = {}
 local bagRows = {}
 local raidRows = {}
 local raidInfoRequests = 0
+local mcpRaidRequests = 0
 local ccpScheduleRequests = 0
 local ccpMessages = {}
 local castCalls = {}
@@ -61,6 +62,7 @@ end
 function RequestRaidInfo() raidInfoRequests = raidInfoRequests + 1 end
 function CCP_SelfLockRequest(force) ccpScheduleRequests = ccpScheduleRequests + 1 end
 function CCP_Send(message) table.insert(ccpMessages, message) end
+function MCP_Send(message) mcpRaidRequests = mcpRaidRequests + 1; table.insert(ccpMessages, message) end
 function GetNumSavedInstances() return table.getn(raidRows) end
 function GetSavedInstanceInfo(index)
   local row = raidRows[index]
@@ -107,6 +109,9 @@ raidRows = {
 }
 assertEqual(ShirsLazyTrix.RequestRaidInfo(), true, "raid info request")
 assertEqual(raidInfoRequests, 1, "raid info request count")
+assertEqual(ShirsLazyTrix.RequestMCPRaidLockouts(), true, "MCP account lockout request")
+assertEqual(mcpRaidRequests, 1, "MCP account lockout request count")
+assertEqual(ccpMessages[1], ".stats locks", "MCP account lockout request uses MCP queue")
 assertEqual(ShirsLazyTrix.RequestCCPRaidSchedule(), true, "CCP schedule request")
 assertEqual(ccpMessages[1], ".stats locks", "CCP schedule request uses the hidden-safe queue")
 assertEqual(ccpScheduleRequests, 0, "CCP schedule request does not use the visible-frame helper")
@@ -144,6 +149,46 @@ assertEqual(canonicalReadyRows, 0, "saved raid alias suppresses canonical ready 
 assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false)), 1, "ready toggle off keeps saved rows only")
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response restores ready catalog state")
+MCP_SelfLockData = {
+  alts = {
+    { name = "AltOne", locks = {
+      { map = 409, resetAt = uptime + 5400 },
+      { map = 531, resetAt = uptime + 7200 },
+      { map = 249, resetAt = uptime - 1 },
+      { map = 533 },
+    } },
+    { name = "AltTwo", locks = { { map = 409, resetAt = uptime + 3600 } } },
+  },
+}
+local accountRaidRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false)
+assertEqual(table.getn(accountRaidRows), 3, "MCP account lockouts include active and undated locks")
+assertEqual(accountRaidRows[1].name, "Molten Core", "MCP account lockout uses raid catalog name")
+assertEqual(accountRaidRows[1].readyAt, now + 3600, "MCP account lockout uses earliest active reset")
+assertEqual(accountRaidRows[1].accountWide, true, "MCP account lockout is labeled account-wide")
+assertEqual(table.getn(accountRaidRows[1].characters), 2, "MCP account lockout retains character names")
+assertEqual(accountRaidRows[2].name, "Temple of Ahn'Qiraj", "MCP account lockout matches map ID")
+assertEqual(accountRaidRows[2].readyAt, now + 7200, "MCP account reset converts uptime to wall time")
+assertEqual(accountRaidRows[3].name, "Naxxramas", "MCP lock with no reset time remains visible")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(accountRaidRows[3], now), "Not known", "undated account lockout does not imply readiness")
+local accountReadyRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true)
+local mcLockCount = 0
+local accountReadyIndex
+for accountReadyIndex = 1, table.getn(accountReadyRows) do
+  if accountReadyRows[accountReadyIndex].name == "Molten Core" then mcLockCount = mcLockCount + 1 end
+end
+assertEqual(mcLockCount, 1, "MCP account lockout suppresses duplicate Ready row")
+raidRows = { { name = "Molten Core", id = 201, reset = 14700 } }
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "native current-character MC lockout observation")
+MCP_SelfLockData = {
+  alts = { { name = "Shirhunt", locks = { { map = 409, resetAt = uptime + 14700 } } } },
+}
+local overlappingAccountRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false)
+assertEqual(table.getn(overlappingAccountRows), 1, "native current lockout remains the only MC row")
+assertEqual(overlappingAccountRows[1].accountWide, true, "matching MCP lockout annotates native row")
+assertEqual(overlappingAccountRows[1].characters[1], "Shirhunt", "MCP holder is retained beside native lockout")
+MCP_SelfLockData = nil
+raidRows = {}
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response clears overlap fixture")
 CCP_SelfLockData = {
   sched = {
     { map = 509, name = "Ruins of Ahn'Qiraj", resetAt = uptime + 7200, cycle = 3 },

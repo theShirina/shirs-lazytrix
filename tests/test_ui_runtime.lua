@@ -134,6 +134,13 @@ function GameTooltip:SetText(text) self.lines = { text } end
 function GameTooltip:AddLine(text) table.insert(self.lines, text) end
 function GameTooltip:Show() self.shown = true end
 function GameTooltip:Hide() self.shown = false end
+local function tooltipHasLine(text)
+  local lineIndex
+  for lineIndex = 1, table.getn(GameTooltip.lines) do
+    if GameTooltip.lines[lineIndex] == text then return true end
+  end
+  return false
+end
 
 ShirsLazyTrix = {}
 local trainerRefreshes = 0
@@ -457,10 +464,25 @@ raidRows = {
 ShirsLazyTrix.RefreshRaidInfoPanel()
 this = raidInfoRow
 raidInfoRow.scripts.OnEnter()
-if GameTooltip.lines[5] ~= "Alfa: 2h 0m" or GameTooltip.lines[6] ~= "Beta: Ready" then
-  error("other-character raid hover lines missing", 2)
+if tooltipHasLine("Alfa: 2h 0m") or tooltipHasLine("Beta: Ready") or
+   tooltipHasLine("Other characters (last saved data)") or tooltipHasLine("No saved data for this raid.") then
+  error("saved-character statuses appeared in raid tooltip", 2)
 end
 raidInfoRow.scripts.OnLeave()
+local savedRaidAccountWide, savedRaidCharacters = raidInfoRow.raidAccountWide, raidInfoRow.raidCharacters
+raidInfoRow.raidAccountWide = true
+raidInfoRow.raidCharacters = { "Alfa" }
+this = raidInfoRow
+raidInfoRow.scripts.OnEnter()
+if not tooltipHasLine("Account-wide lockout (MCP)") or not tooltipHasLine("Alfa") then
+  error("MCP account-wide raid hover lines missing", 2)
+end
+if tooltipHasLine("Alfa: 2h 0m") or tooltipHasLine("Beta: Ready") then
+  error("stale saved raid statuses appeared beside MCP holders", 2)
+end
+raidInfoRow.scripts.OnLeave()
+raidInfoRow.raidAccountWide = savedRaidAccountWide
+raidInfoRow.raidCharacters = savedRaidCharacters
 raidInfoPanel.point = { "TOPRIGHT", UIParent, "TOPRIGHT", -70, -140 }
 this = raidInfoPanel
 raidInfoPanel.scripts.OnDragStart()

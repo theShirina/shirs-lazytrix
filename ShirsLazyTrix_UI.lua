@@ -38,6 +38,9 @@ local function createCheckbox(parent, name, labelText, key, y, x, labelWidth)
       if this:GetChecked() and name == "ShirsLazyTrixShowRaidInfoPanel" and ShirsLazyTrix.RequestRaidInfo then
         ShirsLazyTrix.RequestRaidInfo()
       end
+      if this:GetChecked() and name == "ShirsLazyTrixShowRaidInfoPanel" and ShirsLazyTrix.RequestMCPRaidLockouts then
+        ShirsLazyTrix.RequestMCPRaidLockouts()
+      end
       if this:GetChecked() and name == "ShirsLazyTrixShowRaidInfoPanel" and ShirsLazyTrixDB.showRaidInfoSchedule == true and ShirsLazyTrix.RequestCCPRaidSchedule then
         ShirsLazyTrix.RequestCCPRaidSchedule()
       elseif this:GetChecked() and name == "ShirsLazyTrixShowRaidInfoSchedule" and ShirsLazyTrix.RequestCCPRaidSchedule then
@@ -325,15 +328,11 @@ function ShirsLazyTrix.RefreshRaidInfoRowTooltip(row)
   else
     GameTooltip:AddLine("This character: " .. (row.statusText or "Not known"), 1, 1, 1)
   end
-  GameTooltip:AddLine("Other characters (last saved data)", 1, 0.82, 0)
-  local rows = ShirsLazyTrix.GetRaidInfoCharacterStatuses and
-    ShirsLazyTrix.GetRaidInfoCharacterStatuses(row.raidName) or {}
-  if table.getn(rows) == 0 then
-    GameTooltip:AddLine("No saved data for this raid.", 0.7, 0.8, 0.9)
-  else
-    local index
-    for index = 1, table.getn(rows) do
-      GameTooltip:AddLine(rows[index].owner .. ": " .. rows[index].status, 0.85, 0.9, 0.96)
+  if row.raidAccountWide then
+    GameTooltip:AddLine("Account-wide lockout (MCP)", 1, 0.82, 0)
+    local characterIndex
+    for characterIndex = 1, table.getn(row.raidCharacters or {}) do
+      GameTooltip:AddLine(row.raidCharacters[characterIndex], 0.8, 0.8, 0.8)
     end
   end
   GameTooltip:Show()
@@ -523,6 +522,8 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
       row.raidName = entry.name
       row.raidID = entry.id or ""
       row.raidReady = entry.ready == true
+      row.raidAccountWide = entry.accountWide == true
+      row.raidCharacters = entry.characters
       row.raidScheduled = entry.scheduled == true
       row.raidCycle = entry.cycle
       row.statusText = ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry)
@@ -539,6 +540,8 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
       row.raidName = nil
       row.raidID = nil
       row.raidReady = nil
+      row.raidAccountWide = nil
+      row.raidCharacters = nil
       row.raidScheduled = nil
       row.raidCycle = nil
       row.statusText = nil

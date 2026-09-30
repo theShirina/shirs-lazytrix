@@ -137,13 +137,13 @@ local function raidIDText(value)
 end
 
 local RAID_INFO_READY_CATALOG = {
-  { name = "Molten Core", aliases = { "Molten Core" } },
-  { name = "Onyxia's Lair", aliases = { "Onyxia's Lair", "Onyxia" } },
-  { name = "Blackwing Lair", aliases = { "Blackwing Lair" } },
-  { name = "Zul'Gurub", aliases = { "Zul'Gurub" } },
-  { name = "Ruins of Ahn'Qiraj", aliases = { "Ruins of Ahn'Qiraj", "The Ruins of Ahn'Qiraj", "AQ20" } },
-  { name = "Temple of Ahn'Qiraj", aliases = { "Temple of Ahn'Qiraj", "Ahn'Qiraj Temple", "Ahn'Qiraj", "AQ40" } },
-  { name = "Naxxramas", aliases = { "Naxxramas" } },
+  { map = 409, name = "Molten Core", aliases = { "Molten Core" } },
+  { map = 249, name = "Onyxia's Lair", aliases = { "Onyxia's Lair", "Onyxia" } },
+  { map = 469, name = "Blackwing Lair", aliases = { "Blackwing Lair" } },
+  { map = 309, name = "Zul'Gurub", aliases = { "Zul'Gurub" } },
+  { map = 509, name = "Ruins of Ahn'Qiraj", aliases = { "Ruins of Ahn'Qiraj", "The Ruins of Ahn'Qiraj", "AQ20" } },
+  { map = 531, name = "Temple of Ahn'Qiraj", aliases = { "Temple of Ahn'Qiraj", "Ahn'Qiraj Temple", "Ahn'Qiraj", "AQ40" } },
+  { map = 533, name = "Naxxramas", aliases = { "Naxxramas" } },
 }
 
 local function raidCatalogMatches(savedName, catalogEntry)
@@ -210,6 +210,53 @@ local function ccpScheduleDisplayEntries(saved)
   return entries
 end
 
+local function accountRaidLockoutDisplayEntries()
+  local data = nil
+  if type(_G) == "table" then
+    data = _G.MCP_SelfLockData
+  elseif type(getglobal) == "function" then
+    data = getglobal("MCP_SelfLockData")
+  end
+  local alts = type(data) == "table" and data.alts or nil
+  local entries = {}
+  if type(alts) ~= "table" or type(GetTime) ~= "function" then return entries end
+  local currentUptime = uptime()
+  local observedAt = wallTime(nil)
+  local catalogIndex, altIndex, lockIndex
+  for catalogIndex = 1, table.getn(RAID_INFO_READY_CATALOG) do
+    local catalogEntry = RAID_INFO_READY_CATALOG[catalogIndex]
+    local resetAt, characters, foundLock = nil, {}, false
+    for altIndex = 1, table.getn(alts) do
+      local alt = alts[altIndex]
+      local locks = type(alt) == "table" and alt.locks or nil
+      if type(alt) == "table" and cleanText(alt.name) ~= "" and type(locks) == "table" then
+        for lockIndex = 1, table.getn(locks) do
+          local lock = locks[lockIndex]
+          if type(lock) == "table" and lock.map == catalogEntry.map and
+             (lock.resetAt == nil or (numberInRange(lock.resetAt, 0, MAX_UPTIME_SECONDS) and
+              lock.resetAt > currentUptime and lock.resetAt - currentUptime <= MAX_COOLDOWN_SECONDS)) then
+            foundLock = true
+            local seen = false
+            local characterIndex
+            for characterIndex = 1, table.getn(characters) do
+              if characters[characterIndex] == alt.name then seen = true; break end
+            end
+            if not seen then table.insert(characters, alt.name) end
+            if lock.resetAt and (not resetAt or lock.resetAt < resetAt) then resetAt = lock.resetAt end
+            break
+          end
+        end
+      end
+    end
+    if foundLock then
+      table.insert(entries, { name = catalogEntry.name, id = tostring(catalogEntry.map),
+        readyAt = resetAt and observedAt + resetAt - currentUptime or nil,
+        accountWide = true, characters = characters })
+    end
+  end
+  return entries
+end
+
 function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedule)
   local state = currentRaidInfoState()
   local entries = {}
@@ -218,7 +265,28 @@ function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedul
   for savedIndex = 1, table.getn(saved) do
     local entry = saved[savedIndex]
     if type(entry) == "table" and cleanText(entry.name) ~= "" then
-      table.insert(entries, entry)
+      local displayEntry = {}
+      local key, value
+      for key, value in pairs(entry) do displayEntry[key] = value end
+      table.insert(entries, displayEntry)
+    end
+  end
+  local accountEntries = accountRaidLockoutDisplayEntries()
+  local accountIndex
+  for accountIndex = 1, table.getn(accountEntries) do
+    local entryIndex
+    local matchingEntry = nil
+    for entryIndex = 1, table.getn(entries) do
+      if raidNamesMatch(entries[entryIndex].name, accountEntries[accountIndex].name) then
+        matchingEntry = entries[entryIndex]
+        break
+      end
+    end
+    if matchingEntry then
+      matchingEntry.accountWide = true
+      matchingEntry.characters = accountEntries[accountIndex].characters
+    elseif table.getn(entries) < MAX_SAVED_RAID_INSTANCES then
+      table.insert(entries, accountEntries[accountIndex])
     end
   end
   if includeReady and state.known == true then
@@ -227,9 +295,8 @@ function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedul
       if table.getn(entries) >= MAX_SAVED_RAID_INSTANCES then break end
       local catalogEntry = RAID_INFO_READY_CATALOG[catalogIndex]
       local savedMatch = false
-      for savedIndex = 1, table.getn(saved) do
-        local savedEntry = saved[savedIndex]
-        if type(savedEntry) == "table" and raidCatalogMatches(savedEntry.name, catalogEntry) then
+      for savedIndex = 1, table.getn(entries) do
+        if type(entries[savedIndex]) == "table" and raidCatalogMatches(entries[savedIndex].name, catalogEntry) then
           savedMatch = true
           break
         end
@@ -244,13 +311,27 @@ function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedul
     local scheduleIndex
     for scheduleIndex = 1, table.getn(scheduleEntries) do
       local entryIndex
-      for entryIndex = table.getn(entries), 1, -1 do
-        if entries[entryIndex].ready == true and sameText(entries[entryIndex].name, scheduleEntries[scheduleIndex].name) then
-          table.remove(entries, entryIndex)
+      local catalogIndex
+      local catalogEntry = nil
+      local hasLockout = false
+      for catalogIndex = 1, table.getn(RAID_INFO_READY_CATALOG) do
+        if RAID_INFO_READY_CATALOG[catalogIndex].map == tonumber(scheduleEntries[scheduleIndex].id) then
+          catalogEntry = RAID_INFO_READY_CATALOG[catalogIndex]
+          break
         end
       end
-      if table.getn(entries) >= MAX_SAVED_RAID_INSTANCES then break end
-      table.insert(entries, scheduleEntries[scheduleIndex])
+      for entryIndex = table.getn(entries), 1, -1 do
+        if catalogEntry and raidCatalogMatches(entries[entryIndex].name, catalogEntry) then
+          if entries[entryIndex].ready == true then
+            table.remove(entries, entryIndex)
+          else
+            hasLockout = true
+          end
+        end
+      end
+      if not hasLockout and table.getn(entries) < MAX_SAVED_RAID_INSTANCES then
+        table.insert(entries, scheduleEntries[scheduleIndex])
+      end
     end
   end
   return entries
@@ -263,6 +344,12 @@ end
 function ShirsLazyTrix.RequestCCPRaidSchedule()
   if type(CCP_Send) ~= "function" then return false end
   CCP_Send(".stats locks")
+  return true
+end
+
+function ShirsLazyTrix.RequestMCPRaidLockouts()
+  if type(MCP_Send) ~= "function" then return false end
+  MCP_Send(".stats locks")
   return true
 end
 
@@ -337,6 +424,7 @@ function ShirsLazyTrix.InitializeRaidInfo()
   currentRaidInfoState()
   if type(ShirsLazyTrixDB) == "table" and ShirsLazyTrixDB.showRaidInfoPanel == true then
     ShirsLazyTrix.RequestRaidInfo()
+    ShirsLazyTrix.RequestMCPRaidLockouts()
     if ShirsLazyTrixDB.showRaidInfoSchedule == true then
       ShirsLazyTrix.RequestCCPRaidSchedule()
     end
