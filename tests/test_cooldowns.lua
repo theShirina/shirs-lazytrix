@@ -10,7 +10,8 @@ local raidRows = {}
 local raidInfoRequests = 0
 local mcpRaidRequests = 0
 local ccpScheduleRequests = 0
-local ccpMessages = {}
+local ccpSendCalls = 0
+local mcpMessages = {}
 local castCalls = {}
 local craftCalls = {}
 local itemUseCalls = {}
@@ -61,8 +62,8 @@ function GetContainerItemCooldown(bag, slot)
 end
 function RequestRaidInfo() raidInfoRequests = raidInfoRequests + 1 end
 function CCP_SelfLockRequest(force) ccpScheduleRequests = ccpScheduleRequests + 1 end
-function CCP_Send(message) table.insert(ccpMessages, message) end
-function MCP_Send(message) mcpRaidRequests = mcpRaidRequests + 1; table.insert(ccpMessages, message) end
+function CCP_Send(message) ccpSendCalls = ccpSendCalls + 1 end
+function MCP_Send(message) mcpRaidRequests = mcpRaidRequests + 1; table.insert(mcpMessages, message) end
 function GetNumSavedInstances() return table.getn(raidRows) end
 function GetSavedInstanceInfo(index)
   local row = raidRows[index]
@@ -111,10 +112,18 @@ assertEqual(ShirsLazyTrix.RequestRaidInfo(), true, "raid info request")
 assertEqual(raidInfoRequests, 1, "raid info request count")
 assertEqual(ShirsLazyTrix.RequestMCPRaidLockouts(), true, "MCP account lockout request")
 assertEqual(mcpRaidRequests, 1, "MCP account lockout request count")
-assertEqual(ccpMessages[1], ".stats locks", "MCP account lockout request uses MCP queue")
-assertEqual(ShirsLazyTrix.RequestCCPRaidSchedule(), true, "CCP schedule request")
-assertEqual(ccpMessages[1], ".stats locks", "CCP schedule request uses the hidden-safe queue")
-assertEqual(ccpScheduleRequests, 0, "CCP schedule request does not use the visible-frame helper")
+assertEqual(mcpMessages[1], ".stats locks", "MCP account lockout request uses MCP queue")
+assertEqual(ShirsLazyTrix.RequestCCPRaidSchedule(), true, "MCP schedule request")
+assertEqual(mcpRaidRequests, 2, "schedule request uses the MCP queue")
+assertEqual(mcpMessages[2], ".stats locks", "schedule request sends the MCP lock query")
+assertEqual(ccpSendCalls, 0, "schedule request does not use CCP_Send")
+assertEqual(ccpScheduleRequests, 0, "schedule request does not use the visible-frame helper")
+local savedMCPSend = MCP_Send
+MCP_Send = nil
+assertEqual(ShirsLazyTrix.RequestCCPRaidSchedule(), false, "missing MCP sender fails closed")
+assertEqual(ccpSendCalls, 0, "missing MCP sender does not fall back to CCP_Send")
+MCP_Send = savedMCPSend
+assertEqual(mcpRaidRequests, 2, "failed schedule request sends nothing")
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "raid info observation")
 local raidState = ShirsLazyTrix.GetCurrentRaidInfo()
 assertEqual(raidState.known, true, "raid info state known")
@@ -189,7 +198,8 @@ assertEqual(overlappingAccountRows[1].characters[1], "Shirhunt", "MCP holder is 
 MCP_SelfLockData = nil
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response clears overlap fixture")
-CCP_SelfLockData = {
+CCP_SelfLockData = nil
+MCP_SelfLockData = {
   sched = {
     { map = 509, name = "Ruins of Ahn'Qiraj", resetAt = uptime + 7200, cycle = 3 },
     { map = 309, name = "Zul'Gurub", resetAt = uptime + 3600, cycle = 3 },
@@ -197,43 +207,78 @@ CCP_SelfLockData = {
     { map = 531, name = "Temple of Ahn'Qiraj", resetAt = uptime + 9999, cycle = 7 },
   },
 }
+local nativeInstancesBefore = raidState.instances
+local toggleOffRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true, false)
+assertEqual(table.getn(toggleOffRows), 7, "schedule toggle off keeps the native Ready catalog")
+local toggleOffIndex
+for toggleOffIndex = 1, table.getn(toggleOffRows) do
+  assertEqual(toggleOffRows[toggleOffIndex].ready, true, "schedule toggle off leaves Ready rows unchanged")
+  assertEqual(toggleOffRows[toggleOffIndex].scheduled, nil, "schedule toggle off adds no scheduled rows")
+end
+assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, false)), 0, "schedule toggle off adds no rows without Ready")
+local globalScheduledRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)
+assertEqual(table.getn(globalScheduledRows), 3, "MCP schedule is read through _G")
 local savedGlobal = _G
 _G = nil
 function getglobal(name)
-  if name == "CCP_SelfLockData" then return CCP_SelfLockData end
+  if name == "MCP_SelfLockData" then return MCP_SelfLockData end
 end
 raidState.known = false
-assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "unknown native raid info suppresses CCP schedule rows")
+local unknownScheduleCount = table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true))
 raidState.known = true
 local scheduledRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)
 _G = savedGlobal
-assertEqual(table.getn(scheduledRows), 3, "CCP schedule exposes the three requested raids")
-assertEqual(scheduledRows[1].name, "Onyxia's Lair", "CCP schedule order puts Onyxia first")
-assertEqual(scheduledRows[1].readyAt, now + 1800, "CCP uptime maps to wall-clock reset")
-assertEqual(scheduledRows[1].cycle, 5, "CCP schedule cycle is preserved")
-assertEqual(scheduledRows[1].scheduled, true, "CCP schedule row is marked scheduled")
-assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(scheduledRows[1], now), "Ready - resets in 30m 0s", "unsaved CCP schedule row states readiness and reset")
-local validSchedule = CCP_SelfLockData.sched
+assertEqual(unknownScheduleCount, 0, "unknown native raid info suppresses MCP schedule rows")
+assertEqual(table.getn(scheduledRows), 3, "MCP schedule is read through getglobal when _G is missing")
+local expectedSchedule = {
+  { name = "Onyxia's Lair", id = "249" },
+  { name = "Zul'Gurub", id = "309" },
+  { name = "Ruins of Ahn'Qiraj", id = "509" },
+}
+local scheduleNames = {}
+local scheduleIDs = {}
+local expectedIndex
+for expectedIndex = 1, table.getn(expectedSchedule) do
+  local row = scheduledRows[expectedIndex]
+  assertEqual(row.name, expectedSchedule[expectedIndex].name, "MCP schedule row name")
+  assertEqual(row.id, expectedSchedule[expectedIndex].id, "MCP schedule row ID")
+  assertEqual(globalScheduledRows[expectedIndex].name, row.name, "_G and getglobal branches agree on name")
+  assertEqual(globalScheduledRows[expectedIndex].id, row.id, "_G and getglobal branches agree on ID")
+  assertEqual(scheduleNames[row.name], nil, "MCP schedule names are distinct")
+  assertEqual(scheduleIDs[row.id], nil, "MCP schedule IDs are distinct")
+  scheduleNames[row.name] = true
+  scheduleIDs[row.id] = true
+  assertEqual(row.scheduled, true, "MCP schedule row is marked scheduled")
+end
+assertEqual(scheduleIDs["531"], nil, "MCP schedule has no 40-player row")
+assertEqual(scheduleNames["Temple of Ahn'Qiraj"], nil, "MCP schedule has no AQ40 row")
+assertEqual(scheduledRows[1].readyAt, now + 1800, "MCP uptime maps to wall-clock reset")
+assertEqual(scheduledRows[1].cycle, 5, "MCP schedule cycle is preserved")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(scheduledRows[1], now), "Ready - resets in 30m 0s", "unsaved MCP schedule row states readiness and reset")
+assertEqual(raidState.instances, nativeInstancesBefore, "schedule display keeps the native snapshot table")
+assertEqual(table.getn(raidState.instances), 0, "schedule display adds nothing to the native snapshot")
+assertEqual(table.getn(MCP_SelfLockData.sched), 4, "schedule display leaves MCP data intact")
+assertEqual(MCP_SelfLockData.sched[3].resetAt, uptime + 1800, "schedule display leaves MCP reset intact")
+assertEqual(MCP_SelfLockData.sched[3].scheduled, nil, "schedule display does not tag MCP data")
+local validSchedule = MCP_SelfLockData.sched
 local staleResetTimes = { uptime, uptime - 1 }
 local staleResetIndex
 for staleResetIndex = 1, table.getn(staleResetTimes) do
-  CCP_SelfLockData.sched = {
+  MCP_SelfLockData.sched = {
     { map = 249, name = "Onyxia's Lair", resetAt = staleResetTimes[staleResetIndex], cycle = 5 },
   }
-  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "CCP reset at or before current uptime fails closed")
+  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "MCP reset at or before current uptime fails closed")
 end
-CCP_SelfLockData.sched = validSchedule
+MCP_SelfLockData.sched = validSchedule
 local invalidCycles = { 0, 1.5, 366.5 }
 local invalidCycleIndex
 for invalidCycleIndex = 1, table.getn(invalidCycles) do
-  CCP_SelfLockData.sched = {
+  MCP_SelfLockData.sched = {
     { map = 249, name = "Onyxia's Lair", resetAt = uptime + 1800, cycle = invalidCycles[invalidCycleIndex] },
   }
-  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "invalid CCP cycle fails closed")
+  assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)), 0, "invalid MCP cycle fails closed")
 end
-CCP_SelfLockData.sched = validSchedule
-assertEqual(scheduledRows[2].name, "Zul'Gurub", "CCP schedule includes Zul'Gurub")
-assertEqual(scheduledRows[3].name, "Ruins of Ahn'Qiraj", "CCP schedule includes AQ20")
+MCP_SelfLockData.sched = validSchedule
 local combinedRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true, true)
 assertEqual(table.getn(combinedRows), 7, "combined ready and schedule rows avoid synthetic duplicates")
 local combinedScheduled = 0
@@ -243,17 +288,26 @@ for combinedIndex = 1, table.getn(combinedRows) do
   local combinedRow = combinedRows[combinedIndex]
   combinedNames[combinedRow.name] = (combinedNames[combinedRow.name] or 0) + 1
   if combinedRow.scheduled == true then combinedScheduled = combinedScheduled + 1 end
+  if combinedRow.name == "Temple of Ahn'Qiraj" then
+    assertEqual(combinedRow.scheduled, nil, "combined AQ40 row is never scheduled")
+    assertEqual(combinedRow.ready, true, "combined AQ40 row keeps native Ready state")
+  end
 end
 assertEqual(combinedNames["Onyxia's Lair"], 1, "combined Onyxia row appears once")
 assertEqual(combinedNames["Zul'Gurub"], 1, "combined Zul'Gurub row appears once")
 assertEqual(combinedNames["Ruins of Ahn'Qiraj"], 1, "combined AQ20 row appears once")
+assertEqual(combinedNames["Temple of Ahn'Qiraj"], 1, "combined AQ40 row appears once")
 assertEqual(combinedScheduled, 3, "combined rows preserve scheduled reset details")
 raidRows = { { name = "Zul'Gurub", id = "Z9", reset = 600 } }
-assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "saved raid remains valid with CCP schedule")
+assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "saved raid remains valid with MCP schedule")
 local mixedRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false, true)
-assertEqual(table.getn(mixedRows), 3, "saved raid suppresses duplicate CCP schedule row")
+assertEqual(table.getn(mixedRows), 3, "saved raid suppresses duplicate MCP schedule row")
 assertEqual(mixedRows[1].name, "Zul'Gurub", "saved raid keeps native row first")
-assertEqual(mixedRows[2].name, "Onyxia's Lair", "remaining CCP schedule row is retained")
+assertEqual(mixedRows[1].scheduled, nil, "saved native row is not marked scheduled")
+assertEqual(mixedRows[2].name, "Onyxia's Lair", "remaining MCP schedule row is retained")
+assertEqual(raidState.instances[1].scheduled, nil, "schedule display does not tag the native snapshot")
+assertEqual(raidState.instances[1].id, "Z9", "schedule display keeps the native snapshot ID")
+assertEqual(table.getn(raidState.instances), 1, "schedule display keeps the native snapshot size")
 ShirsLazyTrixDB.cooldownsByCharacter["Microbot Vanilla\031Alfa"] = {
   raidInfo = {
     known = true,

@@ -167,9 +167,9 @@ end
 local function ccpScheduleDisplayEntries(saved)
   local data = nil
   if type(_G) == "table" then
-    data = _G.CCP_SelfLockData
+    data = _G.MCP_SelfLockData
   elseif type(getglobal) == "function" then
-    data = getglobal("CCP_SelfLockData")
+    data = getglobal("MCP_SelfLockData")
   end
   local schedule = type(data) == "table" and data.sched or nil
   local entries = {}
@@ -342,8 +342,8 @@ function ShirsLazyTrix.GetRaidInfoReadyCatalog()
 end
 
 function ShirsLazyTrix.RequestCCPRaidSchedule()
-  if type(CCP_Send) ~= "function" then return false end
-  CCP_Send(".stats locks")
+  if type(MCP_Send) ~= "function" then return false end
+  MCP_Send(".stats locks")
   return true
 end
 

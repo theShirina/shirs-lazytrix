@@ -1,6 +1,6 @@
 # Shir's LazyTrix
 
-A small quality-of-life addon for WoW 1.12 clients. Version 0.0.21 adds Microbot Control Panel account lockouts to Raid Info, including holders beside an existing native lockout row.
+A small quality-of-life addon for WoW 1.12 clients. Version 0.0.22 adds active raid lockouts held by other characters when Microbot Control Panel is loaded, even when Show all is off.
 
 ## Features
 
@@ -42,8 +42,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.21 adds Microbot
 - Optional movable Raid Info panel for this character's saved raid lockouts and reset times.
 - Hovering a raid row shows matching saved raid data for other characters, with last-observed status.
 - Matches saved AQ40 lockouts when the client uses either server raid-name order.
-- When Microbot Control Panel is loaded, shows active raid lockouts held by other saved characters and names their holders.
-- Merges account-wide holders into an existing native raid row instead of showing a duplicate raid.
+- When Microbot Control Panel is loaded, shows active account-wide raid lockouts, even when Show all is off.
 - The Raid Info header's Show all option adds standard raids without a current lockout and labels them Ready.
 - Optionally shows CCP's scheduled reset countdown for AQ20, Zul'Gurub, and Onyxia's Lair.
 - Uses the short Raid Info labels AQ40, AQ20, and Onyxia.
@@ -61,7 +60,7 @@ A small quality-of-life addon for WoW 1.12 clients. Version 0.0.21 adds Microbot
 
 ## Raid Info
 
-The optional Raid Info panel is off by default. Enable it in LazyTrix settings to show this character's saved raid instances and reset times. When Microbot Control Panel is loaded, LazyTrix also requests MCP's account lockout data and adds active locks held by saved alternate characters; hover a row to see which characters hold it. If the current character already has that raid locked, the holders appear on the same row. These account-wide rows also appear when Show all is off. Enable Show all in the panel header to add standard raids that are not currently saved and display them as Ready. Enable Show CCP raid schedules in settings to add AQ20, Zul'Gurub, and Onyxia's Lair from CCP's server schedule. LazyTrix requests that schedule through CCP without opening CCP's Raid Lockouts panel, then shows each unsaved scheduled raid as `Ready - resets in ...` with its cycle in the tooltip. Hover a raid row to see matching data last observed for other saved characters; those values are not live queries for the other characters. `Hide in instances and raids` is on by default and hides the Raid Info panel while you are inside an instance or raid. Turn it off to keep the panel visible there; the separate combat-hide setting still applies.
+The optional Raid Info panel is off by default. Enable it in LazyTrix settings to show this character's saved raid instances and reset times. When Microbot Control Panel is loaded, LazyTrix also shows active raid lockouts held by saved alternate characters. These account-wide rows also appear when Show all is off. Enable Show all in the panel header to add standard raids that are not currently saved and display them as Ready. Enable Show CCP raid schedules in settings to add AQ20, Zul'Gurub, and Onyxia's Lair when the server schedule is available. LazyTrix requests the schedule through Microbot Control Panel without opening its Raid Lockouts panel, then shows each unsaved scheduled raid as `Ready - resets in ...` with its cycle in the tooltip. Hover a raid row to see matching data last observed for other saved characters; those values are not live queries for the other characters. `Hide in instances and raids` is on by default and hides the Raid Info panel while you are inside an instance or raid. Turn it off to keep the panel visible there; the separate combat-hide setting still applies.
 
 ## Shift behavior
 
@@ -101,7 +100,7 @@ When **Only automate while Shift is held** is enabled, LazyTrix waits for Shift 
 
 ## Installation
 
-1. Download [`ShirsLazyTrix-v0.0.21.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.21/ShirsLazyTrix-v0.0.21.zip).
+1. Download [`ShirsLazyTrix-v0.0.22.zip`](https://github.com/theShirina/shirs-lazytrix/releases/download/v0.0.22/ShirsLazyTrix-v0.0.22.zip).
 2. Extract the `ShirsLazyTrix` folder into `Interface\AddOns`.
 3. Restart the client if the addon was not present when WoW started.
 4. Click the LazyTrix **L** icon to open settings. When button collection is enabled, left-click opens the collected buttons and right-click opens settings. Drag the icon to move it.

@@ -127,7 +127,7 @@ def validate_source() -> None:
     validate_public_boundary()
     toc = (ROOT / "ShirsLazyTrix.toc").read_text(encoding="utf-8")
     assert re.search(r"^## Interface:\s*11200\s*$", toc, re.MULTILINE), "TOC interface must be 11200"
-    assert re.search(r"^## Version:\s*0\.0\.21\s*$", toc, re.MULTILINE), "TOC version must be 0.0.21"
+    assert re.search(r"^## Version:\s*0\.0\.22\s*$", toc, re.MULTILINE), "TOC version must be 0.0.22"
     assert re.search(r"^## SavedVariables:\s*ShirsLazyTrixDB\s*$", toc, re.MULTILINE), "SavedVariables mismatch"
 
     entries = [line.strip() for line in toc.splitlines() if line.strip() and not line.startswith("##")]
@@ -184,7 +184,7 @@ def validate_source() -> None:
     assert "hooksecurefunc" not in tooltips, "item-ID tooltips must not use the later secure-hook API"
 
     cooldowns = (ROOT / "ShirsLazyTrix_Cooldowns.lua").read_text(encoding="utf-8")
-    for token in ("RequestCCPRaidSchedule", 'CCP_Send(".stats locks")', "CCP_SelfLockData", "map = 249", "map = 309", "map = 509", "includeCCPSchedule", "FormatRaidInfoDisplayStatus"):
+    for token in ("RequestCCPRaidSchedule", 'MCP_Send(".stats locks")', "MCP_SelfLockData", "map = 249", "map = 309", "map = 509", "includeCCPSchedule", "FormatRaidInfoDisplayStatus"):
         assert token in cooldowns, f"CCP raid schedule integration is missing: {token}"
 
     ui = (ROOT / "ShirsLazyTrix_UI.lua").read_text(encoding="utf-8")
@@ -401,9 +401,9 @@ def validate_source() -> None:
         assert "repeatable" not in text.lower(), f"obsolete recurrence wording remains in {name}"
 
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "ShirsLazyTrix-v0.0.21.zip" in readme, "README download must match the TOC version"
+    assert "ShirsLazyTrix-v0.0.22.zip" in readme, "README download must match the TOC version"
     workflow = (ROOT / ".github/workflows/validate.yml").read_text(encoding="utf-8")
-    assert "ShirsLazyTrix-v0.0.21.zip" in workflow, "workflow package check must match the TOC version"
+    assert "ShirsLazyTrix-v0.0.22.zip" in workflow, "workflow package check must match the TOC version"
 
     combined = "\n".join((ROOT / name).read_text(encoding="utf-8") for name in LUA_FILES)
     forbidden = ("C_QuestLog", "QUEST_ACCEPT_CONFIRM", "QUEST_AUTOCOMPLETE", "hooksecurefunc")
