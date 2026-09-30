@@ -314,10 +314,17 @@ function ShirsLazyTrix.RefreshRaidInfoRowTooltip(row)
   if not row or not row.raidName or not GameTooltip then return false end
   GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
   GameTooltip:SetText(row.raidName)
-  if row.raidID and row.raidID ~= "" then
+  if not row.raidAccountOnly and row.raidID and row.raidID ~= "" then
     GameTooltip:AddLine("Instance ID: " .. row.raidID, 0.7, 0.8, 0.9)
   end
-  if row.raidReady then
+  if row.raidAccountOnly then
+    if row.raidCurrentKnown then
+      GameTooltip:AddLine("This character: Ready (not saved)", 0.35, 1, 0.45)
+    else
+      GameTooltip:AddLine("This character: Not known", 0.7, 0.8, 0.9)
+    end
+    GameTooltip:AddLine(row.accountStatusText or "Time until reset: Not known", 1, 0.82, 0)
+  elseif row.raidReady then
     GameTooltip:AddLine("This character: Ready (not saved)", 0.35, 1, 0.45)
     GameTooltip:AddLine("No current lockout was reported for this raid.", 0.7, 0.8, 0.9)
   elseif row.raidScheduled then
@@ -523,13 +530,21 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
       row.raidID = entry.id or ""
       row.raidReady = entry.ready == true
       row.raidAccountWide = entry.accountWide == true
+      row.raidAccountOnly = entry.accountOnly == true
+      row.raidCurrentKnown = entry.currentKnown == true
       row.raidCharacters = entry.characters
       row.raidScheduled = entry.scheduled == true
       row.raidCycle = entry.cycle
       row.statusText = ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry)
+      row.accountStatusText = nil
+      if row.raidAccountOnly then
+        row.accountStatusText = "Time until reset: " .. ShirsLazyTrix.FormatRaidInfoStatus(entry)
+      end
       row.label:SetText(raidInfoDisplayName(entry.name))
       row.status:SetText(row.statusText)
-      if row.raidReady or row.raidScheduled then
+      if row.raidAccountOnly and not row.raidCurrentKnown then
+        row.status:SetTextColor(0.7, 0.8, 0.9)
+      elseif row.raidReady or row.raidScheduled or (row.raidAccountOnly and row.raidCurrentKnown) then
         row.status:SetTextColor(0.35, 1, 0.45)
       else
         row.status:SetTextColor(1, 0.82, 0)
@@ -541,10 +556,13 @@ function ShirsLazyTrix.RefreshRaidInfoPanel()
       row.raidID = nil
       row.raidReady = nil
       row.raidAccountWide = nil
+      row.raidAccountOnly = nil
+      row.raidCurrentKnown = nil
       row.raidCharacters = nil
       row.raidScheduled = nil
       row.raidCycle = nil
       row.statusText = nil
+      row.accountStatusText = nil
       row:Hide()
     end
   end

@@ -286,6 +286,8 @@ function ShirsLazyTrix.GetRaidInfoDisplayEntries(includeReady, includeCCPSchedul
       matchingEntry.accountWide = true
       matchingEntry.characters = accountEntries[accountIndex].characters
     elseif table.getn(entries) < MAX_SAVED_RAID_INSTANCES then
+      accountEntries[accountIndex].accountOnly = true
+      accountEntries[accountIndex].currentKnown = state.known == true
       table.insert(entries, accountEntries[accountIndex])
     end
   end
@@ -406,6 +408,10 @@ function ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
 end
 
 function ShirsLazyTrix.FormatRaidInfoDisplayStatus(entry, now)
+  if type(entry) == "table" and entry.accountOnly == true then
+    if entry.currentKnown == true then return "Ready" end
+    return "Not known"
+  end
   if type(entry) == "table" and entry.scheduled == true then
     return "Ready - resets in " .. ShirsLazyTrix.FormatRaidInfoStatus(entry, now)
   end

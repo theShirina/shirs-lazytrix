@@ -483,6 +483,35 @@ end
 raidInfoRow.scripts.OnLeave()
 raidInfoRow.raidAccountWide = savedRaidAccountWide
 raidInfoRow.raidCharacters = savedRaidCharacters
+raidRows = { { name = "Molten Core", id = "409", status = "Account: 1h 0m",
+  accountWide = true, accountOnly = true, currentKnown = true, characters = { "Alfa" } } }
+ShirsLazyTrix.RefreshRaidInfoPanel()
+this = raidInfoRow
+raidInfoRow.scripts.OnEnter()
+if not tooltipHasLine("This character: Ready (not saved)") or
+   tooltipHasLine("This character: Account: 1h 0m") or tooltipHasLine("Instance ID: 409") then
+  error("alt-only lockout falsely labels this character saved", 2)
+end
+if not tooltipHasLine("Account-wide lockout (MCP)") or not tooltipHasLine("Alfa") then
+  error("alt-only holder disappeared", 2)
+end
+raidRows[1].currentKnown = false
+ShirsLazyTrix.RefreshRaidInfoPanel()
+raidInfoRow.scripts.OnEnter()
+if not tooltipHasLine("This character: Not known") or tooltipHasLine("This character: Ready (not saved)") then
+  error("unknown native state falsely implies readiness", 2)
+end
+raidRows = { { name = "Molten Core", id = "A1", status = "1h 0m" } }
+ShirsLazyTrix.RefreshRaidInfoPanel()
+raidInfoRow.scripts.OnEnter()
+if raidInfoRow.raidAccountOnly or not tooltipHasLine("This character: 1h 0m") or
+   not tooltipHasLine("Instance ID: A1") then error("reused native row retained account-only state", 2) end
+raidInfoRow.scripts.OnLeave()
+raidRows = {
+  { name = "Molten Core", id = "A1", status = "1h 0m" },
+  { name = "Onyxia's Lair", id = "B2", status = "Ready" },
+}
+ShirsLazyTrix.RefreshRaidInfoPanel()
 raidInfoPanel.point = { "TOPRIGHT", UIParent, "TOPRIGHT", -70, -140 }
 this = raidInfoPanel
 raidInfoPanel.scripts.OnDragStart()
@@ -611,7 +640,106 @@ insideInstance = false
 ShirsLazyTrix.RefreshCooldownPanelVisibility()
 if not cooldownPanel:IsVisible() then error("cooldown panel did not return after leaving an instance", 2) end
 
+-- Exercise the real raid model and formatter, not the UI stubs above.
+do
+  local observedNow, observedUptime = 200000, 500
+  local nativeRaids = {}
+  function time() return observedNow end
+  function GetTime() return observedUptime end
+  function UnitName(unit) if unit == "player" then return "CurrentTank" end end
+  function GetCVar(name) if name == "realmName" then return "Fixture Realm" end end
+  function GetNumSavedInstances() return table.getn(nativeRaids) end
+  function GetSavedInstanceInfo(index)
+    local entry = nativeRaids[index]
+    if entry then return entry.name, entry.id, entry.reset end
+  end
+  function MCP_Send() error("raid display must not send a server request", 2) end
+  function SendChatMessage() error("raid display must not send chat", 2) end
+  dofile(root .. "/ShirsLazyTrix_Cooldowns.lua")
+  ShirsLazyTrixDB.showRaidInfoReady = false
+  ShirsLazyTrixDB.showRaidInfoSchedule = false
+  ShirsLazyTrixDB.cooldownsByCharacter = {}
+  MCP_SelfLockData = {
+    locks = {},
+    alts = { { name = "HolderAlt", locks = {
+      { map = 531, id = 731, resetAt = observedUptime + (6 * 86400) + (4 * 3600) },
+    } } },
+    members = { { name = "GroupOnly", locks = { { map = 533, id = 991 } } } },
+  }
+  local holderLock = MCP_SelfLockData.alts[1].locks[1]
+  local providerReset = holderLock.resetAt
+  if not ShirsLazyTrix.UpdateRaidInfoObservations(observedNow) then error("empty native raid observation failed", 2) end
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  this = raidInfoRow
+  raidInfoRow.scripts.OnEnter()
+  if raidInfoRow.label.text ~= "AQ40" or raidInfoRow.status.text ~= "Ready" then
+    error("real AQ40 alt-only main row must say Ready", 2)
+  end
+  if not tooltipHasLine("Time until reset: 6d 4h") or tooltipHasLine("Account: 6d 4h") then
+    error("real AQ40 tooltip must label the account countdown Time until reset: 6d 4h", 2)
+  end
+  if not tooltipHasLine("This character: Ready (not saved)") or
+     not tooltipHasLine("Account-wide lockout (MCP)") or not tooltipHasLine("HolderAlt") or
+     tooltipHasLine("Instance ID: 531") or tooltipHasLine("Instance ID: 731") then
+    error("real AQ40 tooltip mixed current status and account holder", 2)
+  end
+  if raidInfoRow.status.textColor[1] ~= 0.35 or raidInfoRow.status.textColor[2] ~= 1 then
+    error("known native Ready row must use the established Ready color", 2)
+  end
+  if table.getn(ShirsLazyTrix.GetCurrentRaidInfo().instances) ~= 0 or
+     named.ShirsLazyTrixRaidInfoRow2:IsVisible() then error("alt/group data leaked into current saved rows", 2) end
+  local environment = _G
+  local savedGetGlobal = getglobal
+  function getglobal(name) return environment[name] or named[name] end
+  _G = nil
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  if raidInfoRow.status.text ~= "Ready" or not tooltipHasLine("Time until reset: 6d 4h") then
+    error("getglobal-only client lost the current/account split", 2)
+  end
+  _G = environment
+  getglobal = savedGetGlobal
+  ShirsLazyTrix.GetCurrentRaidInfo().known = false
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  if raidInfoRow.status.text ~= "Not known" or not tooltipHasLine("This character: Not known") or
+     tooltipHasLine("This character: Ready (not saved)") or not tooltipHasLine("Time until reset: 6d 4h") then
+    error("unknown native state must remain unknown with the account reset intact", 2)
+  end
+  ShirsLazyTrix.GetCurrentRaidInfo().known = true
+  holderLock.resetAt = nil
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  if raidInfoRow.status.text ~= "Ready" or not tooltipHasLine("Time until reset: Not known") then
+    error("undated account reset must not replace known native readiness", 2)
+  end
+  raidInfoRow.accountStatusText = nil
+  ShirsLazyTrix.RefreshRaidInfoRowTooltip(raidInfoRow)
+  if not tooltipHasLine("Time until reset: Not known") or tooltipHasLine("Account: Not known") or
+     not tooltipHasLine("Account-wide lockout (MCP)") or not tooltipHasLine("HolderAlt") then
+    error("missing countdown must retain the reset label and account holder", 2)
+  end
+  holderLock.resetAt = providerReset
+  nativeRaids = { { name = "Ahn'Qiraj Temple", id = 812, reset = 3600 } }
+  ShirsLazyTrix.UpdateRaidInfoObservations(observedNow)
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  if raidInfoRow.status.text ~= "1h 0m" or raidInfoRow.raidAccountOnly or
+     not tooltipHasLine("Instance ID: 812") or not tooltipHasLine("This character: 1h 0m") or
+     not tooltipHasLine("HolderAlt") or tooltipHasLine("Time until reset: 6d 4h") then
+    error("genuine native AQ40 save lost its own ID/reset or retained stale account-only status", 2)
+  end
+  if ShirsLazyTrix.GetCurrentRaidInfo().instances[1].readyAt ~= observedNow + 3600 or
+     holderLock.resetAt ~= providerReset or holderLock.accountOnly or MCP_SelfLockData.locks[1] then
+    error("display mutated native or provider lockouts", 2)
+  end
+  MCP_SelfLockData = nil
+  nativeRaids = {}
+  ShirsLazyTrix.UpdateRaidInfoObservations(observedNow)
+  ShirsLazyTrix.RefreshRaidInfoPanel()
+  if raidInfoRow:IsVisible() or raidInfoRow.raidName or raidInfoRow.accountStatusText or GameTooltip.shown then
+    error("hidden reused row kept stale account status or tooltip", 2)
+  end
+end
+
 print("ui-runtime-construction: PASS")
 print("ui-runtime-minimap-drag: PASS")
 print("ui-runtime-checkbox: PASS")
 print("ui-runtime-cooldown-panel: PASS")
+print("ui-runtime-real-raid-current-account-split: PASS")

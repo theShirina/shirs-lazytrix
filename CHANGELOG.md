@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.23
+
+### Fixed
+
+- An alt's reset timer no longer appears as the current character's raid status: the row stays `Ready` when that character's raid data is known, and the tooltip separately shows the account-wide holder and `Time until reset`.
+
 ## 0.0.22
 
 ### Added

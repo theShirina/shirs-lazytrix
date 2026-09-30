@@ -159,10 +159,11 @@ assertEqual(table.getn(ShirsLazyTrix.GetRaidInfoDisplayEntries(false)), 1, "read
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response restores ready catalog state")
 MCP_SelfLockData = {
+  locks = {}, -- MCP current-character free; countdown belongs to an alt.
   alts = {
     { name = "AltOne", locks = {
       { map = 409, resetAt = uptime + 5400 },
-      { map = 531, resetAt = uptime + 7200 },
+      { map = 531, resetAt = uptime + (6 * 86400) + (5 * 3600) },
       { map = 249, resetAt = uptime - 1 },
       { map = 533 },
     } },
@@ -170,15 +171,22 @@ MCP_SelfLockData = {
   },
 }
 local accountRaidRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false)
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(accountRaidRows[2], now), "Ready", "AQ40 alt-only main row shows native current readiness, not the account countdown")
+assertEqual(accountRaidRows[1].accountOnly, true, "alt-only lockout must not become current-character saved")
+assertEqual(accountRaidRows[1].currentKnown, true, "native empty response proves current character is unsaved")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(accountRaidRows[1], now), "Ready", "sibling alt-only raid row shows current readiness")
+assertEqual(ShirsLazyTrix.FormatRaidInfoStatus(accountRaidRows[1], now), "1h 0m", "account countdown remains available separately")
 assertEqual(table.getn(accountRaidRows), 3, "MCP account lockouts include active and undated locks")
 assertEqual(accountRaidRows[1].name, "Molten Core", "MCP account lockout uses raid catalog name")
 assertEqual(accountRaidRows[1].readyAt, now + 3600, "MCP account lockout uses earliest active reset")
 assertEqual(accountRaidRows[1].accountWide, true, "MCP account lockout is labeled account-wide")
 assertEqual(table.getn(accountRaidRows[1].characters), 2, "MCP account lockout retains character names")
 assertEqual(accountRaidRows[2].name, "Temple of Ahn'Qiraj", "MCP account lockout matches map ID")
-assertEqual(accountRaidRows[2].readyAt, now + 7200, "MCP account reset converts uptime to wall time")
+assertEqual(accountRaidRows[2].readyAt, now + (6 * 86400) + (5 * 3600), "MCP account reset converts uptime to wall time")
+assertEqual(ShirsLazyTrix.FormatRaidInfoStatus(accountRaidRows[2], now), "6d 5h", "AQ40 account reset remains available for the tooltip")
 assertEqual(accountRaidRows[3].name, "Naxxramas", "MCP lock with no reset time remains visible")
-assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(accountRaidRows[3], now), "Not known", "undated account lockout does not imply readiness")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(accountRaidRows[3], now), "Ready", "undated account lockout cannot replace known native readiness")
+assertEqual(ShirsLazyTrix.FormatRaidInfoStatus(accountRaidRows[3], now), "Not known", "undated account reset stays unknown separately")
 local accountReadyRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(true)
 local mcLockCount = 0
 local accountReadyIndex
@@ -186,6 +194,14 @@ for accountReadyIndex = 1, table.getn(accountReadyRows) do
   if accountReadyRows[accountReadyIndex].name == "Molten Core" then mcLockCount = mcLockCount + 1 end
 end
 assertEqual(mcLockCount, 1, "MCP account lockout suppresses duplicate Ready row")
+assertEqual(table.getn(ShirsLazyTrix.GetCurrentRaidInfo().instances), 0, "alt merge leaves native current snapshot empty")
+local currentState = ShirsLazyTrix.GetCurrentRaidInfo()
+currentState.known = false
+local unknownAccountRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false)
+assertEqual(unknownAccountRows[1].accountOnly, true, "unknown native state keeps account-only provenance")
+assertEqual(unknownAccountRows[1].currentKnown, false, "unknown native state does not claim current readiness")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(unknownAccountRows[1], now), "Not known", "unknown native main status stays unknown despite an account reset")
+currentState.known = true
 raidRows = { { name = "Molten Core", id = 201, reset = 14700 } }
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "native current-character MC lockout observation")
 MCP_SelfLockData = {
@@ -195,6 +211,10 @@ local overlappingAccountRows = ShirsLazyTrix.GetRaidInfoDisplayEntries(false)
 assertEqual(table.getn(overlappingAccountRows), 1, "native current lockout remains the only MC row")
 assertEqual(overlappingAccountRows[1].accountWide, true, "matching MCP lockout annotates native row")
 assertEqual(overlappingAccountRows[1].characters[1], "Shirhunt", "MCP holder is retained beside native lockout")
+assertEqual(overlappingAccountRows[1].accountOnly, nil, "native overlap is not account-only")
+assertEqual(overlappingAccountRows[1].id, "201", "native overlap preserves real instance ID")
+assertEqual(overlappingAccountRows[1].readyAt, now + 14700, "native overlap preserves current reset")
+assertEqual(ShirsLazyTrix.FormatRaidInfoDisplayStatus(overlappingAccountRows[1], now), "4h 5m", "genuine native save keeps its own countdown")
 MCP_SelfLockData = nil
 raidRows = {}
 assertEqual(ShirsLazyTrix.UpdateRaidInfoObservations(now), true, "empty raid response clears overlap fixture")
